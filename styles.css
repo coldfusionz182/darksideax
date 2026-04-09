@@ -524,18 +524,20 @@ a:hover {
   font-size: 11px;
 }
 
-/* Thread list specific */
+/* thread-table columns */
+.thread-table .col-icon {
+  width: 40px;
+  text-align: center;
+}
+
 .thread-table .col-thread-main {
-  width: 50%;
+  width: auto;
 }
 
-.thread-table .thread-title a {
-  font-weight: 700;
-  color: #e0e0e0;
-}
-
-.thread-table .thread-title a:hover {
-  color: #ffffff;
+.thread-table .col-stats {
+  width: 80px;          /* compact like old layout */
+  text-align: center;
+  white-space: nowrap;
 }
 
 .thread-meta {
