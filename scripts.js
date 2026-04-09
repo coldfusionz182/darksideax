@@ -1,12 +1,9 @@
-// scripts.js
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { SUPABASE_ANON_KEY } from './keys.js';
 
 const SUPABASE_URL = 'https://ffmkkwskvjvytdddevmm.supabase.co';
-
 const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-// --- helper: current user + role from profiles ---
 // --- helper: current user + role from public.users ---
 async function getCurrentUserWithRole() {
   const { data: userData, error } = await supabaseClient.auth.getUser();
@@ -35,7 +32,6 @@ async function getCurrentUserWithRole() {
   };
 }
 
-// --- header auth state ---
 // --- header auth state ---
 async function updateHeaderAuthState() {
   const authLinks = document.querySelector('.auth-links');
@@ -185,16 +181,16 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   async function loadAdmins() {
-  const { data, error } = await supabaseClient
-    .from('users')
-    .select('id, email, role')
-    .in('role', ['admin', 'owner']);
-  if (error) {
-    console.error('loadAdmins error', error);
-    return [];
+    const { data, error } = await supabaseClient
+      .from('users')
+      .select('id, email, role')
+      .in('role', ['admin', 'owner']);
+    if (error) {
+      console.error('loadAdmins error', error);
+      return [];
+    }
+    return data || [];
   }
-  return data || [];
-}
 
   async function initAdminPanel() {
     const current = await getCurrentUserWithRole();
@@ -213,22 +209,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const admins = await loadAdmins();
     list.innerHTML = admins
-  .map(
-    (a) => `
+      .map(
+        (a) => `
       <div class="admin-row">
         <span>${a.email || a.id}</span>
         <span class="badge badge-${a.role}">${a.role}</span>
       </div>
     `,
-  )
-  .join('');
+      )
+      .join('');
 
     if (current.role === 'owner') {
       actions.innerHTML = `
         <button id="add-admin" class="btn btn-small btn-primary">Add admin</button>
         <button id="remove-admin" class="btn btn-small btn-outline">Remove admin</button>
       `;
-      // TODO: implement dialogs
       document.getElementById('add-admin').onclick = () =>
         alert('Add admin not implemented yet');
       document.getElementById('remove-admin').onclick = () =>
@@ -280,10 +275,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     supabaseClient
       .channel('public:shouts')
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'shouts' }, (payload) => {
-        renderShout(payload.new);
-        shoutBox.scrollTop = shoutBox.scrollHeight;
-      })
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'shouts' },
+        (payload) => {
+          renderShout(payload.new);
+          shoutBox.scrollTop = shoutBox.scrollHeight;
+        },
+      )
       .subscribe();
 
     shoutForm.addEventListener('submit', async (e) => {
@@ -443,7 +442,7 @@ document.addEventListener('DOMContentLoaded', () => {
       threadsData = await res.json();
       sortThreads(sortSelect ? sortSelect.value : 'newest');
     } catch (e) {
-      console.error('loadThreads error:', e);
+      console.error('loadThreads error', e);
     }
   }
 
@@ -472,68 +471,68 @@ document.addEventListener('DOMContentLoaded', () => {
     const submitBtn = document.getElementById('thread-submit');
 
     getCurrentUser().then(async () => {
-  if (currentUser) {
-    const { data: profile } = await supabaseClient
-      .from('profiles')
-      .select('username')
-      .eq('id', currentUser.id)
-      .maybeSingle();
+      if (currentUser) {
+        const { data: profile } = await supabaseClient
+          .from('profiles')
+          .select('username')
+          .eq('id', currentUser.id)
+          .maybeSingle();
 
-    authorEl.value = profile?.username || currentUser.email;
-  } else {
-    statusEl.textContent = 'You must be logged in to post a thread.';
-    submitBtn.disabled = true;
-  }
-});
-
-newThreadForm.addEventListener('submit', async (e) => {
-  e.preventDefault();
-
-  if (!currentUser) {
-    statusEl.textContent = 'You must be logged in to post a thread.';
-    return;
-  }
-
-  if (
-    !titleEl.value.trim() ||
-    !tagEl.value ||
-    !authorEl.value.trim() ||
-    !contentEl.value.trim()
-  ) {
-    statusEl.textContent = 'Please fill in all fields.';
-    return;
-  }
-
-  submitBtn.disabled = true;
-  statusEl.textContent = 'Creating thread...';
-
-  try {
-    const res = await fetch('/api/create-thread', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        title: titleEl.value.trim(),
-        tag: tagEl.value,
-        author: authorEl.value.trim(),
-        content: contentEl.value.trim(),
-      }),
+        authorEl.value = profile?.username || currentUser.email;
+      } else {
+        statusEl.textContent = 'You must be logged in to post a thread.';
+        submitBtn.disabled = true;
+      }
     });
 
-    if (!res.ok) throw new Error('Request failed');
-    const data = await res.json();
-    if (!data.success) throw new Error(data.error || 'Unknown error');
+    newThreadForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
 
-    statusEl.textContent = 'Thread created! Redirecting...';
-    setTimeout(() => {
-      window.location.href = 'accounts.html';
-    }, 800);
-  } catch (err) {
-    console.error('create-thread error', err);
-    statusEl.textContent = 'Error creating thread. Check backend.';
-  } finally {
-    submitBtn.disabled = false;
-  }
-});
+      if (!currentUser) {
+        statusEl.textContent = 'You must be logged in to post a thread.';
+        return;
+      }
+
+      if (
+        !titleEl.value.trim() ||
+        !tagEl.value ||
+        !authorEl.value.trim() ||
+        !contentEl.value.trim()
+      ) {
+        statusEl.textContent = 'Please fill in all fields.';
+        return;
+      }
+
+      submitBtn.disabled = true;
+      statusEl.textContent = 'Creating thread...';
+
+      try {
+        const res = await fetch('/api/create-thread', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            title: titleEl.value.trim(),
+            tag: tagEl.value,
+            author: authorEl.value.trim(),
+            content: contentEl.value.trim(),
+          }),
+        });
+
+        if (!res.ok) throw new Error('Request failed');
+        const data = await res.json();
+        if (!data.success) throw new Error(data.error || 'Unknown error');
+
+        statusEl.textContent = 'Thread created! Redirecting...';
+        setTimeout(() => {
+          window.location.href = 'accounts.html';
+        }, 800);
+      } catch (err) {
+        console.error('create-thread error', err);
+        statusEl.textContent = 'Error creating thread. Check backend.';
+      } finally {
+        submitBtn.disabled = false;
+      }
+    });
   }
 
   // ===================== Single thread view (thread.html) =====================
@@ -788,161 +787,154 @@ newThreadForm.addEventListener('submit', async (e) => {
   }
 
   // ===================== PROFILE PAGE (profile.html) =====================
-  // ===================== PROFILE PAGE (profile.html) =====================
-const profileUsernameEl = document.getElementById('profile-username');
-const profileRoleTextEl = document.getElementById('profile-role-text');
-// const profileRolePill = document.getElementById('profile-role-pill'); // not used in your HTML
-const profileEmailEl = document.getElementById('profile-email');
-const profileJoinedEl = document.getElementById('profile-joined');
-const statThreadsEl = document.getElementById('stat-threads');
-const statRepliesEl = document.getElementById('stat-replies');
-const statLikesEl = document.getElementById('stat-likes');
-const profileThreadsList = document.getElementById('profile-threads-list');
-const profileRepliesList = document.getElementById('profile-replies-list');
-const profileLikesList = document.getElementById('profile-likes-list');
+  const profileUsernameEl = document.getElementById('profile-username');
+  const profileRoleTextEl = document.getElementById('profile-role-text');
+  const profileEmailEl = document.getElementById('profile-email');
+  const profileJoinedEl = document.getElementById('profile-joined');
+  const statThreadsEl = document.getElementById('stat-threads');
+  const statRepliesEl = document.getElementById('stat-replies');
+  const statLikesEl = document.getElementById('stat-likes');
+  const profileThreadsList = document.getElementById('profile-threads-list');
+  const profileRepliesList = document.getElementById('profile-replies-list');
+  const profileLikesList = document.getElementById('profile-likes-list');
 
-function mapRoleToLabel(role) {
-  switch (role) {
-    case 'owner':
-      return 'Owner';
-    case 'admin':
-      return 'Administrator';
-    default:
-      return 'Member';
+  function mapRoleToLabel(role) {
+    switch (role) {
+      case 'owner':
+        return 'Owner';
+      case 'admin':
+        return 'Administrator';
+      default:
+        return 'Member';
+    }
   }
-}
 
-if (profileUsernameEl && profileRoleTextEl) {
-  (async () => {
-    const { data: userData, error } = await supabaseClient.auth.getUser();
-    if (error || !userData?.user) {
-      profileUsernameEl.textContent = 'Not logged in';
-      // if you ever add a pill element, you can hide it here
-      // if (profileRolePill) profileRolePill.style.display = 'none';
-      return;
-    }
+  if (profileUsernameEl && profileRoleTextEl) {
+    (async () => {
+      const { data: userData, error } = await supabaseClient.auth.getUser();
+      if (error || !userData?.user) {
+        profileUsernameEl.textContent = 'Not logged in';
+        return;
+      }
 
-    const user = userData.user;
+      const user = userData.user;
 
-    // get username + created_at from profiles
-    const { data: profile } = await supabaseClient
-      .from('profiles')
-      .select('username, created_at')
-      .eq('id', user.id)
-      .maybeSingle();
+      // get username + created_at from profiles
+      const { data: profile } = await supabaseClient
+        .from('profiles')
+        .select('username, created_at')
+        .eq('id', user.id)
+        .maybeSingle();
 
-    // get role from public.users
-    const { data: userRow } = await supabaseClient
-      .from('users')
-      .select('role')
-      .eq('id', user.id)
-      .maybeSingle();
+      // get role from public.users
+      const { data: userRow } = await supabaseClient
+        .from('users')
+        .select('role')
+        .eq('id', user.id)
+        .maybeSingle();
 
-    const uname = profile?.username || user.email;
-    const role = userRow?.role || 'user';
+      const uname = profile?.username || user.email;
+      const role = userRow?.role || 'user';
 
-    profileUsernameEl.textContent = uname;
-    if (profileEmailEl) profileEmailEl.textContent = user.email;
-    if (profileJoinedEl && profile?.created_at) {
-      profileJoinedEl.textContent = formatDateShort(profile.created_at);
-    }
+      profileUsernameEl.textContent = uname;
+      if (profileEmailEl) profileEmailEl.textContent = user.email;
+      if (profileJoinedEl && profile?.created_at) {
+        profileJoinedEl.textContent = formatDateShort(profile.created_at);
+      }
 
-    // text like "Member" / "Administrator" / "Owner"
-    profileRoleTextEl.textContent = mapRoleToLabel(role);
+      profileRoleTextEl.textContent = mapRoleToLabel(role);
 
-    // if you want CSS rank classes on the big avatar:
-    const avatarEl = document.getElementById('profile-avatar');
-    if (avatarEl) {
-      avatarEl.classList.remove('rank-owner', 'rank-admin', 'rank-user');
-      if (role === 'owner') avatarEl.classList.add('rank-owner');
-      else if (role === 'admin') avatarEl.classList.add('rank-admin');
-      else avatarEl.classList.add('rank-user');
-    }
+      const avatarEl = document.getElementById('profile-avatar');
+      if (avatarEl) {
+        avatarEl.classList.remove('rank-owner', 'rank-admin', 'rank-user');
+        if (role === 'owner') avatarEl.classList.add('rank-owner');
+        else if (role === 'admin') avatarEl.classList.add('rank-admin');
+        else avatarEl.classList.add('rank-user');
+      }
 
-    // stats + lists (unchanged except using uname/email as before)
-    const [{ data: threads }, { data: replies }, { data: likes }] = await Promise.all([
-      supabaseClient
-        .from('threads')
-        .select('id, title, tag, created_at')
-        .eq('author', uname)
-        .order('created_at', { ascending: false }),
-      supabaseClient
-        .from('thread_replies')
-        .select('id, thread_id, content, created_at')
-        .eq('author', user.email)
-        .order('created_at', { ascending: false }),
-      supabaseClient
-        .from('thread_likes')
-        .select('id, thread_id, created_at')
-        .eq('user_id', user.id),
-    ]);
+      const [{ data: threads }, { data: replies }, { data: likes }] = await Promise.all([
+        supabaseClient
+          .from('threads')
+          .select('id, title, tag, created_at')
+          .eq('author', uname)
+          .order('created_at', { ascending: false }),
+        supabaseClient
+          .from('thread_replies')
+          .select('id, thread_id, content, created_at')
+          .eq('author', user.email)
+          .order('created_at', { ascending: false }),
+        supabaseClient
+          .from('thread_likes')
+          .select('id, thread_id, created_at')
+          .eq('user_id', user.id),
+      ]);
 
-    if (statThreadsEl) statThreadsEl.textContent = threads ? threads.length : 0;
-    if (statRepliesEl) statRepliesEl.textContent = replies ? replies.length : 0;
-    if (statLikesEl) statLikesEl.textContent = likes ? likes.length : 0;
+      if (statThreadsEl) statThreadsEl.textContent = threads ? threads.length : 0;
+      if (statRepliesEl) statRepliesEl.textContent = replies ? replies.length : 0;
+      if (statLikesEl) statLikesEl.textContent = likes ? likes.length : 0;
 
-    if (profileThreadsList) {
-      profileThreadsList.innerHTML = '';
-      if (!threads || threads.length === 0) {
-        const li = document.createElement('li');
-        li.className = 'meta';
-        li.textContent = 'You have not created any threads yet.';
-        profileThreadsList.appendChild(li);
-      } else {
-        threads.slice(0, 5).forEach((t) => {
+      if (profileThreadsList) {
+        profileThreadsList.innerHTML = '';
+        if (!threads || threads.length === 0) {
           const li = document.createElement('li');
-          li.innerHTML = `
-            <a href="thread.html?id=${t.id}">
-              <span class="badge-pill">${t.tag}</span>${t.title}
-            </a>
-            <div class="meta">Posted ${formatDateShort(t.created_at)}</div>
-          `;
+          li.className = 'meta';
+          li.textContent = 'You have not created any threads yet.';
           profileThreadsList.appendChild(li);
-        });
+        } else {
+          threads.slice(0, 5).forEach((t) => {
+            const li = document.createElement('li');
+            li.innerHTML = `
+              <a href="thread.html?id=${t.id}">
+                <span class="badge-pill">${t.tag}</span>${t.title}
+              </a>
+              <div class="meta">Posted ${formatDateShort(t.created_at)}</div>
+            `;
+            profileThreadsList.appendChild(li);
+          });
+        }
       }
-    }
 
-    if (profileRepliesList) {
-      profileRepliesList.innerHTML = '';
-      if (!replies || replies.length === 0) {
-        const li = document.createElement('li');
-        li.className = 'meta';
-        li.textContent = 'You have not replied to any threads yet.';
-        profileRepliesList.appendChild(li);
-      } else {
-        replies.slice(0, 5).forEach((r) => {
+      if (profileRepliesList) {
+        profileRepliesList.innerHTML = '';
+        if (!replies || replies.length === 0) {
           const li = document.createElement('li');
-          li.innerHTML = `
-            <a href="thread.html?id=${r.thread_id}">
-              Reply on thread #${r.thread_id}
-            </a>
-            <div class="meta">${formatDateShort(r.created_at)}</div>
-          `;
+          li.className = 'meta';
+          li.textContent = 'You have not replied to any threads yet.';
           profileRepliesList.appendChild(li);
-        });
+        } else {
+          replies.slice(0, 5).forEach((r) => {
+            const li = document.createElement('li');
+            li.innerHTML = `
+              <a href="thread.html?id=${r.thread_id}">
+                Reply on thread #${r.thread_id}
+              </a>
+              <div class="meta">${formatDateShort(r.created_at)}</div>
+            `;
+            profileRepliesList.appendChild(li);
+          });
+        }
       }
-    }
 
-    if (profileLikesList) {
-      profileLikesList.innerHTML = '';
-      if (!likes || likes.length === 0) {
-        const li = document.createElement('li');
-        li.className = 'meta';
-        li.textContent = 'You have not liked any threads yet.';
-        profileLikesList.appendChild(li);
-      } else {
-        likes.slice(0, 5).forEach((lk) => {
+      if (profileLikesList) {
+        profileLikesList.innerHTML = '';
+        if (!likes || likes.length === 0) {
           const li = document.createElement('li');
-          li.innerHTML = `
-            <a href="thread.html?id=${lk.thread_id}">
-              Liked thread #${lk.thread_id}
-            </a>
-            <div class="meta">${formatDateShort(lk.created_at)}</div>
-          `;
+          li.className = 'meta';
+          li.textContent = 'You have not liked any threads yet.';
           profileLikesList.appendChild(li);
-        });
+        } else {
+          likes.slice(0, 5).forEach((lk) => {
+            const li = document.createElement('li');
+            li.innerHTML = `
+              <a href="thread.html?id=${lk.thread_id}">
+                Liked thread #${lk.thread_id}
+              </a>
+              <div class="meta">${formatDateShort(lk.created_at)}</div>
+            `;
+            profileLikesList.appendChild(li);
+          });
+        }
       }
-    }
-  })();
+    })();
   }
 });
