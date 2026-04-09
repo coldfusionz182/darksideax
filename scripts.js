@@ -17,7 +17,7 @@ async function getCurrentUserWithRole() {
   const [{ data: profile }, { data: userRow }] = await Promise.all([
     supabaseClient
       .from('profiles')
-      .select('username')
+      .select('username, avatar_url')
       .eq('id', user.id)
       .maybeSingle(),
     supabaseClient
@@ -32,6 +32,7 @@ async function getCurrentUserWithRole() {
     email: user.email,
     username: profile?.username || user.email,
     role: userRow?.role || 'user',
+    avatar_url: profile?.avatar_url || null,
   };
 
   // expose globally so other JS files can use it
@@ -53,9 +54,13 @@ async function updateHeaderAuthState() {
 
   window.dsUserRole = current.role;
 
+  const avatarSrc =
+    current.avatar_url ||
+    'images/default-avatar.png';
+
   authLinks.innerHTML = `
     <button class="user-pill" id="header-profile-link">
-      <i class="fa fa-user-circle"></i>
+      <img src="${avatarSrc}" class="user-avatar-header" alt="Avatar">
       <span>${current.username}</span>
     </button>
     <button class="btn btn-small btn-outline" id="logout-btn">
@@ -575,6 +580,10 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         const t = data.thread;
+
+        // let avatars.js hook into this
+        window.dispatchEvent(new CustomEvent('ds-thread-loaded', { detail: { thread: t } }));
+
         threadTitleDisplay.textContent = t.title;
         threadMetaDisplay.textContent = `[${t.tag}] Started by ${t.author} • ${formatDateShort(
           t.created_at,
@@ -836,7 +845,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const { data: profile } = await supabaseClient
         .from('profiles')
-        .select('username, created_at')
+        .select('username, created_at, avatar_url')
         .eq('id', user.id)
         .maybeSingle();
 
@@ -858,11 +867,14 @@ document.addEventListener('DOMContentLoaded', () => {
       profileRoleTextEl.textContent = mapRoleToLabel(role);
 
       const avatarEl = document.getElementById('profile-avatar');
-      if (avatarEl) {
-        avatarEl.classList.remove('rank-owner', 'rank-admin', 'rank-user');
-        if (role === 'owner') avatarEl.classList.add('rank-owner');
-        else if (role === 'admin') avatarEl.classList.add('rank-admin');
-        else avatarEl.classList.add('rank-user');
+      const avatarIcon = document.getElementById('profile-avatar-icon');
+
+      if (avatarEl && profile?.avatar_url) {
+        avatarEl.innerHTML = '';
+        const img = document.createElement('img');
+        img.id = 'profile-avatar-img';
+        img.src = profile.avatar_url;
+        avatarEl.appendChild(img);
       }
 
       const [{ data: threads }, { data: replies }, { data: likes }] = await Promise.all([
@@ -885,6 +897,11 @@ document.addEventListener('DOMContentLoaded', () => {
       if (statThreadsEl) statThreadsEl.textContent = threads ? threads.length : 0;
       if (statRepliesEl) statRepliesEl.textContent = replies ? replies.length : 0;
       if (statLikesEl) statLikesEl.textContent = likes ? likes.length : 0;
+
+      const bannerThreads = document.getElementById('banner-threads');
+      const bannerPosts = document.getElementById('banner-posts');
+      if (bannerThreads) bannerThreads.textContent = threads ? threads.length : 0;
+      if (bannerPosts) bannerPosts.textContent = replies ? replies.length : 0;
 
       if (profileThreadsList) {
         profileThreadsList.innerHTML = '';
@@ -947,6 +964,45 @@ document.addEventListener('DOMContentLoaded', () => {
             profileLikesList.appendChild(li);
           });
         }
+      }
+
+      // avatar URL input logic
+      const avatarInput = document.getElementById('avatar-url-input');
+      const avatarSave = document.getElementById('avatar-url-save');
+      const avatarStatus = document.getElementById('avatar-url-status');
+
+      if (avatarInput && avatarSave && avatarEl) {
+        if (profile?.avatar_url) {
+          avatarInput.value = profile.avatar_url;
+        }
+
+        avatarSave.addEventListener('click', async () => {
+          const url = avatarInput.value.trim();
+          if (!url) {
+            avatarStatus.textContent = 'Enter an image URL first.';
+            return;
+          }
+          avatarStatus.textContent = 'Saving avatar...';
+
+          try {
+            const { error: upError } = await supabaseClient
+              .from('profiles')
+              .update({ avatar_url: url })
+              .eq('id', user.id);
+            if (upError) throw upError;
+
+            avatarEl.innerHTML = '';
+            const img = document.createElement('img');
+            img.id = 'profile-avatar-img';
+            img.src = url;
+            avatarEl.appendChild(img);
+
+            avatarStatus.textContent = 'Avatar updated.';
+          } catch (err) {
+            console.error('avatar update error', err);
+            avatarStatus.textContent = 'Failed to update avatar.';
+          }
+        });
       }
     })();
   }

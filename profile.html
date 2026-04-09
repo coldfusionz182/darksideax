@@ -45,6 +45,14 @@
       font-size: 40px;
       color: #f9fafb;
       box-shadow: 0 0 0 2px rgba(0,0,0,0.5);
+      overflow: hidden;
+    }
+
+    .profile-avatar-large img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
     }
 
     .profile-username-big {
@@ -131,6 +139,37 @@
     .info-label { color: #9ca3c9; }
     .info-value { color: #e5e7ff; }
     .info-online { color: #4ade80; }
+
+    /* avatar URL input row */
+    .profile-info-row-avatar {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 4px;
+    }
+    .avatar-url-input {
+      width: 100%;
+      padding: 4px 6px;
+      border-radius: 3px;
+      border: 1px solid #1f2937;
+      background: #020617;
+      color: #e5e7ff;
+      font-size: 0.8rem;
+    }
+    .avatar-url-input:focus {
+      outline: none;
+      border-color: #4f46e5;
+    }
+    .avatar-url-actions {
+      display: flex;
+      gap: 6px;
+      margin-top: 4px;
+      font-size: 0.75rem;
+      align-items: center;
+    }
+    .avatar-url-status {
+      font-size: 0.75rem;
+      color: #9ca3c9;
+    }
 
     .profile-wide-card { margin-bottom: 10px; }
 
@@ -284,11 +323,11 @@
         <div class="profile-banner-inner">
           <div class="profile-banner-left">
             <div class="profile-avatar-large" id="profile-avatar">
-              <i class="fa fa-user-ninja"></i>
+              <!-- default icon, replaced by <img> when avatar_url exists -->
+              <i class="fa fa-user-ninja" id="profile-avatar-icon"></i>
             </div>
             <div>
               <div class="profile-username-big" id="profile-username">Loading...</div>
-              <!-- ID changed to match scripts.js -->
               <div class="profile-rank-text" id="profile-role-text">Member</div>
             </div>
           </div>
@@ -370,6 +409,23 @@
               <span class="info-label">Warning Level:</span>
               <span class="info-value" id="info-warnings">0%</span>
             </div>
+
+            <!-- Avatar URL setter -->
+            <div class="profile-info-row profile-info-row-avatar">
+              <span class="info-label">Avatar URL:</span>
+              <input
+                type="text"
+                id="avatar-url-input"
+                class="avatar-url-input"
+                placeholder="Paste image URL (https://...)"
+              >
+              <div class="avatar-url-actions">
+                <button type="button" class="btn btn-small btn-primary" id="avatar-url-save">
+                  <i class="fa fa-image"></i> Set avatar
+                </button>
+                <span class="avatar-url-status" id="avatar-url-status"></span>
+              </div>
+            </div>
           </section>
         </div>
 
@@ -390,7 +446,6 @@
                 <div class="wide-stat-label">Posts</div>
               </div>
               <div>
-                <!-- ID changed to stat-likes to match scripts.js -->
                 <div class="wide-stat-number" id="stat-likes">0</div>
                 <div class="wide-stat-label">Likes</div>
               </div>

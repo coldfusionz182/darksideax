@@ -64,6 +64,18 @@
       font-size: 0.8rem;
     }
 
+    /* avatar */
+    .author-avatar-wrapper {
+      margin-bottom: 8px;
+    }
+    .author-avatar {
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid #181c2d;
+    }
+
     /* main content box */
     .thread-content-box {
       background: #05070d;
@@ -243,6 +255,9 @@
           <div class="thread-layout">
             <!-- left: author info -->
             <aside class="thread-sidebar">
+              <div class="author-avatar-wrapper">
+                <img id="thread-avatar-img" class="author-avatar" src="images/default-avatar.png" alt="Avatar">
+              </div>
               <div class="author-name" id="thread-author-name">Author</div>
               <div class="author-rank">Thread Owner</div>
               <div class="author-meta">
@@ -303,6 +318,15 @@
   </main>
 </div>
 
-<script type="module" src="scripts.js"></script>
+<!-- load main logic + avatars module -->
+<script type="module">
+  import './scripts.js';
+  import { initThreadAvatar } from './avatars.js';
+
+  window.addEventListener('ds-thread-loaded', (e) => {
+    const thread = e.detail.thread; // has .content
+    initThreadAvatar(thread.content);
+  });
+</script>
 </body>
 </html>

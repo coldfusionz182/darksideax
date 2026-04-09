@@ -49,27 +49,6 @@
       font-size: 0.8rem;
     }
 
-    .color-palette {
-  position: absolute;
-  z-index: 9999;
-  background: #05070d;
-  border: 1px solid #181c2d;
-  border-radius: 4px;
-  padding: 6px;
-  display: grid;
-  grid-template-columns: repeat(5, 18px);
-  gap: 4px;
-}
-
-.color-palette button {
-  width: 18px;
-  height: 18px;
-  border-radius: 2px;
-  border: 1px solid #111827;
-  cursor: pointer;
-  padding: 0;
-}
-
     .header-username { font-weight: 600; }
 
     .user-rank-badge {
@@ -96,6 +75,21 @@
       background: rgba(96,165,250,0.18);
       color: #bfdbfe;
       border-color: rgba(96,165,250,0.7);
+    }
+
+    /* avatar preview in header */
+    .user-header-card {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .author-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid #181c2d;
     }
 
     .editor-container {
@@ -194,6 +188,28 @@
       align-items: center;
       font-size: 0.8rem;
     }
+
+    /* colour palette */
+    .color-palette {
+      position: absolute;
+      z-index: 9999;
+      background: #05070d;
+      border: 1px solid #181c2d;
+      border-radius: 4px;
+      padding: 6px;
+      display: grid;
+      grid-template-columns: repeat(5, 18px);
+      gap: 4px;
+    }
+
+    .color-palette button {
+      width: 18px;
+      height: 18px;
+      border-radius: 2px;
+      border: 1px solid #111827;
+      cursor: pointer;
+      padding: 0;
+    }
   </style>
 </head>
 <body>
@@ -244,11 +260,16 @@
             <div class="editor-header-bar">
               <div class="editor-header-left">Post a new Thread</div>
               <div class="editor-header-user">
-                <span class="header-username" id="user-name-display">User</span>
-                <span class="user-rank-badge rank-member" id="user-rank-badge">
-                  <i class="fa fa-user"></i>
-                  <span id="user-rank-text">Member</span>
-                </span>
+                <div class="user-header-card">
+                  <img id="create-thread-avatar-img" class="author-avatar" src="images/default-avatar.png" alt="Avatar">
+                  <div>
+                    <span class="header-username" id="user-name-display">User</span>
+                    <span class="user-rank-badge rank-member" id="user-rank-badge">
+                      <i class="fa fa-user"></i>
+                      <span id="user-rank-text">Member</span>
+                    </span>
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -283,46 +304,42 @@
                 </div>
 
                 <div class="editor-toolbar">
-  <!-- existing buttons... -->
-  <button type="button" class="toolbar-btn" data-format="bold">
-    <i class="fa fa-bold"></i>
-  </button>
-  <button type="button" class="toolbar-btn" data-format="italic">
-    <i class="fa fa-italic"></i>
-  </button>
-  <button type="button" class="toolbar-btn" data-format="underline">
-    <i class="fa fa-underline"></i>
-  </button>
-  <button type="button" class="toolbar-btn" id="btn-hide-text">
-    <i class="fa fa-user-secret"></i> Hide text
-  </button>
+                  <button type="button" class="toolbar-btn" data-format="bold">
+                    <i class="fa fa-bold"></i>
+                  </button>
+                  <button type="button" class="toolbar-btn" data-format="italic">
+                    <i class="fa fa-italic"></i>
+                  </button>
+                  <button type="button" class="toolbar-btn" data-format="underline">
+                    <i class="fa fa-underline"></i>
+                  </button>
+                  <button type="button" class="toolbar-btn" id="btn-hide-text">
+                    <i class="fa fa-user-secret"></i> Hide text
+                  </button>
+                  <!-- colour button -->
+                  <button type="button" class="toolbar-btn" data-format="color" id="btn-color">
+                    <i class="fa fa-palette"></i>
+                  </button>
+                </div>
 
-  <!-- NEW: colour button -->
-  <button type="button" class="toolbar-btn" data-format="color" id="btn-color">
-    <i class="fa fa-palette"></i>
-  </button>
-</div>
-
-<!-- NEW: small colour palette popup -->
-<div id="color-palette" class="color-palette" style="display:none;">
-  <!-- simple grid of colours -->
-  <button data-color="#ffffff" style="background:#ffffff;"></button>
-  <button data-color="#000000" style="background:#000000;"></button>
-  <button data-color="#ff0000" style="background:#ff0000;"></button>
-  <button data-color="#ffa500" style="background:#ffa500;"></button>
-  <button data-color="#ffff00" style="background:#ffff00;"></button>
-  <button data-color="#00ff00" style="background:#00ff00;"></button>
-  <button data-color="#00ffff" style="background:#00ffff;"></button>
-  <button data-color="#0000ff" style="background:#0000ff;"></button>
-  <button data-color="#ff00ff" style="background:#ff00ff;"></button>
-  <!-- add more if you want -->
-</div>
+                <!-- colour palette popup -->
+                <div id="color-palette" class="color-palette" style="display:none;">
+                  <button data-color="#ffffff" style="background:#ffffff;"></button>
+                  <button data-color="#000000" style="background:#000000;"></button>
+                  <button data-color="#ff0000" style="background:#ff0000;"></button>
+                  <button data-color="#ffa500" style="background:#ffa500;"></button>
+                  <button data-color="#ffff00" style="background:#ffff00;"></button>
+                  <button data-color="#00ff00" style="background:#00ff00;"></button>
+                  <button data-color="#00ffff" style="background:#00ffff;"></button>
+                  <button data-color="#0000ff" style="background:#0000ff;"></button>
+                  <button data-color="#ff00ff" style="background:#ff00ff;"></button>
+                </div>
 
                 <textarea
                   id="thread-content"
                   class="editor-textarea"
                   required
-                  placeholder="Describe the accounts, rules, warranty, how to redeem, etc.&#10;&#10;Highlight any sensitive part (combos, tokens, keys) and click 'Hide text' to wrap it in [HIDDEN] tags."
+                  placeholder="Describe the accounts, rules, warranty, how to redeem, etc.&#10;&#10;Highlight any sensitive part (combos, tokens, keys) and click 'Hide text' to wrap it in [HIDDEN] tags.&#10;&#10;Optional: add an avatar line like [avatar=https://link/to/your-image.jpg]"
                 ></textarea>
               </div>
 
@@ -350,7 +367,14 @@
   </main>
 </div>
 
-<script type="module" src="scripts.js"></script>
-<script type="module" src="threadcreation.js"></script>
+<script type="module">
+  import './scripts.js';
+  import './threadcreation.js';
+  import { initCreateThreadAvatar } from './avatars.js';
+
+  document.addEventListener('DOMContentLoaded', () => {
+    initCreateThreadAvatar();
+  });
+</script>
 </body>
 </html>
