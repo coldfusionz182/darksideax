@@ -110,15 +110,33 @@ document.addEventListener('DOMContentLoaded', () => {
   line.appendChild(textSpan);
   shoutBox.appendChild(line);
 
-  // Admin: right‑click username to delete shout
   if (window.dsUserRole === 'admin') {
-    userSpan.addEventListener('contextmenu', async (e) => {
-      e.preventDefault();
+    // custom context menu
+    const menu = document.createElement('div');
+    menu.className = 'shout-context-menu';
+    menu.innerHTML = `<div class="shout-context-item">Delete shout</div>`;
+    document.body.appendChild(menu);
+    menu.style.display = 'none';
 
-      const choice = prompt(
-        `Right‑clicked ${row.username}. Type "delete" to remove this shout.`
-      );
-      if (!choice || choice.toLowerCase() !== 'delete') return;
+    const menuItem = menu.querySelector('.shout-context-item');
+
+    function hideMenu() {
+      menu.style.display = 'none';
+    }
+
+    userSpan.addEventListener('contextmenu', (e) => {
+      e.preventDefault();
+      menu.style.display = 'block';
+      const rect = userSpan.getBoundingClientRect();
+      menu.style.left = `${rect.right + 6}px`;
+      menu.style.top = `${rect.top}px`;
+    });
+
+    document.addEventListener('click', hideMenu);
+
+    menuItem.addEventListener('click', async () => {
+      hideMenu();
+      if (!confirm('Delete this shout?')) return;
 
       try {
         const { error } = await supabaseClient
@@ -126,7 +144,6 @@ document.addEventListener('DOMContentLoaded', () => {
           .delete()
           .eq('id', row.id);
         if (error) throw error;
-
         line.remove();
       } catch (err) {
         console.error('delete shout error', err);

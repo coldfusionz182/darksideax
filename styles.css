@@ -249,6 +249,29 @@ a:hover {
   font-size: 13px;
 }
 
+.shout-context-menu {
+  position: fixed;
+  z-index: 9999;
+  background: #111;
+  border: 1px solid #333;
+  border-radius: 4px;
+  padding: 4px 0;
+  min-width: 120px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.6);
+}
+
+.shout-context-item {
+  padding: 4px 10px;
+  font-size: 12px;
+  cursor: pointer;
+  color: #eee;
+}
+
+.shout-context-item:hover {
+  background: #c0392b;
+  color: #fff;
+}
+
 #shoutbox-messages {
   max-height: 220px;      /* adjust to taste */
   overflow-y: auto;
