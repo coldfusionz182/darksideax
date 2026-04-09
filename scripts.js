@@ -114,7 +114,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
   }
 
-  // NEW helper: load full current user with role for shout permissions
+  // include role for shout permissions
   async function fetchCurrentUserProfileWithRole() {
     const base = await fetchCurrentUserProfile();
     if (!base) return null;
@@ -146,24 +146,22 @@ document.addEventListener('DOMContentLoaded', () => {
     return menu;
   }
 
-  function canCurrentUserDeleteShout(currentUser, shoutRow) {
+  // adjust this if you want admins blocked from specific owner ID
+  const OWNER_ID = 'PUT_OWNER_USER_ID_HERE';
+
+  function canCurrentUserDeleteShout(currentUser, row) {
     if (!currentUser) return false;
 
     // owner can delete any shout
     if (currentUser.role === 'owner') return true;
 
-    // admins: can delete own shouts and normal users' shouts, not owner/admin shouts
     if (currentUser.role === 'admin') {
-      if (shoutRow.user_role === 'owner' || shoutRow.user_role === 'admin') {
-        return false;
-      }
-      if (shoutRow.user_id === currentUser.id) return true;
-      if (!shoutRow.user_role || shoutRow.user_role === 'user') return true;
-      return false;
+      if (row.user_id === OWNER_ID) return false;
+      return true;
     }
 
     // normal users: only their own shouts
-    return shoutRow.user_id === currentUser.id;
+    return row.user_id === currentUser.id;
   }
 
   function renderShout(row, currentUser) {
@@ -284,7 +282,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const { data, error } = await supabaseClient
       .from('shouts')
-      .select('id, user_id, user_role, username, message, created_at')
+      .select('id, user_id, username, message, created_at')
       .order('created_at', { ascending: false })
       .limit(50);
 
@@ -312,10 +310,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     await loadShouts(me);
 
-    // poll every 2 seconds as a fallback
     setInterval(() => {
       loadShouts(me);
-    }, 2000);
+    }, 1000); // 1 second like before
 
     supabaseClient
       .channel('public:shouts')
@@ -345,7 +342,6 @@ document.addEventListener('DOMContentLoaded', () => {
       try {
         const { error } = await supabaseClient.from('shouts').insert({
           user_id: meNow.id,
-          user_role: meNow.role,
           username: meNow.username,
           message: msg,
         });
@@ -456,7 +452,7 @@ document.addEventListener('DOMContentLoaded', () => {
             threadsData = threadsData.filter((th) => th.id !== t.id);
             sortThreads(sortSelect ? sortSelect.value : 'newest');
           } catch (err) {
-            console.error('delete-thread error:', err);
+            console.error('delete-thread error', err);
             alert('Failed to delete thread.');
           }
         });
@@ -493,7 +489,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (threadListBody) {
     if (sortSelect) {
-      sortThreads(sortSelect.value);
       sortSelect.addEventListener('change', () => sortThreads(sortSelect.value));
     }
     loadThreads();
@@ -865,14 +860,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const user = userData.user;
 
-      // get username + created_at from profiles
       const { data: profile } = await supabaseClient
         .from('profiles')
         .select('username, created_at')
         .eq('id', user.id)
         .maybeSingle();
 
-      // get role from public.users
       const { data: userRow } = await supabaseClient
         .from('users')
         .select('role')
@@ -987,14 +980,14 @@ document.addEventListener('DOMContentLoaded', () => {
   // ===================== INDEX: Current Staff (from public.users) =====================
   async function loadCurrentStaff() {
     const container = document.getElementById('current-staff-list');
-    if (!container) return; // not on index.html
+    if (!container) return;
 
     try {
       const { data, error } = await supabaseClient
         .from('users')
         .select('email, role, username')
         .in('role', ['admin', 'owner'])
-        .order('role', { ascending: false }); // owner first, then admins
+        .order('role', { ascending: false });
 
       if (error) {
         console.error('loadCurrentStaff error', error);
