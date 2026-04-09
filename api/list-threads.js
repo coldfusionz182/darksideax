@@ -14,12 +14,16 @@ export default async function handler(req, res) {
   }
 
   try {
+    // optional ?limit=, default 25, max 100
+    const limit = Math.min(parseInt(req.query.limit, 10) || 25, 100);
+
     const { data, error } = await supabase
       .from('threads')
       .select(
         'id, title, tag, author, content, created_at, replies, views, last_post_user, last_post_time'
       )
-      .order('created_at', { ascending: false });
+      .order('created_at', { ascending: false })
+      .limit(limit);
 
     if (error) {
       console.error('Supabase select error:', error);
@@ -27,7 +31,7 @@ export default async function handler(req, res) {
       return;
     }
 
-    res.status(200).json(data);
+    res.status(200).json(data || []);
   } catch (err) {
     console.error('list-threads handler error:', err);
     res.status(500).json({ error: 'Server error' });

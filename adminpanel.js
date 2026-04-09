@@ -114,8 +114,7 @@ function renderAdminsTable(admins, currentUser) {
 }
 
 async function handleDemoteAdmin(userId, email) {
-  if (!confirm(`Remove admin rights from ${email}?`)) return;
-
+  // no confirm dialog per your request
   try {
     const current = await getCurrentUserWithRole();
     if (!current || (current.role !== 'owner' && current.role !== 'admin')) {
@@ -203,55 +202,136 @@ async function refreshAdmins(currentUser) {
   renderAdminsTable(admins, currentUser);
 }
 
-// --- Create user via backend endpoint ---
-async function handleCreateUser(currentUser) {
-  const emailInput = document.getElementById('create-email');
-  const passInput = document.getElementById('create-password');
-  const roleSelect = document.getElementById('create-role');
-  const statusEl = document.getElementById('create-user-status');
+/* ===================== NEWEST THREADS SECTION ===================== */
 
-  const email = emailInput.value.trim();
-  const password = passInput.value.trim();
-  const role = roleSelect.value;
+let allThreads = [];
 
-  if (!email || !password) {
-    statusEl.textContent = 'Email and password are required.';
+function renderThreadsTable(currentUser) {
+  const tbody = document.getElementById('threads-tbody');
+  const searchInput = document.getElementById('threads-search-input');
+  if (!tbody) return;
+
+  const query = (searchInput?.value || '').toLowerCase();
+
+  const filtered = allThreads.filter((t) => {
+    const title = (t.title || '').toLowerCase();
+    const author = (t.author || '').toLowerCase();
+    return title.includes(query) || author.includes(query);
+  });
+
+  tbody.innerHTML = '';
+
+  if (!filtered.length) {
+    const tr = document.createElement('tr');
+    const td = document.createElement('td');
+    td.colSpan = 5;
+    td.className = 'admin-empty';
+    td.textContent = 'No threads found.';
+    tr.appendChild(td);
+    tbody.appendChild(tr);
     return;
   }
 
-  if (!currentUser || (currentUser.role !== 'owner' && currentUser.role !== 'admin')) {
-    statusEl.textContent = 'You do not have permission to create users.';
-    return;
+  filtered.forEach((t) => {
+    const tr = document.createElement('tr');
+
+    const tdTitle = document.createElement('td');
+    tdTitle.innerHTML = `<a href="thread.html?id=${t.id}" target="_blank">${t.title}</a>`;
+
+    const tdAuthor = document.createElement('td');
+    tdAuthor.textContent = t.author || 'unknown';
+
+    const tdTag = document.createElement('td');
+    tdTag.textContent = t.tag || '-';
+
+    const tdCreated = document.createElement('td');
+    const d = new Date(t.created_at);
+    const dd = d.getDate().toString().padStart(2, '0');
+    const mm = (d.getMonth() + 1).toString().padStart(2, '0');
+    const hh = d.getHours().toString().padStart(2, '0');
+    const mi = d.getMinutes().toString().padStart(2, '0');
+    tdCreated.textContent = `${dd}/${mm} ${hh}:${mi}`;
+
+    const tdActions = document.createElement('td');
+    tdActions.style.textAlign = 'right';
+    tdActions.className = 'admin-actions-cell';
+
+    const canDelete = currentUser && (currentUser.role === 'owner' || currentUser.role === 'admin');
+    if (canDelete) {
+      const btnDelete = document.createElement('button');
+      btnDelete.className = 'btn-row btn-row-danger';
+      btnDelete.innerHTML = `<i class="fa fa-trash"></i> Delete`;
+      btnDelete.addEventListener('click', () => handleDeleteThread(t.id, t.title, currentUser));
+      tdActions.appendChild(btnDelete);
+    }
+
+    tr.appendChild(tdTitle);
+    tr.appendChild(tdAuthor);
+    tr.appendChild(tdTag);
+    tr.appendChild(tdCreated);
+    tr.appendChild(tdActions);
+
+    tbody.appendChild(tr);
+  });
+}
+
+async function loadNewestThreads(currentUser) {
+  const tbody = document.getElementById('threads-tbody');
+  if (tbody) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="5" class="admin-empty">Loading newest threads…</td>
+      </tr>
+    `;
   }
-
-  statusEl.textContent = 'Creating user...';
-
-  const { data: sessionData } = await supabaseClient.auth.getSession();
-  const token = sessionData?.session?.access_token || null;
 
   try {
-    const res = await fetch('/api/create-user', {
+    const res = await fetch('/api/list-threads?limit=25');
+    const data = await res.json();
+    allThreads = Array.isArray(data) ? data : [];
+    renderThreadsTable(currentUser);
+  } catch (err) {
+    console.error('loadNewestThreads error', err);
+    if (tbody) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="5" class="admin-empty">Failed to load threads.</td>
+        </tr>
+      `;
+    }
+  }
+}
+
+async function handleDeleteThread(threadId, title, currentUser) {
+  try {
+    if (!currentUser || (currentUser.role !== 'owner' && currentUser.role !== 'admin')) {
+      alert('You do not have permission to delete threads.');
+      return;
+    }
+
+    const res = await fetch('/api/delete-thread', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password, role, token }),
+      body: JSON.stringify({ id: threadId }),
     });
 
     const json = await res.json();
     if (!res.ok || !json.success) {
-      throw new Error(json.error || 'Failed to create user');
+      throw new Error(json.error || 'Failed to delete thread');
     }
 
-    statusEl.textContent = `User created: ${json.user.email} (${json.user.role})`;
-    emailInput.value = '';
-    passInput.value = '';
-    roleSelect.value = 'user';
+    document.getElementById('stat-last-action').textContent =
+      'Deleted thread: ' + (title || threadId);
 
-    await refreshAdmins(currentUser);
+    allThreads = allThreads.filter((t) => t.id !== threadId);
+    renderThreadsTable(currentUser);
   } catch (err) {
-    console.error('create user error', err);
-    statusEl.textContent = 'Error: ' + err.message;
+    console.error('delete thread error', err);
+    alert('Failed to delete thread: ' + err.message);
   }
 }
+
+/* ===================== INIT ===================== */
 
 async function initAdminPanel() {
   const main = document.querySelector('.admin-main');
@@ -259,7 +339,9 @@ async function initAdminPanel() {
   const userInfo = document.getElementById('admin-user-info');
   const btnAddAdmin = document.getElementById('btn-add-admin');
   const btnRefresh = document.getElementById('btn-refresh');
-  const btnCreateUser = document.getElementById('btn-create-user');
+  const btnCreateUser = document.getElementById('btn-create-user'); // can be unused now
+  const threadsSearchInput = document.getElementById('threads-search-input');
+  const btnThreadsRefresh = document.getElementById('btn-threads-refresh');
 
   const current = await getCurrentUserWithRole();
   console.log('current user for adminpanel', current);
@@ -291,10 +373,15 @@ async function initAdminPanel() {
     btnAddAdmin.addEventListener('click', () => handleAddAdmin(current));
   if (btnRefresh)
     btnRefresh.addEventListener('click', () => refreshAdmins(current));
-  if (btnCreateUser)
-    btnCreateUser.addEventListener('click', () => handleCreateUser(current));
+
+  // Newest threads: search + refresh
+  if (threadsSearchInput)
+    threadsSearchInput.addEventListener('input', () => renderThreadsTable(current));
+  if (btnThreadsRefresh)
+    btnThreadsRefresh.addEventListener('click', () => loadNewestThreads(current));
 
   await refreshAdmins(current);
+  await loadNewestThreads(current);
 }
 
 document.addEventListener('DOMContentLoaded', () => {
