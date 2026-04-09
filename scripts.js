@@ -31,7 +31,6 @@ async function updateHeaderAuthState() {
 
   window.dsUserRole = role;
 
-  // make name clickable → profile.html
   authLinks.innerHTML = `
     <button class="user-pill" id="header-profile-link">
       <i class="fa fa-user-circle"></i>
@@ -63,54 +62,129 @@ document.addEventListener('DOMContentLoaded', () => {
   // --- header auth state ---
   updateHeaderAuthState();
 
-  // --- Shoutbox (index + section pages) ---
-  const input = document.getElementById('shout-input');
-  const sendBtn = document.getElementById('shout-send');
-  const box = document.getElementById('shoutbox-messages');
+  // ===================== SHOUTBOX (index.html) =====================
+  const shoutInput = document.getElementById('shout-input');
+  const shoutSendBtn = document.getElementById('shout-send');
+  const shoutBox = document.getElementById('shoutbox-messages');
+  const shoutForm = document.getElementById('shoutbox-form');
+  const shoutMeta = document.getElementById('shoutbox-meta');
+  const shoutFooter = document.getElementById('shoutbox-footer');
 
-  if (input && sendBtn && box) {
-    function addShout(text) {
-      const line = document.createElement('div');
-      line.className = 'shout-line';
+  async function fetchCurrentUserProfile() {
+    const { data, error } = await supabaseClient.auth.getUser();
+    if (error || !data?.user) return null;
 
-      const user = document.createElement('span');
-      user.className = 'shout-user rank-member';
-      user.textContent = 'You';
+    const user = data.user;
+    const { data: profile } = await supabaseClient
+      .from('profiles')
+      .select('username')
+      .eq('id', user.id)
+      .maybeSingle();
 
-      const time = document.createElement('span');
-      time.className = 'shout-time';
-      const now = new Date();
-      const hh = now.getHours().toString().padStart(2, '0');
-      const mm = now.getMinutes().toString().padStart(2, '0');
-      time.textContent = `${hh}:${mm}`;
+    return {
+      id: user.id,
+      username: profile?.username || user.email
+    };
+  }
 
-      const msg = document.createElement('span');
-      msg.className = 'shout-text';
-      msg.textContent = text;
+  function renderShout(row) {
+    const line = document.createElement('div');
+    line.className = 'shout-line';
 
-      line.appendChild(user);
-      line.appendChild(time);
-      line.appendChild(msg);
-      box.appendChild(line);
-      box.scrollTop = box.scrollHeight;
+    const userSpan = document.createElement('span');
+    userSpan.className = 'shout-user rank-member';
+    userSpan.textContent = row.username;
+
+    const timeSpan = document.createElement('span');
+    timeSpan.className = 'shout-time';
+    const d = new Date(row.created_at);
+    const hh = d.getHours().toString().padStart(2, '0');
+    const mm = d.getMinutes().toString().padStart(2, '0');
+    timeSpan.textContent = `${hh}:${mm}`;
+
+    const textSpan = document.createElement('span');
+    textSpan.className = 'shout-text';
+    textSpan.textContent = row.message;
+
+    line.appendChild(userSpan);
+    line.appendChild(timeSpan);
+    line.appendChild(textSpan);
+    shoutBox.appendChild(line);
+  }
+
+  async function loadShouts() {
+    if (!shoutBox) return;
+
+    const { data, error } = await supabaseClient
+      .from('shouts')
+      .select('id, username, message, created_at')
+      .order('created_at', { ascending: false })
+      .limit(50);
+
+    if (error) {
+      console.error('loadShouts error', error);
+      return;
     }
 
-    sendBtn.addEventListener('click', () => {
-      const text = input.value.trim();
-      if (!text) return;
-      addShout(text);
-      input.value = '';
-    });
+    shoutBox.innerHTML = '';
+    data.slice().reverse().forEach(renderShout);
+    shoutBox.scrollTop = shoutBox.scrollHeight;
+  }
 
-    input.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') {
-        e.preventDefault();
-        sendBtn.click();
+  async function setupShoutbox() {
+    if (!shoutInput || !shoutSendBtn || !shoutBox || !shoutForm) return;
+
+    const me = await fetchCurrentUserProfile();
+    if (!me) {
+      shoutInput.disabled = true;
+      shoutSendBtn.disabled = true;
+      if (shoutFooter) shoutFooter.textContent = 'Login to chat in the shoutbox.';
+    } else if (shoutMeta) {
+      shoutMeta.textContent = `Logged in as ${me.username} · live chat`;
+    }
+
+    await loadShouts();
+
+    supabaseClient
+      .channel('public:shouts')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'shouts' },
+        payload => {
+          renderShout(payload.new);
+          shoutBox.scrollTop = shoutBox.scrollHeight;
+        }
+      )
+      .subscribe();
+
+    shoutForm.addEventListener('submit', async (e) => {
+      e.preventDefault(); // stops page refresh
+
+      if (!me) return;
+
+      const text = shoutInput.value.trim();
+      if (!text) return;
+      if (text.length > 180) return;
+
+      const msg = text;
+      shoutInput.value = '';
+
+      try {
+        const { error } = await supabaseClient.from('shouts').insert({
+          user_id: me.id,
+          username: me.username,
+          message: msg
+        });
+        if (error) throw error;
+      } catch (err) {
+        console.error('send shout error', err);
       }
     });
   }
 
-  // --- Accounts thread list (accounts.html) ---
+  setupShoutbox();
+
+  // ===================== Accounts thread list (accounts.html) =====================
   const threadListBody = document.getElementById('thread-list');
   const sortSelect = document.getElementById('sort-select');
   let threadsData = [];
@@ -251,7 +325,7 @@ document.addEventListener('DOMContentLoaded', () => {
     loadThreads();
   }
 
-  // --- New thread form (new-thread.html, login required) ---
+  // ===================== New thread form (new-thread.html) =====================
   const newThreadForm = document.getElementById('new-thread-form');
   let currentUser = null;
 
@@ -333,7 +407,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // --- Single thread view (thread.html) with likes + replies ---
+  // ===================== Single thread view (thread.html) =====================
   const threadTitleDisplay = document.getElementById('thread-title-display');
   const threadMetaDisplay = document.getElementById('thread-meta-display');
   const threadContentDisplay = document.getElementById('thread-content-display');
@@ -364,7 +438,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     (async () => {
       try {
-        // load thread
         const res = await fetch(
           `/api/get-thread?id=${encodeURIComponent(threadId)}`
         );
@@ -387,7 +460,6 @@ document.addEventListener('DOMContentLoaded', () => {
           threadTagPill.style.display = 'inline-flex';
         }
 
-        // check login
         const { data: userData } = await supabaseClient.auth.getUser();
         const user = userData?.user || null;
         if (!user) {
@@ -400,7 +472,6 @@ document.addEventListener('DOMContentLoaded', () => {
           replyInfoText.textContent = 'Reply as ' + (user.email || 'member');
         }
 
-        // load likes for this thread + this user
         let liked = false;
         let likeCount = 0;
 
@@ -422,7 +493,6 @@ document.addEventListener('DOMContentLoaded', () => {
           }
         }
 
-        // like toggle
         if (user) {
           likeBtn.addEventListener('click', async () => {
             likeBtn.disabled = true;
@@ -459,7 +529,6 @@ document.addEventListener('DOMContentLoaded', () => {
           });
         }
 
-        // load replies
         async function loadReplies() {
           const { data: replies, error } = await supabaseClient
             .from('thread_replies')
@@ -536,7 +605,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         await loadReplies();
 
-        // reply submit
         replyForm.addEventListener('submit', async (e) => {
           e.preventDefault();
           replyStatus.textContent = '';
@@ -588,7 +656,7 @@ document.addEventListener('DOMContentLoaded', () => {
     })();
   }
 
-  // --- PROFILE PAGE (profile.html) ---
+  // ===================== PROFILE PAGE (profile.html) =====================
   const profileUsernameEl = document.getElementById('profile-username');
   const profileRoleTextEl = document.getElementById('profile-role-text');
   const profileRolePill = document.getElementById('profile-role-pill');
@@ -625,13 +693,12 @@ document.addEventListener('DOMContentLoaded', () => {
       const role = profile?.role || 'user';
 
       profileUsernameEl.textContent = uname;
-      profileEmailEl.textContent = user.email;
+      if (profileEmailEl) profileEmailEl.textContent = user.email;
       profileRoleTextEl.textContent = role === 'admin' ? 'Administrator' : 'Member';
-      if (profile?.created_at) {
+      if (profile?.created_at && profileJoinedEl) {
         profileJoinedEl.textContent = formatDateShort(profile.created_at);
       }
 
-      // stats
       const [{ data: threads }, { data: replies }, { data: likes }] = await Promise.all([
         supabaseClient
           .from('threads')
@@ -649,68 +716,74 @@ document.addEventListener('DOMContentLoaded', () => {
           .eq('user_id', user.id)
       ]);
 
-      statThreadsEl.textContent = threads ? threads.length : 0;
-      statRepliesEl.textContent = replies ? replies.length : 0;
-      statLikesEl.textContent = likes ? likes.length : 0;
+      if (statThreadsEl) statThreadsEl.textContent = threads ? threads.length : 0;
+      if (statRepliesEl) statRepliesEl.textContent = replies ? replies.length : 0;
+      if (statLikesEl) statLikesEl.textContent = likes ? likes.length : 0;
 
       // threads list
-      profileThreadsList.innerHTML = '';
-      if (!threads || threads.length === 0) {
-        const li = document.createElement('li');
-        li.className = 'meta';
-        li.textContent = 'You have not created any threads yet.';
-        profileThreadsList.appendChild(li);
-      } else {
-        threads.slice(0, 5).forEach((t) => {
+      if (profileThreadsList) {
+        profileThreadsList.innerHTML = '';
+        if (!threads || threads.length === 0) {
           const li = document.createElement('li');
-          li.innerHTML = `
-            <a href="thread.html?id=${t.id}">
-              <span class="badge-pill">${t.tag}</span>${t.title}
-            </a>
-            <div class="meta">Posted ${formatDateShort(t.created_at)}</div>
-          `;
+          li.className = 'meta';
+          li.textContent = 'You have not created any threads yet.';
           profileThreadsList.appendChild(li);
-        });
+        } else {
+          threads.slice(0, 5).forEach((t) => {
+            const li = document.createElement('li');
+            li.innerHTML = `
+              <a href="thread.html?id=${t.id}">
+                <span class="badge-pill">${t.tag}</span>${t.title}
+              </a>
+              <div class="meta">Posted ${formatDateShort(t.created_at)}</div>
+            `;
+            profileThreadsList.appendChild(li);
+          });
+        }
       }
 
       // replies list
-      profileRepliesList.innerHTML = '';
-      if (!replies || replies.length === 0) {
-        const li = document.createElement('li');
-        li.className = 'meta';
-        li.textContent = 'You have not replied to any threads yet.';
-        profileRepliesList.appendChild(li);
-      } else {
-        replies.slice(0, 5).forEach((r) => {
+      if (profileRepliesList) {
+        profileRepliesList.innerHTML = '';
+        if (!replies || replies.length === 0) {
           const li = document.createElement('li');
-          li.innerHTML = `
-            <a href="thread.html?id=${r.thread_id}">
-              Reply on thread #${r.thread_id}
-            </a>
-            <div class="meta">${formatDateShort(r.created_at)}</div>
-          `;
+          li.className = 'meta';
+          li.textContent = 'You have not replied to any threads yet.';
           profileRepliesList.appendChild(li);
-        });
+        } else {
+          replies.slice(0, 5).forEach((r) => {
+            const li = document.createElement('li');
+            li.innerHTML = `
+              <a href="thread.html?id=${r.thread_id}">
+                Reply on thread #${r.thread_id}
+              </a>
+              <div class="meta">${formatDateShort(r.created_at)}</div>
+            `;
+            profileRepliesList.appendChild(li);
+          });
+        }
       }
 
       // likes list
-      profileLikesList.innerHTML = '';
-      if (!likes || likes.length === 0) {
-        const li = document.createElement('li');
-        li.className = 'meta';
-        li.textContent = 'You have not liked any threads yet.';
-        profileLikesList.appendChild(li);
-      } else {
-        likes.slice(0, 5).forEach((lk) => {
+      if (profileLikesList) {
+        profileLikesList.innerHTML = '';
+        if (!likes || likes.length === 0) {
           const li = document.createElement('li');
-          li.innerHTML = `
-            <a href="thread.html?id=${lk.thread_id}">
-              Liked thread #${lk.thread_id}
-            </a>
-            <div class="meta">${formatDateShort(lk.created_at)}</div>
-          `;
+          li.className = 'meta';
+          li.textContent = 'You have not liked any threads yet.';
           profileLikesList.appendChild(li);
-        });
+        } else {
+          likes.slice(0, 5).forEach((lk) => {
+            const li = document.createElement('li');
+            li.innerHTML = `
+              <a href="thread.html?id=${lk.thread_id}">
+                Liked thread #${lk.thread_id}
+              </a>
+              <div class="meta">${formatDateShort(lk.created_at)}</div>
+            `;
+            profileLikesList.appendChild(li);
+          });
+        }
       }
     })();
   }
