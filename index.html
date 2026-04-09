@@ -8,7 +8,6 @@
   <link href="styles.css" rel="stylesheet">
 </head>
 <body>
-
 <div id="page">
   <!-- HEADER -->
   <header id="header">
@@ -47,6 +46,7 @@
   <!-- CONTENT -->
   <main id="container">
     <div class="wrapper">
+
       <!-- Top section: welcome + stats -->
       <section class="index-top">
         <div class="welcome card-panel">
@@ -275,6 +275,16 @@
             </tbody>
           </table>
         </div>
+      </section>
+
+      <!-- ADMINS PANEL (visible to admins; only owner gets buttons) -->
+      <section id="admin-panel" class="card-panel" style="display:none;">
+        <h2 class="card-title"><i class="fa fa-user-shield"></i> Admins</h2>
+        <p class="admin-note">
+          Admins can view this list. Only the <strong>Owner</strong> can add or remove admins.
+        </p>
+        <div id="admin-list"></div>
+        <div id="admin-actions"></div>
       </section>
 
       <!-- FOOTER -->

@@ -153,6 +153,53 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 }
 
+async function loadAdmins() {
+  const { data, error } = await supabase
+    .from('users')
+    .select('id, email, role')
+    .in('role', ['admin', 'owner']);
+  if (error) {
+    console.error(error);
+    return [];
+  }
+  return data;
+}
+
+async function initAdminPanel() {
+  const current = await getCurrentUserWithRole();
+  const panel = document.getElementById('admin-panel');
+  const list  = document.getElementById('admin-list');
+  const actions = document.getElementById('admin-actions');
+
+  if (!current || !['admin', 'owner'].includes(current.role)) {
+    panel.style.display = 'none';
+    return;
+  }
+
+  panel.style.display = 'block';
+
+  const admins = await loadAdmins();
+  list.innerHTML = admins.map(a => `
+    <div class="admin-row">
+      <span>${a.email}</span>
+      <span class="badge badge-${a.role}">${a.role}</span>
+    </div>
+  `).join('');
+
+  if (current.role === 'owner') {
+    actions.innerHTML = `
+      <button id="add-admin" class="btn btn-small btn-primary">Add admin</button>
+      <button id="remove-admin" class="btn btn-small btn-outline">Remove admin</button>
+    `;
+    document.getElementById('add-admin').onclick = showAddAdminDialog;
+    document.getElementById('remove-admin').onclick = showRemoveAdminDialog;
+  } else {
+    actions.innerHTML = `<p>You can view admins but only the Owner can change them.</p>`;
+  }
+}
+
+initAdminPanel();
+
   async function loadShouts() {
     if (!shoutBox) return;
 
