@@ -32,7 +32,7 @@ export default async function handler(req, res) {
           tag,
           author,
           content,
-          section: 'accounts',
+          section: 'accounts',   // <- ONLY change vs configs handler
         }
       ])
       .select()
