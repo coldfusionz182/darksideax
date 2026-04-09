@@ -7,7 +7,11 @@ async function loadAccountThreads() {
 
   const sort = sortSelectEl?.value || 'newest';
 
-  const resp = await fetch('/api/list-threads?section=accounts&limit=50');
+  // force fresh response, no cache
+  const resp = await fetch(
+    `/api/list-threads?section=accounts&limit=50&_=${Date.now()}`,
+    { cache: 'no-store' }
+  );
   const data = await resp.json();
 
   if (!Array.isArray(data)) {
@@ -20,7 +24,9 @@ async function loadAccountThreads() {
 
   // HARD filter: only rows whose section === 'accounts'
   const accountsOnly = data.filter(
-    (row) => typeof row.section === 'string' && row.section.toLowerCase() === 'accounts'
+    (row) =>
+      typeof row.section === 'string' &&
+      row.section.toLowerCase() === 'accounts'
   );
 
   if (accountsOnly.length === 0) {
@@ -32,11 +38,17 @@ async function loadAccountThreads() {
   }
 
   if (sort === 'oldest') {
-    accountsOnly.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+    accountsOnly.sort(
+      (a, b) => new Date(a.created_at) - new Date(b.created_at)
+    );
   } else if (sort === 'replies') {
-    accountsOnly.sort((a, b) => (b.replies ?? 0) - (a.replies ?? 0));
+    accountsOnly.sort(
+      (a, b) => (b.replies ?? 0) - (a.replies ?? 0)
+    );
   } else {
-    accountsOnly.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+    accountsOnly.sort(
+      (a, b) => new Date(b.created_at) - new Date(a.created_at)
+    );
   }
 
   threadListEl.innerHTML = '';
