@@ -7,7 +7,7 @@ const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 // global current user for other scripts (threadcreation.js, thread page etc.)
 window.currentUser = null;
 
-// --- helper: current user + role from public.users ---
+// --- helper: current user + role + avatar_url from public.users ---
 async function getCurrentUserWithRole() {
   const { data: userData, error } = await supabaseClient.auth.getUser();
   if (error || !userData?.user) return null;
@@ -15,25 +15,25 @@ async function getCurrentUserWithRole() {
   const user = userData.user;
 
   const [{ data: profile }, { data: userRow }] = await Promise.all([
-  supabaseClient
-    .from('profiles')
-    .select('username, avatar_url')
-    .eq('id', user.id)
-    .maybeSingle(),
-  supabaseClient
-    .from('users')
-    .select('role')
-    .eq('id', user.id)
-    .maybeSingle(),
-]);
+    supabaseClient
+      .from('profiles')
+      .select('username')
+      .eq('id', user.id)
+      .maybeSingle(),
+    supabaseClient
+      .from('users')
+      .select('role, avatar_url')
+      .eq('id', user.id)
+      .maybeSingle(),
+  ]);
 
-const userInfo = {
-  id: user.id,
-  email: user.email,
-  username: profile?.username || user.email,
-  role: userRow?.role || 'user',
-  avatar_url: profile?.avatar_url || null,
-};
+  const userInfo = {
+    id: user.id,
+    email: user.email,
+    username: profile?.username || user.email,
+    role: userRow?.role || 'user',
+    avatar_url: userRow?.avatar_url || null, // << from users table
+  };
 
   // expose globally so other JS files can use it
   window.currentUser = userInfo;
@@ -55,18 +55,18 @@ async function updateHeaderAuthState() {
   window.dsUserRole = current.role;
 
   const avatarSrc =
-  current.avatar_url ||
-  'images/default-avatar.png';
+    current.avatar_url ||
+    'images/default-avatar.png';
 
-authLinks.innerHTML = `
-  <button class="user-pill" id="header-profile-link">
-    <img src="${avatarSrc}" class="user-avatar-header" alt="Avatar">
-    <span>${current.username}</span>
-  </button>
-  <button class="btn btn-small btn-outline" id="logout-btn">
-    <i class="fa fa-sign-out-alt"></i> Logout
-  </button>
-`;
+  authLinks.innerHTML = `
+    <button class="user-pill" id="header-profile-link">
+      <img src="${avatarSrc}" class="user-avatar-header" alt="Avatar">
+      <span>${current.username}</span>
+    </button>
+    <button class="btn btn-small btn-outline" id="logout-btn">
+      <i class="fa fa-sign-out-alt"></i> Logout
+    </button>
+  `;
 
   const logoutBtn = document.getElementById('logout-btn');
   if (logoutBtn) {
@@ -843,20 +843,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const user = userData.user;
 
-      const { data: profile } = await supabaseClient
-        .from('profiles')
-        .select('username, created_at, avatar_url')
-        .eq('id', user.id)
-        .maybeSingle();
-
-      const { data: userRow } = await supabaseClient
-        .from('users')
-        .select('role')
-        .eq('id', user.id)
-        .maybeSingle();
+      const [{ data: profile }, { data: userRow }] = await Promise.all([
+        supabaseClient
+          .from('profiles')
+          .select('username, created_at')
+          .eq('id', user.id)
+          .maybeSingle(),
+        supabaseClient
+          .from('users')
+          .select('role, avatar_url')
+          .eq('id', user.id)
+          .maybeSingle(),
+      ]);
 
       const uname = profile?.username || user.email;
       const role = userRow?.role || 'user';
+      const avatarUrl = userRow?.avatar_url || null;
 
       profileUsernameEl.textContent = uname;
       if (profileEmailEl) profileEmailEl.textContent = user.email;
@@ -869,13 +871,15 @@ document.addEventListener('DOMContentLoaded', () => {
       const avatarEl = document.getElementById('profile-avatar');
       const avatarIcon = document.getElementById('profile-avatar-icon');
 
-if (avatarEl && profile?.avatar_url) {
-  avatarEl.innerHTML = '';
-  const img = document.createElement('img');
-  img.id = 'profile-avatar-img';
-  img.src = profile.avatar_url;
-  avatarEl.appendChild(img);
-}
+      if (avatarEl && avatarUrl) {
+        avatarEl.innerHTML = '';
+        const img = document.createElement('img');
+        img.id = 'profile-avatar-img';
+        img.src = avatarUrl;
+        avatarEl.appendChild(img);
+      } else if (avatarIcon) {
+        avatarIcon.style.display = 'block';
+      }
 
       const [{ data: threads }, { data: replies }, { data: likes }] = await Promise.all([
         supabaseClient
@@ -966,14 +970,14 @@ if (avatarEl && profile?.avatar_url) {
         }
       }
 
-      // avatar URL input logic
+      // avatar URL input logic (writes to users.avatar_url)
       const avatarInput = document.getElementById('avatar-url-input');
       const avatarSave = document.getElementById('avatar-url-save');
       const avatarStatus = document.getElementById('avatar-url-status');
 
       if (avatarInput && avatarSave && avatarEl) {
-        if (profile?.avatar_url) {
-          avatarInput.value = profile.avatar_url;
+        if (avatarUrl) {
+          avatarInput.value = avatarUrl;
         }
 
         avatarSave.addEventListener('click', async () => {
@@ -986,7 +990,7 @@ if (avatarEl && profile?.avatar_url) {
 
           try {
             const { error: upError } = await supabaseClient
-              .from('profiles')
+              .from('users')
               .update({ avatar_url: url })
               .eq('id', user.id);
             if (upError) throw upError;
@@ -996,6 +1000,10 @@ if (avatarEl && profile?.avatar_url) {
             img.id = 'profile-avatar-img';
             img.src = url;
             avatarEl.appendChild(img);
+
+            // update header avatar if present
+            const headerAvatar = document.querySelector('.user-avatar-header');
+            if (headerAvatar) headerAvatar.src = url;
 
             avatarStatus.textContent = 'Avatar updated.';
           } catch (err) {
