@@ -977,7 +977,7 @@ document.addEventListener('DOMContentLoaded', () => {
     })();
   }
 
-  // ===================== INDEX: Current Staff (from public.users) =====================
+    // ===================== INDEX: Current Staff (from public.users) =====================
   async function loadCurrentStaff() {
     const container = document.getElementById('current-staff-list');
     if (!container) return;
@@ -1031,4 +1031,27 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   loadCurrentStaff();
+
+  // ===================== INDEX: Accounts threads counter =====================
+  async function updateIndexAccountsThreads() {
+    const el = document.getElementById('index-accounts-threads');
+    if (!el) return; // not on index.html
+
+    try {
+      const { count, error } = await supabaseClient
+        .from('threads')
+        .select('*', { count: 'exact', head: true });
+
+      if (error) {
+        console.error('updateIndexAccountsThreads error', error);
+        return;
+      }
+
+      el.textContent = count ?? 0;
+    } catch (err) {
+      console.error('updateIndexAccountsThreads error', err);
+    }
+  }
+
+  updateIndexAccountsThreads();
 });
