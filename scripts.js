@@ -915,7 +915,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       }
 
-      if (profileLikesList) {
+            if (profileLikesList) {
         profileLikesList.innerHTML = '';
         if (!likes || likes.length === 0) {
           const li = document.createElement('li');
@@ -937,4 +937,29 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     })();
   }
+
+  // ===================== INDEX: Accounts posts counter (index.html) =====================
+  async function updateIndexAccountsPosts() {
+    const el = document.getElementById('index-accounts-posts');
+    if (!el) return; // not on index.html
+
+    try {
+      const { error, count } = await supabaseClient
+        .from('threads')
+        .select('*', { count: 'exact', head: true })
+        .eq('tag', 'Accounts'); // or adjust filter as needed
+
+      if (error) {
+        console.error('updateIndexAccountsPosts error', error);
+        return;
+      }
+
+      el.textContent = (count || 0).toLocaleString();
+    } catch (err) {
+      console.error('updateIndexAccountsPosts error', err);
+    }
+  }
+
+  updateIndexAccountsPosts();
 });
+        
