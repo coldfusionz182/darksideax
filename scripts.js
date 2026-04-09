@@ -8,6 +8,28 @@ const SUPABASE_ANON_KEY =
 
 const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+// --- helper: current user + role from profiles ---
+async function getCurrentUserWithRole() {
+  const { data: userData, error } = await supabaseClient.auth.getUser();
+  if (error || !userData?.user) return null;
+
+  const user = userData.user;
+
+  const { data: profile } = await supabaseClient
+    .from('profiles')
+    .select('username, role')
+    .eq('id', user.id)
+    .maybeSingle();
+
+  return {
+    id: user.id,
+    email: user.email,
+    username: profile?.username || user.email,
+    role: profile?.role || 'user',
+  };
+}
+
+// --- header auth state ---
 async function updateHeaderAuthState() {
   const authLinks = document.querySelector('.auth-links');
   if (!authLinks) return;
@@ -61,12 +83,26 @@ async function updateHeaderAuthState() {
 document.addEventListener('DOMContentLoaded', () => {
   updateHeaderAuthState();
 
+  // --- show Admin Panel navbar link for admin/owner ---
+  async function showAdminNavIfAllowed() {
+    const navAdmin = document.getElementById('nav-admin-link');
+    if (!navAdmin) return;
+
+    const current = await getCurrentUserWithRole();
+    if (!current) return;
+
+    if (current.role === 'admin' || current.role === 'owner') {
+      navAdmin.style.display = 'inline-block';
+    }
+  }
+  showAdminNavIfAllowed();
+
   // ===================== SHOUTBOX (index.html) =====================
-  const shoutInput  = document.getElementById('shout-input');
+  const shoutInput = document.getElementById('shout-input');
   const shoutSendBtn = document.getElementById('shout-send');
-  const shoutBox   = document.getElementById('shoutbox-messages');
-  const shoutForm  = document.getElementById('shoutbox-form');
-  const shoutMeta  = document.getElementById('shoutbox-meta');
+  const shoutBox = document.getElementById('shoutbox-messages');
+  const shoutForm = document.getElementById('shoutbox-form');
+  const shoutMeta = document.getElementById('shoutbox-meta');
   const shoutFooter = document.getElementById('shoutbox-footer');
 
   async function fetchCurrentUserProfile() {
@@ -82,123 +118,132 @@ document.addEventListener('DOMContentLoaded', () => {
 
     return {
       id: user.id,
-      username: profile?.username || user.email
+      username: profile?.username || user.email,
     };
   }
 
   function renderShout(row) {
-  const line = document.createElement('div');
-  line.className = 'shout-line';
+    const line = document.createElement('div');
+    line.className = 'shout-line';
 
-  const userSpan = document.createElement('span');
-  userSpan.className = 'shout-user rank-member';
-  userSpan.textContent = row.username;
+    const userSpan = document.createElement('span');
+    userSpan.className = 'shout-user rank-member';
+    userSpan.textContent = row.username;
 
-  const timeSpan = document.createElement('span');
-  timeSpan.className = 'shout-time';
-  const d = new Date(row.created_at);
-  const hh = d.getHours().toString().padStart(2, '0');
-  const mm = d.getMinutes().toString().padStart(2, '0');
-  timeSpan.textContent = `${hh}:${mm}`;
+    const timeSpan = document.createElement('span');
+    timeSpan.className = 'shout-time';
+    const d = new Date(row.created_at);
+    const hh = d.getHours().toString().padStart(2, '0');
+    const mm = d.getMinutes().toString().padStart(2, '0');
+    timeSpan.textContent = `${hh}:${mm}`;
 
-  const textSpan = document.createElement('span');
-  textSpan.className = 'shout-text';
-  textSpan.textContent = row.message;
+    const textSpan = document.createElement('span');
+    textSpan.className = 'shout-text';
+    textSpan.textContent = row.message;
 
-  line.appendChild(userSpan);
-  line.appendChild(timeSpan);
-  line.appendChild(textSpan);
-  shoutBox.appendChild(line);
+    line.appendChild(userSpan);
+    line.appendChild(timeSpan);
+    line.appendChild(textSpan);
+    shoutBox.appendChild(line);
 
-  if (window.dsUserRole === 'admin') {
-    // custom context menu
-    const menu = document.createElement('div');
-    menu.className = 'shout-context-menu';
-    menu.innerHTML = `<div class="shout-context-item">Delete shout</div>`;
-    document.body.appendChild(menu);
-    menu.style.display = 'none';
-
-    const menuItem = menu.querySelector('.shout-context-item');
-
-    function hideMenu() {
+    if (window.dsUserRole === 'admin') {
+      const menu = document.createElement('div');
+      menu.className = 'shout-context-menu';
+      menu.innerHTML = `<div class="shout-context-item">Delete shout</div>`;
+      document.body.appendChild(menu);
       menu.style.display = 'none';
+
+      const menuItem = menu.querySelector('.shout-context-item');
+
+      function hideMenu() {
+        menu.style.display = 'none';
+      }
+
+      userSpan.addEventListener('contextmenu', (e) => {
+        e.preventDefault();
+        menu.style.display = 'block';
+        const rect = userSpan.getBoundingClientRect();
+        menu.style.left = `${rect.right + 6}px`;
+        menu.style.top = `${rect.top}px`;
+      });
+
+      document.addEventListener('click', hideMenu);
+
+      menuItem.addEventListener('click', async () => {
+        hideMenu();
+        if (!confirm('Delete this shout?')) return;
+
+        try {
+          const { error } = await supabaseClient
+            .from('shouts')
+            .delete()
+            .eq('id', row.id);
+          if (error) throw error;
+          line.remove();
+        } catch (err) {
+          console.error('delete shout error', err);
+          alert('Failed to delete shout.');
+        }
+      });
+    }
+  }
+
+  // ---- Admin panel on index (simple list) ----
+  async function loadAdmins() {
+    const { data, error } = await supabaseClient
+      .from('profiles')
+      .select('id, username, role')
+      .in('role', ['admin', 'owner']);
+    if (error) {
+      console.error(error);
+      return [];
+    }
+    return data;
+  }
+
+  async function initAdminPanel() {
+    const current = await getCurrentUserWithRole();
+    const panel = document.getElementById('admin-panel');
+    const list = document.getElementById('admin-list');
+    const actions = document.getElementById('admin-actions');
+
+    if (!panel || !list || !actions) return;
+
+    if (!current || !['admin', 'owner'].includes(current.role)) {
+      panel.style.display = 'none';
+      return;
     }
 
-    userSpan.addEventListener('contextmenu', (e) => {
-      e.preventDefault();
-      menu.style.display = 'block';
-      const rect = userSpan.getBoundingClientRect();
-      menu.style.left = `${rect.right + 6}px`;
-      menu.style.top = `${rect.top}px`;
-    });
+    panel.style.display = 'block';
 
-    document.addEventListener('click', hideMenu);
+    const admins = await loadAdmins();
+    list.innerHTML = admins
+      .map(
+        (a) => `
+      <div class="admin-row">
+        <span>${a.username || a.id}</span>
+        <span class="badge badge-${a.role}">${a.role}</span>
+      </div>
+    `,
+      )
+      .join('');
 
-    menuItem.addEventListener('click', async () => {
-      hideMenu();
-      if (!confirm('Delete this shout?')) return;
-
-      try {
-        const { error } = await supabaseClient
-          .from('shouts')
-          .delete()
-          .eq('id', row.id);
-        if (error) throw error;
-        line.remove();
-      } catch (err) {
-        console.error('delete shout error', err);
-        alert('Failed to delete shout.');
-      }
-    });
-  }
-}
-
-async function loadAdmins() {
-  const { data, error } = await supabase
-    .from('users')
-    .select('id, email, role')
-    .in('role', ['admin', 'owner']);
-  if (error) {
-    console.error(error);
-    return [];
-  }
-  return data;
-}
-
-async function initAdminPanel() {
-  const current = await getCurrentUserWithRole();
-  const panel = document.getElementById('admin-panel');
-  const list  = document.getElementById('admin-list');
-  const actions = document.getElementById('admin-actions');
-
-  if (!current || !['admin', 'owner'].includes(current.role)) {
-    panel.style.display = 'none';
-    return;
+    if (current.role === 'owner') {
+      actions.innerHTML = `
+        <button id="add-admin" class="btn btn-small btn-primary">Add admin</button>
+        <button id="remove-admin" class="btn btn-small btn-outline">Remove admin</button>
+      `;
+      // TODO: implement dialogs
+      document.getElementById('add-admin').onclick = () =>
+        alert('Add admin not implemented yet');
+      document.getElementById('remove-admin').onclick = () =>
+        alert('Remove admin not implemented yet');
+    } else {
+      actions.innerHTML = `<p>You can view admins but only the Owner can change them.</p>`;
+    }
   }
 
-  panel.style.display = 'block';
-
-  const admins = await loadAdmins();
-  list.innerHTML = admins.map(a => `
-    <div class="admin-row">
-      <span>${a.email}</span>
-      <span class="badge badge-${a.role}">${a.role}</span>
-    </div>
-  `).join('');
-
-  if (current.role === 'owner') {
-    actions.innerHTML = `
-      <button id="add-admin" class="btn btn-small btn-primary">Add admin</button>
-      <button id="remove-admin" class="btn btn-small btn-outline">Remove admin</button>
-    `;
-    document.getElementById('add-admin').onclick = showAddAdminDialog;
-    document.getElementById('remove-admin').onclick = showRemoveAdminDialog;
-  } else {
-    actions.innerHTML = `<p>You can view admins but only the Owner can change them.</p>`;
-  }
-}
-
-initAdminPanel();
+  initAdminPanel();
 
   async function loadShouts() {
     if (!shoutBox) return;
@@ -233,27 +278,21 @@ initAdminPanel();
 
     await loadShouts();
 
-      await loadShouts();
-
-  // poll every 2 seconds as a fallback
-  setInterval(() => {
-    loadShouts();
-  }, 2000);
+    // poll every 2 seconds as a fallback
+    setInterval(() => {
+      loadShouts();
+    }, 2000);
 
     supabaseClient
       .channel('public:shouts')
-      .on(
-        'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'shouts' },
-        payload => {
-          renderShout(payload.new);
-          shoutBox.scrollTop = shoutBox.scrollHeight;
-        }
-      )
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'shouts' }, (payload) => {
+        renderShout(payload.new);
+        shoutBox.scrollTop = shoutBox.scrollHeight;
+      })
       .subscribe();
 
     shoutForm.addEventListener('submit', async (e) => {
-      e.preventDefault(); // stops page refresh
+      e.preventDefault();
 
       const meNow = await fetchCurrentUserProfile();
       if (!meNow) return;
@@ -269,7 +308,7 @@ initAdminPanel();
         const { error } = await supabaseClient.from('shouts').insert({
           user_id: meNow.id,
           username: meNow.username,
-          message: msg
+          message: msg,
         });
         if (error) throw error;
       } catch (err) {
@@ -366,9 +405,9 @@ initAdminPanel();
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
-                Authorization: `Bearer ${token}`
+                Authorization: `Bearer ${token}`,
               },
-              body: JSON.stringify({ id: t.id })
+              body: JSON.stringify({ id: t.id }),
             });
             const json = await res.json();
             if (!res.ok || !json.success) {
@@ -481,8 +520,8 @@ initAdminPanel();
             title: titleEl.value.trim(),
             tag: tagEl.value,
             author: authorEl.value.trim(),
-            content: contentEl.value.trim()
-          })
+            content: contentEl.value.trim(),
+          }),
         });
 
         if (!res.ok) throw new Error('Request failed');
@@ -533,9 +572,7 @@ initAdminPanel();
 
     (async () => {
       try {
-        const res = await fetch(
-          `/api/get-thread?id=${encodeURIComponent(threadId)}`
-        );
+        const res = await fetch(`/api/get-thread?id=${encodeURIComponent(threadId)}`);
         const data = await res.json();
         if (!res.ok || !data.success) {
           throw new Error(data.error || 'Failed to load thread');
@@ -544,7 +581,7 @@ initAdminPanel();
         const t = data.thread;
         threadTitleDisplay.textContent = t.title;
         threadMetaDisplay.textContent = `[${t.tag}] Started by ${t.author} • ${formatDateShort(
-          t.created_at
+          t.created_at,
         )}`;
         threadAuthorName.textContent = t.author;
         threadCreatedAt.textContent = `Posted ${formatDateShort(t.created_at)}`;
@@ -595,7 +632,7 @@ initAdminPanel();
               if (!liked) {
                 const { error } = await supabaseClient.from('thread_likes').insert({
                   thread_id: threadId,
-                  user_id: user.id
+                  user_id: user.id,
                 });
                 if (error) throw error;
                 liked = true;
@@ -655,7 +692,11 @@ initAdminPanel();
             div.innerHTML = `
               <div class="reply-meta">
                 <strong>${r.author}</strong> • ${formatDateShort(r.created_at)}
-                ${canDelete ? '<button class="btn btn-small btn-outline reply-delete-btn" style="float:right;"><i class="fa fa-trash"></i></button>' : ''}
+                ${
+                  canDelete
+                    ? '<button class="btn btn-small btn-outline reply-delete-btn" style="float:right;"><i class="fa fa-trash"></i></button>'
+                    : ''
+                }
               </div>
               <div class="reply-body">${r.content}</div>
             `;
@@ -677,9 +718,9 @@ initAdminPanel();
                     method: 'POST',
                     headers: {
                       'Content-Type': 'application/json',
-                      Authorization: `Bearer ${token}`
+                      Authorization: `Bearer ${token}`,
                     },
-                    body: JSON.stringify({ id: r.id })
+                    body: JSON.stringify({ id: r.id }),
                   });
                   const json = await res.json();
                   if (!res.ok || !json.success) {
@@ -725,7 +766,7 @@ initAdminPanel();
             const { error } = await supabaseClient.from('thread_replies').insert({
               thread_id: threadId,
               author: displayAuthor,
-              content: text
+              content: text,
             });
             if (error) throw error;
 
@@ -763,9 +804,6 @@ initAdminPanel();
   const profileThreadsList = document.getElementById('profile-threads-list');
   const profileRepliesList = document.getElementById('profile-replies-list');
   const profileLikesList = document.getElementById('profile-likes-list');
-  const profileThreadsEmpty = document.getElementById('profile-threads-empty');
-  const profileRepliesEmpty = document.getElementById('profile-replies-empty');
-  const profileLikesEmpty = document.getElementById('profile-likes-empty');
 
   if (profileUsernameEl && profileRoleTextEl) {
     (async () => {
@@ -805,10 +843,7 @@ initAdminPanel();
           .select('id, thread_id, content, created_at')
           .eq('author', user.email)
           .order('created_at', { ascending: false }),
-        supabaseClient
-          .from('thread_likes')
-          .select('id, thread_id, created_at')
-          .eq('user_id', user.id)
+        supabaseClient.from('thread_likes').select('id, thread_id, created_at').eq('user_id', user.id),
       ]);
 
       if (statThreadsEl) statThreadsEl.textContent = threads ? threads.length : 0;

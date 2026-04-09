@@ -38,7 +38,18 @@
   <nav id="navbar">
     <div class="wrapper navbar-inner">
       <ul class="nav-main">
-        <li><a href="index.html" class="active"><i class="fa fa-home"></i> Home</a></li>
+        <li>
+          <a href="index.html" class="active">
+            <i class="fa fa-home"></i> Home
+          </a>
+        </li>
+
+        <!-- Admin Panel button: JS will show this only for admins/owner -->
+        <li id="nav-admin-link" style="display:none;">
+          <a href="adminpanel.html">
+            <i class="fa fa-user-shield"></i> Admin Panel
+          </a>
+        </li>
       </ul>
     </div>
   </nav>
@@ -275,16 +286,6 @@
             </tbody>
           </table>
         </div>
-      </section>
-
-      <!-- ADMINS PANEL (visible to admins; only owner gets buttons) -->
-      <section id="admin-panel" class="card-panel" style="display:none;">
-        <h2 class="card-title"><i class="fa fa-user-shield"></i> Admins</h2>
-        <p class="admin-note">
-          Admins can view this list. Only the <strong>Owner</strong> can add or remove admins.
-        </p>
-        <div id="admin-list"></div>
-        <div id="admin-actions"></div>
       </section>
 
       <!-- FOOTER -->
