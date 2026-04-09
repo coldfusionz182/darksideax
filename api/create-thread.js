@@ -16,13 +16,20 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { title, tag, author, content } = req.body || {};
+    // note: section is now accepted from the body
+    const { title, tag, author, content, section } = req.body || {};
 
     if (!title || !tag || !author || !content) {
       res
         .status(400)
         .json({ success: false, error: 'Missing fields' });
       return;
+    }
+
+    // decide safe section: 'configs' or 'accounts' (default)
+    let safeSection = 'accounts';
+    if (section === 'configs') {
+      safeSection = 'configs';
     }
 
     const { data, error } = await supabase
@@ -32,7 +39,8 @@ export default async function handler(req, res) {
           title,
           tag,
           author,
-          content
+          content,
+          section: safeSection, // <‑‑ gets written as 'accounts' or 'configs'
           // replies/views default in DB
         }
       ])

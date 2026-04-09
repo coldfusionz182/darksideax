@@ -1,111 +1,55 @@
-// get-threads.js
-// Shared thread list loader for Accounts + Configs pages
-
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+// api/get-thread.js
+import { createClient } from '@supabase/supabase-js';
 
 const supabaseUrl = 'https://ffmkkwskvjvytdddevmm.supabase.co';
-const supabaseAnonKey = 'YOUR_PUBLIC_ANON_KEY_HERE'; // replace with your anon/public key
-export const supabaseClient = createClient(supabaseUrl, supabaseAnonKey);
+const supabaseServiceKey =
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZmbWtrd3Nrdmp2eXRkZGRldm1tIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NTY2NTg5NSwiZXhwIjoyMDkxMjQxODk1fQ.YtaWFdm-gyqpqzoVyZTCBTk8rS8Ckm5cOYsun8GwGlQ';
 
-// ===================== THREAD LIST (accounts.html + configs.html) =====================
+const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-// expects in HTML:
-// <tbody id="thread-list" data-section="accounts"></tbody>
-// or
-// <tbody id="thread-list" data-section="configs"></tbody>
+export default async function handler(req, res) {
+  try {
+    if (req.method !== 'GET') {
+      res
+        .status(405)
+        .json({ success: false, error: 'Method not allowed' });
+      return;
+    }
 
-const threadListEl = document.getElementById('thread-list');
-const sortSelectEl = document.getElementById('sort-select');
+    const { id } = req.query || {};
+    if (!id) {
+      res
+        .status(400)
+        .json({ success: false, error: 'Missing id' });
+      return;
+    }
 
-async function loadThreads() {
-  if (!threadListEl) return;
+    const { data, error } = await supabase
+      .from('threads')
+      .select('id, title, tag, author, content, created_at, section')
+      .eq('id', id)
+      .maybeSingle();
 
-  const section = threadListEl.dataset.section || 'accounts'; // default
-  const sort = sortSelectEl?.value || 'newest';
+    if (error) {
+      console.error('get-thread error:', error);
+      res
+        .status(500)
+        .json({ success: false, error: 'Failed to load thread' });
+      return;
+    }
 
-  let query = supabaseClient
-    .from('threads')
-    .select('id, title, tag, author, created_at, replies, views')
-    .eq('section', section);
+    if (!data) {
+      res
+        .status(404)
+        .json({ success: false, error: 'Thread not found' });
+      return;
+    }
 
-  if (sort === 'oldest') {
-    query = query.order('created_at', { ascending: true });
-  } else if (sort === 'replies') {
-    query = query.order('replies', { ascending: false });
-  } else {
-    // newest
-    query = query.order('created_at', { ascending: false });
+    res.status(200).json({ success: true, thread: data });
+  } catch (err) {
+    console.error('get-thread handler error:', err);
+    res
+      .status(500)
+      .json({ success: false, error: 'Server error' });
   }
-
-  const { data, error } = await query;
-
-  if (error) {
-    console.error('loadThreads error', error);
-    threadListEl.innerHTML = `
-      <tr class="thread-row">
-        <td colspan="4">Failed to load threads.</td>
-      </tr>`;
-    return;
-  }
-
-  if (!data || data.length === 0) {
-    threadListEl.innerHTML = `
-      <tr class="thread-row">
-        <td colspan="4">No threads yet. Be the first to post!</td>
-      </tr>`;
-    return;
-  }
-
-  threadListEl.innerHTML = '';
-
-  data.forEach((row, idx) => {
-    const tr = document.createElement('tr');
-    tr.className = 'thread-row' + (idx % 2 === 1 ? ' alt' : '');
-
-    const iconTd = document.createElement('td');
-    iconTd.className = 'col-icon';
-    iconTd.innerHTML = `
-      <div class="thread-icon">
-        <i class="fa fa-${section === 'configs' ? 'sliders-h' : 'user-tag'}"></i>
-      </div>
-    `;
-
-    const mainTd = document.createElement('td');
-    mainTd.className = 'col-thread-main';
-    mainTd.innerHTML = `
-      <div class="thread-title">
-        <a href="thread.html?id=${row.id}">${row.title}</a>
-      </div>
-      <div class="thread-meta">
-        by <span class="rank-member">${row.author}</span>
-        · ${new Date(row.created_at).toLocaleDateString()}
-        ${row.tag ? ` · <span class="badge-pill">${row.tag}</span>` : ''}
-      </div>
-    `;
-
-    const repliesTd = document.createElement('td');
-    repliesTd.className = 'col-stats';
-    repliesTd.textContent = row.replies ?? 0;
-
-    const viewsTd = document.createElement('td');
-    viewsTd.className = 'col-stats';
-    viewsTd.textContent = row.views ?? 0;
-
-    tr.appendChild(iconTd);
-    tr.appendChild(mainTd);
-    tr.appendChild(repliesTd);
-    tr.appendChild(viewsTd);
-
-    threadListEl.appendChild(tr);
-  });
 }
-
-// hook sort select
-if (sortSelectEl) {
-  sortSelectEl.addEventListener('change', () => {
-    loadThreads();
-  });
-}
-
-// initial load
-loadThreads();

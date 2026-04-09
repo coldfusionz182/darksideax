@@ -1,50 +1,23 @@
-// configs-threads.js
-// Load only threads that belong to the "configs" section
-
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { SUPABASE_ANON_KEY } from './keys.js';
-
-const SUPABASE_URL = 'https://ffmkkwskvjvytdddevmm.supabase.co';
-const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-// DOM elements on configs.html
+// accounts-threads.js
 const threadListEl = document.getElementById('thread-list');
 const sortSelectEl = document.getElementById('sort-select');
 
-async function loadConfigsThreads() {
+async function loadAccountThreads() {
   if (!threadListEl) return;
 
   const sort = sortSelectEl?.value || 'newest';
 
-  let query = supabaseClient
-    .from('threads')
-    .select('id, title, tag, author, created_at, replies, views, section')
-    .eq('section', 'configs');
+  // base URL filtered to accounts
+  let url = '/api/list-threads?section=accounts&limit=50';
 
-  if (sort === 'oldest') {
-    query = query.order('created_at', { ascending: true });
-  } else if (sort === 'replies') {
-    query = query.order('replies', { ascending: false });
-  } else {
-    // newest
-    query = query.order('created_at', { ascending: false });
-  }
+  // you can also use sort on the client if needed; server currently sorts by created_at desc
+  const resp = await fetch(url);
+  const data = await resp.json();
 
-  const { data, error } = await query;
-
-  if (error) {
-    console.error('loadConfigsThreads error', error);
+  if (!Array.isArray(data) || data.length === 0) {
     threadListEl.innerHTML = `
       <tr class="thread-row">
-        <td colspan="4">Failed to load config threads.</td>
-      </tr>`;
-    return;
-  }
-
-  if (!data || data.length === 0) {
-    threadListEl.innerHTML = `
-      <tr class="thread-row">
-        <td colspan="4">No config threads yet. Be the first to post!</td>
+        <td colspan="4">No account threads yet. Be the first to post!</td>
       </tr>`;
     return;
   }
@@ -59,7 +32,7 @@ async function loadConfigsThreads() {
     iconTd.className = 'col-icon';
     iconTd.innerHTML = `
       <div class="thread-icon">
-        <i class="fa fa-sliders-h"></i>
+        <i class="fa fa-user-tag"></i>
       </div>
     `;
 
@@ -93,10 +66,10 @@ async function loadConfigsThreads() {
   });
 }
 
-// reload when sort changes
+// optional: re‑load on sort change
 if (sortSelectEl) {
-  sortSelectEl.addEventListener('change', loadConfigsThreads);
+  sortSelectEl.addEventListener('change', loadAccountThreads);
 }
 
 // initial load
-loadConfigsThreads();
+loadAccountThreads();

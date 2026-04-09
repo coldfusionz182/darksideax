@@ -17,13 +17,21 @@ export default async function handler(req, res) {
     // optional ?limit=, default 25, max 100
     const limit = Math.min(parseInt(req.query.limit, 10) || 25, 100);
 
-    const { data, error } = await supabase
+    // optional ?section=configs or ?section=accounts
+    const sectionParam = req.query.section;
+    let query = supabase
       .from('threads')
       .select(
-        'id, title, tag, author, content, created_at, replies, views, last_post_user, last_post_time'
+        'id, title, tag, author, content, created_at, replies, views, last_post_user, last_post_time, section'
       )
       .order('created_at', { ascending: false })
       .limit(limit);
+
+    if (sectionParam === 'configs' || sectionParam === 'accounts') {
+      query = query.eq('section', sectionParam);
+    }
+
+    const { data, error } = await query;
 
     if (error) {
       console.error('Supabase select error:', error);
