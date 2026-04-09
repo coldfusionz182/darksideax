@@ -507,24 +507,34 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!rawContent) return '';
 
     if (canSeeHidden) {
-      // show inner text, strip tags
       return rawContent.replace(/\[HIDDEN\](.*?)\[\/HIDDEN\]/gis, '$1');
     }
 
-    // guests / users without access see placeholder
     return rawContent.replace(
       /\[HIDDEN\](.*?)\[\/HIDDEN\]/gis,
       '[Hidden content – login and reply to this thread to view]'
     );
   }
 
-  // simple BBCode -> HTML for [url=] tags
+  // BBCode -> HTML: url + color
   function bbcodeToHtml(text) {
     if (!text) return '';
-    return text.replace(
+
+    let out = text;
+
+    // [url=...]link[/url]
+    out = out.replace(
       /\[url=(https?:\/\/[^\]]+)\](.*?)\[\/url\]/gis,
       '<a href="$1" target="_blank" rel="noopener noreferrer">$2</a>'
     );
+
+    // [color=#hex]text[/color]
+    out = out.replace(
+      /\[color=([#a-zA-Z0-9]+)\](.*?)\[\/color\]/gis,
+      '<span style="color:$1;">$2</span>'
+    );
+
+    return out;
   }
 
   // ===================== Single thread view (thread.html) =====================
@@ -579,19 +589,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // decide if this visitor can see hidden content
         const currentWithRole = await getCurrentUserWithRole().catch(() => null);
-        const user = currentWithRole; // same structure
+        const user = currentWithRole;
 
         let canSeeHidden = false;
         if (user && (user.role === 'admin' || user.role === 'owner')) {
           canSeeHidden = true;
         }
-        // later: add "has replied" checks here
 
         const renderedContent = renderHiddenContent(t.content, canSeeHidden);
         const htmlContent = bbcodeToHtml(renderedContent);
         threadContentDisplay.innerHTML = htmlContent;
 
-        // likes / replies logic (unchanged)
+        // likes / replies logic
         const { data: userData } = await supabaseClient.auth.getUser();
         const rawUser = userData?.user || null;
         if (!rawUser) {

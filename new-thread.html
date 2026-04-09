@@ -49,6 +49,27 @@
       font-size: 0.8rem;
     }
 
+    .color-palette {
+  position: absolute;
+  z-index: 9999;
+  background: #05070d;
+  border: 1px solid #181c2d;
+  border-radius: 4px;
+  padding: 6px;
+  display: grid;
+  grid-template-columns: repeat(5, 18px);
+  gap: 4px;
+}
+
+.color-palette button {
+  width: 18px;
+  height: 18px;
+  border-radius: 2px;
+  border: 1px solid #111827;
+  cursor: pointer;
+  padding: 0;
+}
+
     .header-username { font-weight: 600; }
 
     .user-rank-badge {
@@ -262,6 +283,7 @@
                 </div>
 
                 <div class="editor-toolbar">
+  <!-- existing buttons... -->
   <button type="button" class="toolbar-btn" data-format="bold">
     <i class="fa fa-bold"></i>
   </button>
@@ -274,10 +296,26 @@
   <button type="button" class="toolbar-btn" id="btn-hide-text">
     <i class="fa fa-user-secret"></i> Hide text
   </button>
-  <!-- NEW: link button -->
-  <button type="button" class="toolbar-btn" data-format="link">
-    <i class="fa fa-link"></i>
+
+  <!-- NEW: colour button -->
+  <button type="button" class="toolbar-btn" data-format="color" id="btn-color">
+    <i class="fa fa-palette"></i>
   </button>
+</div>
+
+<!-- NEW: small colour palette popup -->
+<div id="color-palette" class="color-palette" style="display:none;">
+  <!-- simple grid of colours -->
+  <button data-color="#ffffff" style="background:#ffffff;"></button>
+  <button data-color="#000000" style="background:#000000;"></button>
+  <button data-color="#ff0000" style="background:#ff0000;"></button>
+  <button data-color="#ffa500" style="background:#ffa500;"></button>
+  <button data-color="#ffff00" style="background:#ffff00;"></button>
+  <button data-color="#00ff00" style="background:#00ff00;"></button>
+  <button data-color="#00ffff" style="background:#00ffff;"></button>
+  <button data-color="#0000ff" style="background:#0000ff;"></button>
+  <button data-color="#ff00ff" style="background:#ff00ff;"></button>
+  <!-- add more if you want -->
 </div>
 
                 <textarea
