@@ -89,26 +89,37 @@
     .login-meta-row a:hover {
       text-decoration: underline;
     }
+
+    /* CLEAR LOGIN BUTTON */
     .btn-login {
       width: 100%;
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      gap: 6px;
-      padding: 9px 12px;
+      gap: 8px;
+      margin-top: 6px;
+      padding: 11px 14px;
       border-radius: 4px;
-      border: none;
+      border: 1px solid #ffffff;
       cursor: pointer;
-      background: linear-gradient(135deg, #5865f2, #00c6ff);
-      color: #fff;
-      font-size: 0.92rem;
+      background: #10b981;      /* bright green */
+      color: #020617;
+      font-size: 0.95rem;
+      font-weight: 600;
       text-transform: uppercase;
       letter-spacing: 0.06em;
+    }
+    .btn-login i {
+      font-size: 0.95rem;
+    }
+    .btn-login:hover {
+      background: #22c55e;
     }
     .btn-login:disabled {
       opacity: 0.6;
       cursor: default;
     }
+
     .login-status {
       margin-top: 10px;
       font-size: 0.82rem;
