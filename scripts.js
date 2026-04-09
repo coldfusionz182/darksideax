@@ -915,7 +915,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       }
 
-            if (profileLikesList) {
+      if (profileLikesList) {
         profileLikesList.innerHTML = '';
         if (!likes || likes.length === 0) {
           const li = document.createElement('li');
@@ -938,28 +938,58 @@ document.addEventListener('DOMContentLoaded', () => {
     })();
   }
 
-  // ===================== INDEX: Accounts posts counter (index.html) =====================
-  async function updateIndexAccountsPosts() {
-    const el = document.getElementById('index-accounts-posts');
-    if (!el) return; // not on index.html
+  // ===================== INDEX: Current Staff (from public.users) =====================
+  async function loadCurrentStaff() {
+    const container = document.getElementById('current-staff-list');
+    if (!container) return; // not on index.html
 
     try {
-      const { error, count } = await supabaseClient
-        .from('threads')
-        .select('*', { count: 'exact', head: true })
-        .eq('tag', 'Accounts'); // or adjust filter as needed
+      const { data, error } = await supabaseClient
+        .from('users')
+        .select('email, role, username')
+        .in('role', ['admin', 'owner'])
+        .order('role', { ascending: false }); // owner first
 
       if (error) {
-        console.error('updateIndexAccountsPosts error', error);
+        console.error('loadCurrentStaff error', error);
         return;
       }
 
-      el.textContent = (count || 0).toLocaleString();
+      container.innerHTML = '';
+
+      if (!data || data.length === 0) {
+        container.textContent = 'No staff members found.';
+        return;
+      }
+
+      data.forEach((u) => {
+        const line = document.createElement('div');
+        line.className = 'staff-line';
+
+        const displayName =
+          (u.username && u.username.trim()) ||
+          (u.email ? u.email.split('@')[0] : 'user');
+
+        const roleLabel =
+          u.role === 'owner'
+            ? 'Owner'
+            : u.role === 'admin'
+            ? 'Admin'
+            : u.role || 'Staff';
+
+        line.innerHTML = `
+          <span class="staff-name">
+            <a href="mailto:${u.email}">${displayName}</a>
+          </span>
+          <span class="staff-role">${roleLabel}</span>
+        `;
+
+        container.appendChild(line);
+      });
     } catch (err) {
-      console.error('updateIndexAccountsPosts error', err);
+      console.error('loadCurrentStaff error', err);
     }
   }
 
-  updateIndexAccountsPosts();
+  loadCurrentStaff();
 });
-        
