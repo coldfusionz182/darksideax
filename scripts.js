@@ -15,25 +15,25 @@ async function getCurrentUserWithRole() {
   const user = userData.user;
 
   const [{ data: profile }, { data: userRow }] = await Promise.all([
-    supabaseClient
-      .from('profiles')
-      .select('username, avatar_url')
-      .eq('id', user.id)
-      .maybeSingle(),
-    supabaseClient
-      .from('users')
-      .select('role')
-      .eq('id', user.id)
-      .maybeSingle(),
-  ]);
+  supabaseClient
+    .from('profiles')
+    .select('username, avatar_url')
+    .eq('id', user.id)
+    .maybeSingle(),
+  supabaseClient
+    .from('users')
+    .select('role')
+    .eq('id', user.id)
+    .maybeSingle(),
+]);
 
-  const userInfo = {
-    id: user.id,
-    email: user.email,
-    username: profile?.username || user.email,
-    role: userRow?.role || 'user',
-    avatar_url: profile?.avatar_url || null,
-  };
+const userInfo = {
+  id: user.id,
+  email: user.email,
+  username: profile?.username || user.email,
+  role: userRow?.role || 'user',
+  avatar_url: profile?.avatar_url || null,
+};
 
   // expose globally so other JS files can use it
   window.currentUser = userInfo;
@@ -55,18 +55,18 @@ async function updateHeaderAuthState() {
   window.dsUserRole = current.role;
 
   const avatarSrc =
-    current.avatar_url ||
-    'images/default-avatar.png';
+  current.avatar_url ||
+  'images/default-avatar.png';
 
-  authLinks.innerHTML = `
-    <button class="user-pill" id="header-profile-link">
-      <img src="${avatarSrc}" class="user-avatar-header" alt="Avatar">
-      <span>${current.username}</span>
-    </button>
-    <button class="btn btn-small btn-outline" id="logout-btn">
-      <i class="fa fa-sign-out-alt"></i> Logout
-    </button>
-  `;
+authLinks.innerHTML = `
+  <button class="user-pill" id="header-profile-link">
+    <img src="${avatarSrc}" class="user-avatar-header" alt="Avatar">
+    <span>${current.username}</span>
+  </button>
+  <button class="btn btn-small btn-outline" id="logout-btn">
+    <i class="fa fa-sign-out-alt"></i> Logout
+  </button>
+`;
 
   const logoutBtn = document.getElementById('logout-btn');
   if (logoutBtn) {
@@ -869,13 +869,13 @@ document.addEventListener('DOMContentLoaded', () => {
       const avatarEl = document.getElementById('profile-avatar');
       const avatarIcon = document.getElementById('profile-avatar-icon');
 
-      if (avatarEl && profile?.avatar_url) {
-        avatarEl.innerHTML = '';
-        const img = document.createElement('img');
-        img.id = 'profile-avatar-img';
-        img.src = profile.avatar_url;
-        avatarEl.appendChild(img);
-      }
+if (avatarEl && profile?.avatar_url) {
+  avatarEl.innerHTML = '';
+  const img = document.createElement('img');
+  img.id = 'profile-avatar-img';
+  img.src = profile.avatar_url;
+  avatarEl.appendChild(img);
+}
 
       const [{ data: threads }, { data: replies }, { data: likes }] = await Promise.all([
         supabaseClient
