@@ -4,8 +4,10 @@
   <meta charset="UTF-8">
   <title>New Thread • Configs • Darkside.ax</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
+
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
   <link href="styles.css" rel="stylesheet">
+
   <style>
     body {
       background: radial-gradient(circle at top, #151826 0, #05060a 55%);
@@ -402,11 +404,44 @@
 
 <script type="module">
   import './scripts.js';
-  import './threadcreation-configs.js';
   import { initCreateThreadAvatar } from './avatars.js';
 
   document.addEventListener('DOMContentLoaded', () => {
     initCreateThreadAvatar();
+  });
+
+  const form = document.getElementById('new-thread-form');
+  const statusEl = document.getElementById('thread-status');
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const title = document.getElementById('thread-title').value.trim();
+    const tag = document.getElementById('thread-tag').value.trim();
+    const content = document.getElementById('thread-content').value.trim();
+    const author = window.currentUser?.username || 'Anonymous';
+
+    statusEl.textContent = 'Creating config thread...';
+
+    try {
+      const resp = await fetch('/api/create-config-thread', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title, tag, author, content }),
+      });
+
+      const json = await resp.json();
+
+      if (!resp.ok || !json.success) {
+        statusEl.textContent = json.error || 'Failed to create config thread.';
+        return;
+      }
+
+      window.location.href = 'configs.html';
+    } catch (err) {
+      console.error('create-config-thread error', err);
+      statusEl.textContent = 'Network error creating config thread.';
+    }
   });
 </script>
 </body>

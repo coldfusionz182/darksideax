@@ -1,4 +1,4 @@
-// threadcreation-configs.js
+// threadcreation.js  (ACCOUNTS)
 const form = document.getElementById('new-thread-form');
 
 if (form) {
@@ -12,10 +12,10 @@ if (form) {
 
     const author = window.currentUser?.username || 'Anonymous';
 
-    statusEl.textContent = 'Creating config thread...';
+    statusEl.textContent = 'Creating account thread...';
 
     try {
-      const resp = await fetch('/api/create-config-thread', {
+      const resp = await fetch('/api/create-thread', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ title, tag, author, content }),
@@ -24,14 +24,14 @@ if (form) {
       const json = await resp.json();
 
       if (!resp.ok || !json.success) {
-        statusEl.textContent = json.error || 'Failed to create config thread.';
+        statusEl.textContent = json.error || 'Failed to create thread.';
         return;
       }
 
-      window.location.href = 'configs.html';
+      window.location.href = 'accounts.html';
     } catch (err) {
-      console.error('create-config-thread error', err);
-      statusEl.textContent = 'Network error creating config thread.';
+      console.error('create-thread error', err);
+      statusEl.textContent = 'Network error creating thread.';
     }
   });
 }

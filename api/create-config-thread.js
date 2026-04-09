@@ -1,4 +1,3 @@
-// api/create-config-thread.js
 import { createClient } from '@supabase/supabase-js';
 
 const supabaseUrl = 'https://ffmkkwskvjvytdddevmm.supabase.co';
@@ -25,9 +24,6 @@ export default async function handler(req, res) {
       return;
     }
 
-    // always configs for this endpoint
-    const safeSection = 'configs';
-
     const { data, error } = await supabase
       .from('threads')
       .insert([
@@ -36,8 +32,7 @@ export default async function handler(req, res) {
           tag,
           author,
           content,
-          section: safeSection,
-          // replies/views default in DB
+          section: 'configs',
         }
       ])
       .select()

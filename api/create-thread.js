@@ -1,4 +1,3 @@
-// api/create-thread.js  (accounts only)
 import { createClient } from '@supabase/supabase-js';
 
 const supabaseUrl = 'https://ffmkkwskvjvytdddevmm.supabase.co';
