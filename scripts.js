@@ -108,15 +108,17 @@ document.addEventListener('DOMContentLoaded', () => {
   line.appendChild(userSpan);
   line.appendChild(timeSpan);
   line.appendChild(textSpan);
+  shoutBox.appendChild(line);
 
+  // Admin: right‑click username to delete shout
   if (window.dsUserRole === 'admin') {
-    const delBtn = document.createElement('button');
-    delBtn.className = 'btn btn-small btn-outline shout-delete-btn';
-    delBtn.innerHTML = '<i class="fa fa-trash"></i>';
-    delBtn.style.marginLeft = '8px';
+    userSpan.addEventListener('contextmenu', async (e) => {
+      e.preventDefault();
 
-    delBtn.addEventListener('click', async () => {
-      if (!confirm('Delete this shout?')) return;
+      const choice = prompt(
+        `Right‑clicked ${row.username}. Type "delete" to remove this shout.`
+      );
+      if (!choice || choice.toLowerCase() !== 'delete') return;
 
       try {
         const { error } = await supabaseClient
@@ -131,11 +133,7 @@ document.addEventListener('DOMContentLoaded', () => {
         alert('Failed to delete shout.');
       }
     });
-
-    line.appendChild(delBtn);
   }
-
-  shoutBox.appendChild(line);
 }
 
   async function loadShouts() {
