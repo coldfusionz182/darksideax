@@ -4,6 +4,9 @@ import { SUPABASE_ANON_KEY } from './keys.js';
 const SUPABASE_URL = 'https://ffmkkwskvjvytdddevmm.supabase.co';
 const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+// global current user for other scripts (threadcreation.js, thread page etc.)
+window.currentUser = null;
+
 // --- helper: current user + role from public.users ---
 async function getCurrentUserWithRole() {
   const { data: userData, error } = await supabaseClient.auth.getUser();
@@ -24,12 +27,17 @@ async function getCurrentUserWithRole() {
       .maybeSingle(),
   ]);
 
-  return {
+  const userInfo = {
     id: user.id,
     email: user.email,
     username: profile?.username || user.email,
     role: userRow?.role || 'user',
   };
+
+  // expose globally so other JS files can use it
+  window.currentUser = userInfo;
+
+  return userInfo;
 }
 
 // --- header auth state ---
@@ -312,7 +320,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     setInterval(() => {
       loadShouts(me);
-    }, 1000); // 1 second like before
+    }, 1000); // 1 second
 
     supabaseClient
       .channel('public:shouts')
@@ -492,88 +500,6 @@ document.addEventListener('DOMContentLoaded', () => {
       sortSelect.addEventListener('change', () => sortThreads(sortSelect.value));
     }
     loadThreads();
-  }
-
-  // ===================== New thread form (new-thread.html) =====================
-  const newThreadForm = document.getElementById('new-thread-form');
-  let currentUser = null;
-
-  async function getCurrentUser() {
-    const { data, error } = await supabaseClient.auth.getUser();
-    if (!error && data?.user) currentUser = data.user;
-  }
-
-  if (newThreadForm) {
-    const titleEl = document.getElementById('thread-title');
-    const tagEl = document.getElementById('thread-tag');
-    const authorEl = document.getElementById('thread-author');
-    const contentEl = document.getElementById('thread-content');
-    const statusEl = document.getElementById('thread-status');
-    const submitBtn = document.getElementById('thread-submit');
-
-    getCurrentUser().then(async () => {
-      if (currentUser) {
-        const { data: profile } = await supabaseClient
-          .from('profiles')
-          .select('username')
-          .eq('id', currentUser.id)
-          .maybeSingle();
-
-        authorEl.value = profile?.username || currentUser.email;
-      } else {
-        statusEl.textContent = 'You must be logged in to post a thread.';
-        submitBtn.disabled = true;
-      }
-    });
-
-    newThreadForm.addEventListener('submit', async (e) => {
-      e.preventDefault();
-
-      if (!currentUser) {
-        statusEl.textContent = 'You must be logged in to post a thread.';
-        return;
-      }
-
-      if (
-        !titleEl.value.trim() ||
-        !tagEl.value ||
-        !authorEl.value.trim() ||
-        !contentEl.value.trim()
-      ) {
-        statusEl.textContent = 'Please fill in all fields.';
-        return;
-      }
-
-      submitBtn.disabled = true;
-      statusEl.textContent = 'Creating thread...';
-
-      try {
-        const res = await fetch('/api/create-thread', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            title: titleEl.value.trim(),
-            tag: tagEl.value,
-            author: authorEl.value.trim(),
-            content: contentEl.value.trim(),
-          }),
-        });
-
-        if (!res.ok) throw new Error('Request failed');
-        const data = await res.json();
-        if (!data.success) throw new Error(data.error || 'Unknown error');
-
-        statusEl.textContent = 'Thread created! Redirecting...';
-        setTimeout(() => {
-          window.location.href = 'accounts.html';
-        }, 800);
-      } catch (err) {
-        console.error('create-thread error', err);
-        statusEl.textContent = 'Error creating thread. Check backend.';
-      } finally {
-        submitBtn.disabled = false;
-      }
-    });
   }
 
   // ===================== Single thread view (thread.html) =====================
@@ -977,7 +903,7 @@ document.addEventListener('DOMContentLoaded', () => {
     })();
   }
 
-    // ===================== INDEX: Current Staff (from public.users) =====================
+  // ===================== INDEX: Current Staff (from public.users) =====================
   async function loadCurrentStaff() {
     const container = document.getElementById('current-staff-list');
     if (!container) return;

@@ -1,4 +1,5 @@
 // threadcreation.js
+// Wrap selection with [HIDDEN] tags + simple BBCode tools + POST /api/create-thread.
 
 function wrapSelectionInTag(textarea, openTag, closeTag) {
   const start = textarea.selectionStart;
@@ -32,9 +33,9 @@ function initToolbar() {
       const format = btn.dataset.format;
       e.preventDefault();
 
-      if (format === 'bold') wrapSelectionInTag(contentEl, '[b]', '[/b]');
-      if (format === 'italic') wrapSelectionInTag(contentEl, '[i]', '[/i]');
-      if (format === 'underline') wrapSelectionInTag(contentEl, '[u]', '[/u]');
+      if (format === 'bold')      wrapSelectionInTag(contentEl, '[b]', '[\/b]');
+      else if (format === 'italic')   wrapSelectionInTag(contentEl, '[i]', '[\/i]');
+      else if (format === 'underline')wrapSelectionInTag(contentEl, '[u]', '[\/u]');
     });
   }
 
@@ -43,6 +44,32 @@ function initToolbar() {
       e.preventDefault();
       wrapSelectionInTag(contentEl, '[HIDDEN]', '[/HIDDEN]');
     });
+  }
+}
+
+function initUserHeader() {
+  const user = window.currentUser;
+  if (!user) return; // set by scripts.js / getCurrentUserWithRole
+
+  const nameEl  = document.getElementById('user-name-display');
+  const rankEl  = document.getElementById('user-rank-text');
+  const badgeEl = document.getElementById('user-rank-badge');
+
+  if (nameEl) nameEl.textContent = user.username || 'User';
+  if (rankEl) rankEl.textContent = user.role || 'member';
+
+  if (badgeEl) {
+    badgeEl.classList.remove('rank-admin','rank-member');
+    const role = (user.role || 'user').toLowerCase();
+    const icon = badgeEl.querySelector('i');
+
+    if (role === 'admin' || role === 'owner' || role === 'staff') {
+      badgeEl.classList.add('rank-admin');
+      if (icon) icon.className = 'fa fa-shield-halved';
+    } else {
+      badgeEl.classList.add('rank-member');
+      if (icon) icon.className = 'fa fa-user';
+    }
   }
 }
 
@@ -55,14 +82,19 @@ function initForm() {
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
 
+    const user   = window.currentUser;
+    const author = user?.username || '';
     const title   = document.getElementById('thread-title')?.value.trim()   || '';
     const tag     = document.getElementById('thread-tag')?.value            || '';
     const content = document.getElementById('thread-content')?.value.trim() || '';
 
-    const author  = window.currentUser?.username || '';   // from Supabase / global
+    if (!author) {
+      if (statusEl) statusEl.textContent = 'You must be logged in to post.';
+      return;
+    }
 
-    if (!title || !tag || !author || !content) {
-      if (statusEl) statusEl.textContent = 'Missing title, tag, content or user.';
+    if (!title || !tag || !content) {
+      if (statusEl) statusEl.textContent = 'Please fill in title, tag and message.';
       return;
     }
 
@@ -72,19 +104,13 @@ function initForm() {
       submitBtn.classList.add('btn-disabled');
     }
 
-    const payload = {
-      title,
-      tag,
-      author,
-      content,
-      section: 'accounts'
-    };
+    const payload = { title, tag, author, content, section: 'accounts' };
 
     try {
       const res = await fetch('/api/create-thread', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+        body: JSON.stringify(payload),
       });
 
       const json = await res.json();
@@ -106,42 +132,21 @@ function initForm() {
         }
       }, 800);
     } catch (err) {
-      console.error('create-thread error:', err);
+      console.error('create-thread error', err);
       if (statusEl) statusEl.textContent = 'Server error. Try again.';
       if (submitBtn) submitBtn.disabled = false;
     }
   });
 }
 
-function initUserHeader() {
-  if (!window.currentUser) return;
-
-  const nameEl  = document.getElementById('user-name-display');
-  const rankEl  = document.getElementById('user-rank-text');
-  const badgeEl = document.getElementById('user-rank-badge');
-
-  if (nameEl) nameEl.textContent = window.currentUser.username || 'User';
-  if (rankEl) rankEl.textContent = window.currentUser.rank || 'Member';
-
-  if (badgeEl) {
-    badgeEl.classList.remove('rank-admin','rank-member');
-    const rank = (window.currentUser.rank || 'member').toLowerCase();
-    const icon = badgeEl.querySelector('i');
-
-    if (rank === 'admin' || rank === 'owner' || rank === 'staff') {
-      badgeEl.classList.add('rank-admin');
-      if (icon) icon.className = 'fa fa-shield-halved';
-    } else {
-      badgeEl.classList.add('rank-member');
-      if (icon) icon.className = 'fa fa-user';
-    }
-  }
-}
-
 function initCreateThreadPage() {
   initToolbar();
-  initForm();
-  initUserHeader();
+
+  // give scripts.js a moment to populate window.currentUser
+  setTimeout(() => {
+    initUserHeader();
+    initForm();
+  }, 200);
 }
 
 if (document.readyState === 'loading') {
