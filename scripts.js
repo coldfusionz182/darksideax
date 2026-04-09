@@ -9,54 +9,52 @@ const SUPABASE_ANON_KEY =
 const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // --- helper: current user + role from profiles ---
+// --- helper: current user + role from public.users ---
 async function getCurrentUserWithRole() {
   const { data: userData, error } = await supabaseClient.auth.getUser();
   if (error || !userData?.user) return null;
 
   const user = userData.user;
 
-  const { data: profile } = await supabaseClient
-    .from('profiles')
-    .select('username, role')
-    .eq('id', user.id)
-    .maybeSingle();
+  const [{ data: profile }, { data: userRow }] = await Promise.all([
+    supabaseClient
+      .from('profiles')
+      .select('username')
+      .eq('id', user.id)
+      .maybeSingle(),
+    supabaseClient
+      .from('users')
+      .select('role')
+      .eq('id', user.id)
+      .maybeSingle(),
+  ]);
 
   return {
     id: user.id,
     email: user.email,
     username: profile?.username || user.email,
-    role: profile?.role || 'user',
+    role: userRow?.role || 'user',
   };
 }
 
+// --- header auth state ---
 // --- header auth state ---
 async function updateHeaderAuthState() {
   const authLinks = document.querySelector('.auth-links');
   if (!authLinks) return;
 
-  const { data: userData, error: userError } = await supabaseClient.auth.getUser();
-  if (userError || !userData?.user) {
+  const current = await getCurrentUserWithRole();
+  if (!current) {
     window.dsUserRole = 'guest';
     return;
   }
 
-  const user = userData.user;
-
-  const { data: profile } = await supabaseClient
-    .from('profiles')
-    .select('username, role')
-    .eq('id', user.id)
-    .maybeSingle();
-
-  const displayName = profile?.username || user.email;
-  const role = profile?.role || 'user';
-
-  window.dsUserRole = role;
+  window.dsUserRole = current.role;
 
   authLinks.innerHTML = `
     <button class="user-pill" id="header-profile-link">
       <i class="fa fa-user-circle"></i>
-      <span>${displayName}</span>
+      <span>${current.username}</span>
     </button>
     <button class="btn btn-small btn-outline" id="logout-btn">
       <i class="fa fa-sign-out-alt"></i> Logout
@@ -188,18 +186,17 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // ---- Admin panel on index (simple list) ----
   async function loadAdmins() {
-    const { data, error } = await supabaseClient
-      .from('profiles')
-      .select('id, username, role')
-      .in('role', ['admin', 'owner']);
-    if (error) {
-      console.error(error);
-      return [];
-    }
-    return data;
+  const { data, error } = await supabaseClient
+    .from('users')
+    .select('id, email, role')
+    .in('role', ['admin', 'owner']);
+  if (error) {
+    console.error('loadAdmins error', error);
+    return [];
   }
+  return data || [];
+}
 
   async function initAdminPanel() {
     const current = await getCurrentUserWithRole();
@@ -218,15 +215,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const admins = await loadAdmins();
     list.innerHTML = admins
-      .map(
-        (a) => `
+  .map(
+    (a) => `
       <div class="admin-row">
-        <span>${a.username || a.id}</span>
+        <span>${a.email || a.id}</span>
         <span class="badge badge-${a.role}">${a.role}</span>
       </div>
     `,
-      )
-      .join('');
+  )
+  .join('');
 
     if (current.role === 'owner') {
       actions.innerHTML = `
@@ -477,68 +474,68 @@ document.addEventListener('DOMContentLoaded', () => {
     const submitBtn = document.getElementById('thread-submit');
 
     getCurrentUser().then(async () => {
-      if (currentUser) {
-        const { data: profile } = await supabaseClient
-          .from('profiles')
-          .select('username')
-          .eq('id', currentUser.id)
-          .maybeSingle();
+  if (currentUser) {
+    const { data: profile } = await supabaseClient
+      .from('profiles')
+      .select('username')
+      .eq('id', currentUser.id)
+      .maybeSingle();
 
-        authorEl.value = profile?.username || currentUser.email;
-      } else {
-        statusEl.textContent = 'You must be logged in to post a thread.';
-        submitBtn.disabled = true;
-      }
+    authorEl.value = profile?.username || currentUser.email;
+  } else {
+    statusEl.textContent = 'You must be logged in to post a thread.';
+    submitBtn.disabled = true;
+  }
+});
+
+newThreadForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+
+  if (!currentUser) {
+    statusEl.textContent = 'You must be logged in to post a thread.';
+    return;
+  }
+
+  if (
+    !titleEl.value.trim() ||
+    !tagEl.value ||
+    !authorEl.value.trim() ||
+    !contentEl.value.trim()
+  ) {
+    statusEl.textContent = 'Please fill in all fields.';
+    return;
+  }
+
+  submitBtn.disabled = true;
+  statusEl.textContent = 'Creating thread...';
+
+  try {
+    const res = await fetch('/api/create-thread', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        title: titleEl.value.trim(),
+        tag: tagEl.value,
+        author: authorEl.value.trim(),
+        content: contentEl.value.trim(),
+      }),
     });
 
-    newThreadForm.addEventListener('submit', async (e) => {
-      e.preventDefault();
+    if (!res.ok) throw new Error('Request failed');
+    const data = await res.json();
+    if (!data.success) throw new Error(data.error || 'Unknown error');
 
-      if (!currentUser) {
-        statusEl.textContent = 'You must be logged in to post a thread.';
-        return;
-      }
-
-      if (
-        !titleEl.value.trim() ||
-        !tagEl.value ||
-        !authorEl.value.trim() ||
-        !contentEl.value.trim()
-      ) {
-        statusEl.textContent = 'Please fill in all fields.';
-        return;
-      }
-
-      submitBtn.disabled = true;
-      statusEl.textContent = 'Creating thread...';
-
-      try {
-        const res = await fetch('/api/create-thread', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            title: titleEl.value.trim(),
-            tag: tagEl.value,
-            author: authorEl.value.trim(),
-            content: contentEl.value.trim(),
-          }),
-        });
-
-        if (!res.ok) throw new Error('Request failed');
-        const data = await res.json();
-        if (!data.success) throw new Error(data.error || 'Unknown error');
-
-        statusEl.textContent = 'Thread created! Redirecting...';
-        setTimeout(() => {
-          window.location.href = 'accounts.html';
-        }, 800);
-      } catch (err) {
-        console.error('create-thread error', err);
-        statusEl.textContent = 'Error creating thread. Check backend.';
-      } finally {
-        submitBtn.disabled = false;
-      }
-    });
+    statusEl.textContent = 'Thread created! Redirecting...';
+    setTimeout(() => {
+      window.location.href = 'accounts.html';
+    }, 800);
+  } catch (err) {
+    console.error('create-thread error', err);
+    statusEl.textContent = 'Error creating thread. Check backend.';
+  } finally {
+    submitBtn.disabled = false;
+  }
+});
   }
 
   // ===================== Single thread view (thread.html) =====================

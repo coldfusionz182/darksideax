@@ -90,35 +90,36 @@
     }
 
     .admin-logo-main {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 1.1rem;
-  font-weight: 600;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-}
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 1.1rem;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
 
-.admin-logo-main span {
-  background: linear-gradient(135deg, #ffffff, #7de4ff);
-  -webkit-background-clip: text; /* for WebKit */
-  background-clip: text;         /* standard, fixes warning */
-  color: transparent;
-}
+    .admin-logo-main span {
+      background: linear-gradient(135deg, #ffffff, #7de4ff);
+      -webkit-background-clip: text; /* for WebKit */
+      background-clip: text;         /* standard */
+      color: transparent;
+    }
 
-.admin-logo-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 10px;
-  border-radius: var(--admin-radius-pill);
-  background: rgba(39, 197, 255, 0.13);
-  border: 1px solid rgba(39, 197, 255, 0.36);
-  font-size: 0.68rem;
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-  color: var(--admin-text-muted);
-}
+    .admin-logo-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: var(--admin-radius-pill);
+      background: rgba(39, 197, 255, 0.13);
+      border: 1px solid rgba(39, 197, 255, 0.36);
+      font-size: 0.68rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--admin-text-muted);
+    }
+
     .admin-logo-pill i {
       color: var(--admin-accent);
     }
@@ -765,20 +766,20 @@
       <div class="admin-table-wrap">
         <table class="admin-table">
           <thead>
-            <tr>
-              <th>Email</th>
-              <th>Role</th>
-              <th>UID</th>
-              <th style="text-align:right;">Actions</th>
-            </tr>
+          <tr>
+            <th>Email</th>
+            <th>Role</th>
+            <th>UID</th>
+            <th style="text-align:right;">Actions</th>
+          </tr>
           </thead>
           <tbody id="admins-tbody">
-            <!-- JS will render rows here -->
-            <tr>
-              <td colspan="4" class="admin-empty">
-                Loading admin list…
-              </td>
-            </tr>
+          <!-- JS will render rows here -->
+          <tr>
+            <td colspan="4" class="admin-empty">
+              Loading admin list…
+            </td>
+          </tr>
           </tbody>
         </table>
       </div>
