@@ -4,8 +4,158 @@
   <meta charset="UTF-8">
   <title>Darkside - Beyond the Limits</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <!-- CSS LINKS – keep exactly like this -->
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
   <link href="styles.css" rel="stylesheet">
+
+  <style>
+    /* Glowing purple logo/title */
+    .header-logo {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+    .header-logo .logo-text {
+      font-size: 1.15rem;
+      font-weight: 700;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: #e5e7ff;
+      text-shadow:
+        0 0 4px rgba(129, 140, 248, 0.9),
+        0 0 14px rgba(147, 51, 234, 0.75),
+        0 0 26px rgba(236, 72, 153, 0.55);
+    }
+    .header-logo .logo-slogan {
+      font-size: 0.75rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #9ca3c9;
+    }
+
+    /* one main content column for shoutbox + forums */
+    .content-column {
+      max-width: 1120px;
+      margin: 0 auto;
+    }
+
+    /* polished forums block – table layout only, rest is in styles.css */
+    .category .cat-body.card-panel.card-table {
+      margin: 0 auto 18px;
+      overflow: hidden;
+    }
+
+    .forum-table {
+      table-layout: fixed;
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .forum-table thead tr {
+      background: linear-gradient(to right, #171a22, #111319);
+    }
+
+    .forum-table thead th {
+      font-size: 0.76rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: #9ca3c9;
+      padding: 6px 10px;
+    }
+
+    .forum-table thead th.col-forum {
+      text-align: left;
+    }
+
+    .forum-table thead th.col-stats {
+      text-align: center;
+    }
+
+    .forum-table thead th.col-last {
+      text-align: left;
+    }
+
+    .forum-table .col-icon {
+      width: 54px;
+    }
+
+    .forum-table .col-main {
+      width: auto;
+    }
+
+    /* tighten right side so layout looks cleaner */
+    .forum-table .col-stats {
+      width: 90px;
+      text-align: center;
+    }
+
+    .forum-table .col-last {
+      width: 190px;
+      text-align: left;
+      font-size: 0.8rem;
+    }
+
+    .forum-row,
+    .forum-row.alt {
+      background: #05070c;
+    }
+
+    .forum-row.alt {
+      background: #070a10;
+    }
+
+    .forum-row td {
+      padding: 10px 10px;
+      vertical-align: middle;
+    }
+
+    .forum-title a {
+      font-size: 0.95rem;
+      font-weight: 600;
+    }
+
+    .forum-desc {
+      font-size: 0.8rem;
+      color: #9ca3c9;
+      margin-top: 2px;
+    }
+
+    .forum-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      background: radial-gradient(circle at 30% 0, #22c55e, #0f766e);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #020617;
+      box-shadow: 0 0 0 1px rgba(15,23,42,0.8);
+    }
+
+    .forum-icon i {
+      font-size: 1rem;
+    }
+
+    .stats-count {
+      display: block;
+      font-size: 0.95rem;
+      font-weight: 600;
+    }
+
+    .stats-desc {
+      display: block;
+      font-size: 0.75rem;
+      color: #9ca3c9;
+      margin-top: 1px;
+    }
+
+    /* header text fine‑tune – adjust if you want */
+    .forum-header-left {
+      position: relative;
+      left: 0;          /* keep 0 to stay truly left aligned */
+    }
+  </style>
 </head>
 <body>
 <div id="page">
@@ -43,8 +193,6 @@
             <i class="fa fa-home"></i> Home
           </a>
         </li>
-
-        <!-- Admin Panel button: JS will show this only for admins/owner -->
         <li id="nav-admin-link" style="display:none;">
           <a href="adminpanel.html">
             <i class="fa fa-user-shield"></i> Admin Panel
@@ -98,176 +246,142 @@
         </aside>
       </section>
 
-      <!-- SHOUTBOX -->
-      <section class="shoutbox card-panel">
-        <div class="shoutbox-header">
-          <div class="shoutbox-title">
-            <i class="fa fa-comments"></i> Shoutbox
+      <!-- Shoutbox + forums column -->
+      <div class="content-column">
+
+        <!-- SHOUTBOX -->
+        <section class="shoutbox card-panel">
+          <div class="shoutbox-header">
+            <div class="shoutbox-title">
+              <i class="fa fa-comments"></i> Shoutbox
+            </div>
+            <div class="shoutbox-meta" id="shoutbox-meta">
+              <span class="dot online"></span> Live chat · login to post
+            </div>
           </div>
-          <div class="shoutbox-meta" id="shoutbox-meta">
-            <span class="dot online"></span> Live chat · login to post
+
+          <div class="shoutbox-body" id="shoutbox-messages"></div>
+
+          <form class="shoutbox-form" id="shoutbox-form">
+            <input
+              type="text"
+              id="shout-input"
+              class="shout-input"
+              placeholder="Type your message and press Enter..."
+              maxlength="180"
+            >
+            <button type="submit" class="btn btn-small btn-primary" id="shout-send">
+              <i class="fa fa-paper-plane"></i>
+            </button>
+          </form>
+
+          <div class="shoutbox-footer" id="shoutbox-footer">
+            Shoutbox is for quick chat only. No advertising, no support requests, no spam. Violations will result in mutes.
+          </div>
+        </section>
+
+        <div id="forums"></div>
+
+        <div class="forums-wrap">
+
+  <!-- Cracking category -->
+  <section class="category">
+    <header class="cat-header">
+      <span>Cracking</span>
+      <a href="cracking.html" class="cat-link">View section &raquo;</a>
+    </header>
+
+    <div class="cat-body card-panel card-table">
+
+      <!-- header row -->
+      <div class="forum-header-row">
+        <div class="fh-col fh-main">Forum</div>
+        <div class="fh-col fh-stats">Threads</div>
+        <div class="fh-col fh-last">Last Thread</div>
+      </div>
+
+      <!-- forum row -->
+      <article class="forum-row-flex alt">
+        <div class="forum-cell forum-main">
+          <div class="forum-icon"><i class="fa fa-list"></i></div>
+          <div class="forum-main-text">
+            <div class="forum-title">
+              <a href="configs-wordlists.html">Configs &amp; Wordlists</a>
+            </div>
+            <div class="forum-desc">
+              Share configs for checkers, combo lists and wordlists.
+            </div>
           </div>
         </div>
 
-        <div class="shoutbox-body" id="shoutbox-messages"></div>
-
-        <form class="shoutbox-form" id="shoutbox-form">
-          <input
-            type="text"
-            id="shout-input"
-            class="shout-input"
-            placeholder="Type your message and press Enter..."
-            maxlength="180"
-          >
-          <button type="submit" class="btn btn-small btn-primary" id="shout-send">
-            <i class="fa fa-paper-plane"></i>
-          </button>
-        </form>
-
-        <div class="shoutbox-footer" id="shoutbox-footer">
-          Shoutbox is for quick chat only. No advertising, no support requests, no spam. Violations will result in mutes.
+        <div class="forum-cell forum-stats">
+          <span class="stats-count">1,830</span>
+          <span class="stats-desc">Threads</span>
         </div>
-      </section>
 
-      <!-- Removed home admins panel section -->
-
-      <div id="forums"></div>
-
-      <!-- Cracking category (unchanged) -->
-      <section class="category">
-        <header class="cat-header">
-          <span>Cracking</span>
-          <a href="cracking.html" class="cat-link">View section &raquo;</a>
-        </header>
-        <div class="cat-body card-panel card-table">
-          <table class="forum-table">
-            <thead>
-            <tr>
-              <th class="col-forum" colspan="2">Forum</th>
-              <th class="col-stats">Posts</th>
-              <th class="col-stats">Threads</th>
-              <th class="col-last">Last Post</th>
-            </tr>
-            </thead>
-            <tbody>
-            <tr class="forum-row">
-              <td class="col-icon">
-                <div class="forum-icon"><i class="fa fa-bolt"></i></div>
-              </td>
-              <td class="col-main">
-                <div class="forum-title">
-                  <a href="cracking-general.html">Cracking General</a>
-                </div>
-                <div class="forum-desc">
-                  Discuss configs, methods, hits and general cracking talk.
-                </div>
-              </td>
-              <td class="col-stats">
-                <span class="stats-count">174,891</span><br>
-                <span class="stats-desc">Posts</span>
-              </td>
-              <td class="col-stats">
-                <span class="stats-count">3,594</span><br>
-                <span class="stats-desc">Threads</span>
-              </td>
-              <td class="col-last">
-                <div class="last-title">
-                  <a href="#">Best proxy setup for configs?</a>
-                </div>
-                <div class="last-meta">
-                  by <a href="#">Ghost</a> · 12 minutes ago
-                </div>
-              </td>
-            </tr>
-
-            <tr class="forum-row alt">
-              <td class="col-icon">
-                <div class="forum-icon"><i class="fa fa-list"></i></div>
-              </td>
-              <td class="col-main">
-                <div class="forum-title">
-                  <a href="configs-wordlists.html">Configs &amp; Wordlists</a>
-                </div>
-                <div class="forum-desc">
-                  Share configs for checkers, combo lists and wordlists.
-                </div>
-              </td>
-              <td class="col-stats">
-                <span class="stats-count">315,671</span><br>
-                <span class="stats-desc">Posts</span>
-              </td>
-              <td class="col-stats">
-                <span class="stats-count">1,830</span><br>
-                <span class="stats-desc">Threads</span>
-              </td>
-              <td class="col-last">
-                <div class="last-title">
-                  <a href="#">Massive HQ combo dump</a>
-                </div>
-                <div class="last-meta">
-                  by <a href="#">ProxyLord</a> · 38 minutes ago
-                </div>
-              </td>
-            </tr>
-            </tbody>
-          </table>
+        <div class="forum-cell forum-last">
+          <div class="last-title">
+            Last thread by <a href="#">ColdFusionz</a>
+          </div>
+          <div class="last-meta">
+            updated recently
+          </div>
         </div>
-      </section>
+      </article>
 
-      <!-- Accounts category (simplified: only Threads) -->
-      <section class="category">
-        <header class="cat-header">
-          <span>Accounts</span>
-          <a href="accounts.html" class="cat-link">View section &raquo;</a>
-        </header>
-        <div class="cat-body card-panel card-table">
-          <table class="forum-table">
-            <thead>
-            <tr>
-              <th class="col-forum" colspan="2">Forum</th>
-              <th class="col-stats">Threads</th>
-            </tr>
-            </thead>
-            <tbody>
-            <tr class="forum-row">
-              <td class="col-icon">
-                <div class="forum-icon"><i class="fa fa-user-tag"></i></div>
-              </td>
-              <td class="col-main">
-                <div class="forum-title">
-                  <a href="accounts.html">Accounts</a>
-                </div>
-                <div class="forum-desc">
-                  Share your owned accounts with the community.
-                </div>
-              </td>
-              <td class="col-stats">
-                <span class="stats-count" id="index-accounts-threads">0</span><br>
-                <span class="stats-desc">Threads</span>
-              </td>
-            </tr>
+    </div>
+  </section>
 
-            <tr class="forum-row alt">
-              <td class="col-icon">
-                <div class="forum-icon"><i class="fa fa-graduation-cap"></i></div>
-              </td>
-              <td class="col-main">
-                <div class="forum-title">
-                  <a href="hacking-tutorials.html">Hacking Tutorials</a>
-                </div>
-                <div class="forum-desc">
-                  Guides, tutorials and writeups for beginners and advanced users.
-                </div>
-              </td>
-              <td class="col-stats">
-                <span class="stats-count">1,909</span><br>
-                <span class="stats-desc">Threads</span>
-              </td>
-            </tr>
-            </tbody>
-          </table>
+  <!-- Accounts category -->
+  <section class="category">
+    <header class="cat-header">
+      <span>Accounts</span>
+      <a href="accounts.html" class="cat-link">View section &raquo;</a>
+    </header>
+
+    <div class="cat-body card-panel card-table">
+
+      <!-- header row -->
+      <div class="forum-header-row">
+        <div class="fh-col fh-main">Forum</div>
+        <div class="fh-col fh-stats">Threads</div>
+        <div class="fh-col fh-last">Last Thread</div>
+      </div>
+
+      <!-- forum row -->
+      <article class="forum-row-flex">
+        <div class="forum-cell forum-main">
+          <div class="forum-icon"><i class="fa fa-user-tag"></i></div>
+          <div class="forum-main-text">
+            <div class="forum-title">
+              <a href="accounts.html">Accounts</a>
+            </div>
+            <div class="forum-desc">
+              Share your owned accounts with the community.
+            </div>
+          </div>
         </div>
-      </section>
+
+        <div class="forum-cell forum-stats">
+          <span class="stats-count" id="index-accounts-threads">0</span>
+          <span class="stats-desc">Threads</span>
+        </div>
+
+        <div class="forum-cell forum-last">
+          <div class="last-title">
+            Last thread by <a href="#">ColdFusionz</a>
+          </div>
+          <div class="last-meta">
+            updated recently
+          </div>
+        </div>
+      </article>
+
+    </div>
+  </section>
+
+</div><!-- /.forums-wrap -->
+      </div><!-- /.content-column -->
 
       <!-- FOOTER -->
       <footer class="index-bottom">
