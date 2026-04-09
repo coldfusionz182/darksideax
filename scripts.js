@@ -60,131 +60,129 @@ async function updateHeaderAuthState() {
 
 document.addEventListener('DOMContentLoaded', () => {
   updateHeaderAuthState();
-  setupShoutbox();
 
   // ===================== SHOUTBOX (index.html) =====================
-// ===================== SHOUTBOX (index.html) =====================
-const shoutInput  = document.getElementById('shout-input');
-const shoutSendBtn = document.getElementById('shout-send');
-const shoutBox   = document.getElementById('shoutbox-messages');
-const shoutForm  = document.getElementById('shoutbox-form');
-const shoutMeta  = document.getElementById('shoutbox-meta');
-const shoutFooter = document.getElementById('shoutbox-footer');
+  const shoutInput  = document.getElementById('shout-input');
+  const shoutSendBtn = document.getElementById('shout-send');
+  const shoutBox   = document.getElementById('shoutbox-messages');
+  const shoutForm  = document.getElementById('shoutbox-form');
+  const shoutMeta  = document.getElementById('shoutbox-meta');
+  const shoutFooter = document.getElementById('shoutbox-footer');
 
-async function fetchCurrentUserProfile() {
-  const { data, error } = await supabaseClient.auth.getUser();
-  if (error || !data?.user) return null;
+  async function fetchCurrentUserProfile() {
+    const { data, error } = await supabaseClient.auth.getUser();
+    if (error || !data?.user) return null;
 
-  const user = data.user;
-  const { data: profile } = await supabaseClient
-    .from('profiles')
-    .select('username')
-    .eq('id', user.id)
-    .maybeSingle();
+    const user = data.user;
+    const { data: profile } = await supabaseClient
+      .from('profiles')
+      .select('username')
+      .eq('id', user.id)
+      .maybeSingle();
 
-  return {
-    id: user.id,
-    username: profile?.username || user.email
-  };
-}
-
-function renderShout(row) {
-  const line = document.createElement('div');
-  line.className = 'shout-line';
-
-  const userSpan = document.createElement('span');
-  userSpan.className = 'shout-user rank-member';
-  userSpan.textContent = row.username;
-
-  const timeSpan = document.createElement('span');
-  timeSpan.className = 'shout-time';
-  const d = new Date(row.created_at);
-  const hh = d.getHours().toString().padStart(2, '0');
-  const mm = d.getMinutes().toString().padStart(2, '0');
-  timeSpan.textContent = `${hh}:${mm}`;
-
-  const textSpan = document.createElement('span');
-  textSpan.className = 'shout-text';
-  textSpan.textContent = row.message;
-
-  line.appendChild(userSpan);
-  line.appendChild(timeSpan);
-  line.appendChild(textSpan);
-  shoutBox.appendChild(line);
-}
-
-async function loadShouts() {
-  if (!shoutBox) return;
-
-  const { data, error } = await supabaseClient
-    .from('shouts')
-    .select('id, username, message, created_at')
-    .order('created_at', { ascending: false })
-    .limit(50);
-
-  if (error) {
-    console.error('loadShouts error', error);
-    return;
+    return {
+      id: user.id,
+      username: profile?.username || user.email
+    };
   }
 
-  shoutBox.innerHTML = '';
-  data.slice().reverse().forEach(renderShout);
-  shoutBox.scrollTop = shoutBox.scrollHeight;
-}
+  function renderShout(row) {
+    const line = document.createElement('div');
+    line.className = 'shout-line';
 
-async function setupShoutbox() {
-  if (!shoutInput || !shoutSendBtn || !shoutBox || !shoutForm) return;
+    const userSpan = document.createElement('span');
+    userSpan.className = 'shout-user rank-member';
+    userSpan.textContent = row.username;
 
-  const me = await fetchCurrentUserProfile();
-  if (!me) {
-    shoutInput.disabled = true;
-    shoutSendBtn.disabled = true;
-    if (shoutFooter) shoutFooter.textContent = 'Login to chat in the shoutbox.';
-  } else if (shoutMeta) {
-    shoutMeta.textContent = `Logged in as ${me.username} · live chat`;
+    const timeSpan = document.createElement('span');
+    timeSpan.className = 'shout-time';
+    const d = new Date(row.created_at);
+    const hh = d.getHours().toString().padStart(2, '0');
+    const mm = d.getMinutes().toString().padStart(2, '0');
+    timeSpan.textContent = `${hh}:${mm}`;
+
+    const textSpan = document.createElement('span');
+    textSpan.className = 'shout-text';
+    textSpan.textContent = row.message;
+
+    line.appendChild(userSpan);
+    line.appendChild(timeSpan);
+    line.appendChild(textSpan);
+    shoutBox.appendChild(line);
   }
 
-  await loadShouts();
+  async function loadShouts() {
+    if (!shoutBox) return;
 
-  supabaseClient
-    .channel('public:shouts')
-    .on(
-      'postgres_changes',
-      { event: 'INSERT', schema: 'public', table: 'shouts' },
-      payload => {
-        renderShout(payload.new);
-        shoutBox.scrollTop = shoutBox.scrollHeight;
-      }
-    )
-    .subscribe();
+    const { data, error } = await supabaseClient
+      .from('shouts')
+      .select('id, username, message, created_at')
+      .order('created_at', { ascending: false })
+      .limit(50);
 
-  shoutForm.addEventListener('submit', async (e) => {
-    e.preventDefault(); // stops page refresh
-
-    if (!me) return;
-
-    const text = shoutInput.value.trim();
-    if (!text) return;
-    if (text.length > 180) return;
-
-    const msg = text;
-    shoutInput.value = '';
-
-    try {
-      const { error } = await supabaseClient.from('shouts').insert({
-        user_id: me.id,
-        username: me.username,
-        message: msg
-      });
-      if (error) throw error;
-    } catch (err) {
-      console.error('send shout error', err);
+    if (error) {
+      console.error('loadShouts error', error);
+      return;
     }
-  });
-}
 
-// call from inside DOMContentLoaded callback
-setupShoutbox();
+    shoutBox.innerHTML = '';
+    data.slice().reverse().forEach(renderShout);
+    shoutBox.scrollTop = shoutBox.scrollHeight;
+  }
+
+  async function setupShoutbox() {
+    if (!shoutInput || !shoutSendBtn || !shoutBox || !shoutForm) return;
+
+    const me = await fetchCurrentUserProfile();
+    if (!me) {
+      shoutInput.disabled = true;
+      shoutSendBtn.disabled = true;
+      if (shoutFooter) shoutFooter.textContent = 'Login to chat in the shoutbox.';
+    } else if (shoutMeta) {
+      shoutMeta.textContent = `Logged in as ${me.username} · live chat`;
+    }
+
+    await loadShouts();
+
+    supabaseClient
+      .channel('public:shouts')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'shouts' },
+        payload => {
+          renderShout(payload.new);
+          shoutBox.scrollTop = shoutBox.scrollHeight;
+        }
+      )
+      .subscribe();
+
+    shoutForm.addEventListener('submit', async (e) => {
+      e.preventDefault(); // stops page refresh
+
+      const meNow = await fetchCurrentUserProfile();
+      if (!meNow) return;
+
+      const text = shoutInput.value.trim();
+      if (!text) return;
+      if (text.length > 180) return;
+
+      const msg = text;
+      shoutInput.value = '';
+
+      try {
+        const { error } = await supabaseClient.from('shouts').insert({
+          user_id: meNow.id,
+          username: meNow.username,
+          message: msg
+        });
+        if (error) throw error;
+      } catch (err) {
+        console.error('send shout error', err);
+      }
+    });
+  }
+
+  setupShoutbox();
 
   // ===================== Accounts thread list (accounts.html) =====================
   const threadListBody = document.getElementById('thread-list');
@@ -246,7 +244,6 @@ setupShoutbox();
       tr.appendChild(tdViews);
       tr.appendChild(tdLast);
 
-      // Admin-only delete button
       if (window.dsUserRole === 'admin') {
         const tdDelete = document.createElement('td');
         tdDelete.className = 'col-actions';
@@ -722,7 +719,6 @@ setupShoutbox();
       if (statRepliesEl) statRepliesEl.textContent = replies ? replies.length : 0;
       if (statLikesEl) statLikesEl.textContent = likes ? likes.length : 0;
 
-      // threads list
       if (profileThreadsList) {
         profileThreadsList.innerHTML = '';
         if (!threads || threads.length === 0) {
@@ -744,7 +740,6 @@ setupShoutbox();
         }
       }
 
-      // replies list
       if (profileRepliesList) {
         profileRepliesList.innerHTML = '';
         if (!replies || replies.length === 0) {
@@ -766,7 +761,6 @@ setupShoutbox();
         }
       }
 
-      // likes list
       if (profileLikesList) {
         profileLikesList.innerHTML = '';
         if (!likes || likes.length === 0) {
