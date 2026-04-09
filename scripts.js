@@ -144,6 +144,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     await loadShouts();
 
+      await loadShouts();
+
+  // poll every 2 seconds as a fallback
+  setInterval(() => {
+    loadShouts();
+  }, 2000);
+
     supabaseClient
       .channel('public:shouts')
       .on(
