@@ -161,4 +161,70 @@
 
                 <div class="login-meta-row">
                   <span>New here? Registration is closed.</span>
-                  <a href="index.html"><i class="fa fa-arrow-left"></i> 
+                  <a href="index.html"><i class="fa fa-arrow-left"></i> Back to forum</a>
+                </div>
+
+                <button type="submit" class="btn-login" id="login-submit">
+                  <i class="fa fa-sign-in-alt"></i>
+                  <span>Login</span>
+                </button>
+
+                <div id="login-status" class="login-status"></div>
+              </form>
+            </div>
+          </section>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script type="module">
+    import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+
+    const supabaseUrl = 'https://ffmkkwskvjvytdddevmm.supabase.co';
+    const supabaseAnonKey =
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZmbWtrd3Nrdmp2eXRkZGRldm1tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU2NjU4OTUsImV4cCI6MjA5MTI0MTg5NX0.6Ogv0QubiShMDK1uDTN-QKFkmmE6Fv3Iu4WzBSSIT7M';
+
+    const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+    const form = document.getElementById('login-form');
+    const emailEl = document.getElementById('login-email');
+    const passEl = document.getElementById('login-password');
+    const statusEl = document.getElementById('login-status');
+    const submitBtn = document.getElementById('login-submit');
+
+    function setStatus(text, kind = '') {
+      statusEl.textContent = text;
+      statusEl.className = 'login-status' + (kind ? ' ' + kind : '');
+    }
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      submitBtn.disabled = true;
+      setStatus('Logging in...', '');
+
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: emailEl.value.trim(),
+        password: passEl.value
+      });
+
+      if (error) {
+        console.error(error);
+        setStatus('Login failed: ' + error.message, 'error');
+        submitBtn.disabled = false;
+        return;
+      }
+
+      const accessToken = data.session?.access_token;
+      if (accessToken) {
+        localStorage.setItem('ds_access_token', accessToken);
+      }
+
+      setStatus('Logged in, redirecting...', 'ok');
+      setTimeout(() => {
+        window.location.href = 'accounts.html';
+      }, 800);
+    });
+  </script>
+</body>
+</html>
