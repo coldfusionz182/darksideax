@@ -193,7 +193,7 @@ document.addEventListener('DOMContentLoaded', () => {
           }
 
           try {
-            const res = await fetch('/.netlify/functions/delete-thread', {
+            const res = await fetch('/api/delete-thread', {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
@@ -209,7 +209,7 @@ document.addEventListener('DOMContentLoaded', () => {
             threadsData = threadsData.filter((th) => th.id !== t.id);
             sortThreads(sortSelect ? sortSelect.value : 'newest');
           } catch (err) {
-            console.error('delete-thread error', err);
+            console.error('delete-thread error:', err);
             alert('Failed to delete thread.');
           }
         });
@@ -235,7 +235,7 @@ document.addEventListener('DOMContentLoaded', () => {
   async function loadThreads() {
     if (!threadListBody) return;
     try {
-      const res = await fetch('/.netlify/functions/list-threads');
+      const res = await fetch('/api/list-threads');
       if (!res.ok) throw new Error('Failed to load threads');
       threadsData = await res.json();
       sortThreads(sortSelect ? sortSelect.value : 'newest');
@@ -305,7 +305,7 @@ document.addEventListener('DOMContentLoaded', () => {
       statusEl.textContent = 'Creating thread...';
 
       try {
-        const res = await fetch('/.netlify/functions/create-thread', {
+        const res = await fetch('/api/create-thread', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -366,7 +366,7 @@ document.addEventListener('DOMContentLoaded', () => {
       try {
         // load thread
         const res = await fetch(
-          `/.netlify/functions/get-thread?id=${encodeURIComponent(threadId)}`
+          `/api/get-thread?id=${encodeURIComponent(threadId)}`
         );
         const data = await res.json();
         if (!res.ok || !data.success) {
@@ -509,7 +509,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
 
                 try {
-                  const res = await fetch('/.netlify/functions/delete-reply', {
+                  const res = await fetch('/api/delete-reply', {
                     method: 'POST',
                     headers: {
                       'Content-Type': 'application/json',
@@ -581,7 +581,7 @@ document.addEventListener('DOMContentLoaded', () => {
           repliesPlaceholder.remove();
         }
       } catch (err) {
-        console.error('load single thread error', err);
+        console.error('load single thread error:', err);
         threadTitleDisplay.textContent = 'Error loading thread';
         threadContentDisplay.textContent = 'Could not load this thread.';
       }

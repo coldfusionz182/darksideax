@@ -1,3 +1,4 @@
+// api/delete-thread.js
 import { createClient } from '@supabase/supabase-js';
 
 const supabaseUrl = 'https://ffmkkwskvjvytdddevmm.supabase.co';
@@ -6,21 +7,21 @@ const supabaseServiceKey =
 
 const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 
-export const handler = async (event) => {
-  if (event.httpMethod !== 'POST') {
-    return {
-      statusCode: 405,
-      body: JSON.stringify({ success: false, error: 'Method not allowed' })
-    };
+export default async function handler(req, res) {
+  if (req.method !== 'POST') {
+    res
+      .status(405)
+      .json({ success: false, error: 'Method not allowed' });
+    return;
   }
 
   try {
-    const authHeader = event.headers.authorization || event.headers.Authorization;
+    const authHeader = req.headers.authorization || req.headers.Authorization;
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return {
-        statusCode: 401,
-        body: JSON.stringify({ success: false, error: 'No token' })
-      };
+      res
+        .status(401)
+        .json({ success: false, error: 'No token' });
+      return;
     }
 
     const accessToken = authHeader.slice('Bearer '.length);
@@ -35,10 +36,10 @@ export const handler = async (event) => {
 
     const { data: userData, error: userError } = await supabaseUser.auth.getUser();
     if (userError || !userData?.user) {
-      return {
-        statusCode: 401,
-        body: JSON.stringify({ success: false, error: 'Invalid user' })
-      };
+      res
+        .status(401)
+        .json({ success: false, error: 'Invalid user' });
+      return;
     }
 
     const userId = userData.user.id;
@@ -50,44 +51,40 @@ export const handler = async (event) => {
       .maybeSingle();
 
     if (profError || !profile || profile.role !== 'admin') {
-      return {
-        statusCode: 403,
-        body: JSON.stringify({ success: false, error: 'Not allowed' })
-      };
+      res
+        .status(403)
+        .json({ success: false, error: 'Not allowed' });
+      return;
     }
 
-    const body = JSON.parse(event.body || '{}');
+    const body = req.body || {};
     const { id } = body;
 
     if (!id) {
-      return {
-        statusCode: 400,
-        body: JSON.stringify({ success: false, error: 'Missing id' })
-      };
+      res
+        .status(400)
+        .json({ success: false, error: 'Missing id' });
+      return;
     }
 
     const { error: delError } = await supabaseAdmin
-      .from('thread_replies')
+      .from('threads')
       .delete()
       .eq('id', id);
 
     if (delError) {
-      console.error('Supabase delete reply error:', delError);
-      return {
-        statusCode: 500,
-        body: JSON.stringify({ success: false, error: delError.message })
-      };
+      console.error('Supabase delete error:', delError);
+      res
+        .status(500)
+        .json({ success: false, error: delError.message });
+      return;
     }
 
-    return {
-      statusCode: 200,
-      body: JSON.stringify({ success: true })
-    };
+    res.status(200).json({ success: true });
   } catch (err) {
-    console.error('delete-reply handler error:', err);
-    return {
-      statusCode: 500,
-      body: JSON.stringify({ success: false, error: 'Server error' })
-    };
+    console.error('delete-thread handler error:', err);
+    res
+      .status(500)
+      .json({ success: false, error: 'Server error' });
   }
-};
+}
