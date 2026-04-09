@@ -27,15 +27,40 @@ function initToolbar() {
 
   if (toolbar) {
     toolbar.addEventListener('click', (e) => {
-      const btn = e.target.closest('.toolbar-btn[data-format]');
+      const btn = e.target.closest('.toolbar-btn');
       if (!btn) return;
 
       const format = btn.dataset.format;
       e.preventDefault();
 
-      if (format === 'bold')      wrapSelectionInTag(contentEl, '[b]', '[\/b]');
-      else if (format === 'italic')   wrapSelectionInTag(contentEl, '[i]', '[\/i]');
-      else if (format === 'underline')wrapSelectionInTag(contentEl, '[u]', '[\/u]');
+      if (format === 'bold') {
+        wrapSelectionInTag(contentEl, '[b]', '[/b]');
+      } else if (format === 'italic') {
+        wrapSelectionInTag(contentEl, '[i]', '[/i]');
+      } else if (format === 'underline') {
+        wrapSelectionInTag(contentEl, '[u]', '[/u]');
+      } else if (format === 'link') {
+        // create hyperlink
+        const start = contentEl.selectionStart;
+        const end   = contentEl.selectionEnd;
+        if (start === end) {
+          // no selection – nothing to link
+          return;
+        }
+
+        const url = prompt('Enter URL (including https://):', 'https://');
+        if (!url || !url.trim()) return;
+
+        const value    = contentEl.value;
+        const selected = value.substring(start, end);
+        const before   = value.substring(0, start);
+        const after    = value.substring(end);
+
+        const wrapped = `[url=${url.trim()}]${selected}[/url]`;
+        contentEl.value = before + wrapped + after;
+        contentEl.focus();
+        contentEl.setSelectionRange(start, start + wrapped.length);
+      }
     });
   }
 

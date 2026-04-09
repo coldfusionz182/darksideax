@@ -61,7 +61,7 @@ async function updateHeaderAuthState() {
     <button class="btn btn-small btn-outline" id="logout-btn">
       <i class="fa fa-sign-out-alt"></i> Logout
     </button>
- `;
+  `;
 
   const logoutBtn = document.getElementById('logout-btn');
   if (logoutBtn) {
@@ -518,6 +518,15 @@ document.addEventListener('DOMContentLoaded', () => {
     );
   }
 
+  // simple BBCode -> HTML for [url=] tags
+  function bbcodeToHtml(text) {
+    if (!text) return '';
+    return text.replace(
+      /\[url=(https?:\/\/[^\]]+)\](.*?)\[\/url\]/gis,
+      '<a href="$1" target="_blank" rel="noopener noreferrer">$2</a>'
+    );
+  }
+
   // ===================== Single thread view (thread.html) =====================
   const threadTitleDisplay = document.getElementById('thread-title-display');
   const threadMetaDisplay = document.getElementById('thread-meta-display');
@@ -579,7 +588,8 @@ document.addEventListener('DOMContentLoaded', () => {
         // later: add "has replied" checks here
 
         const renderedContent = renderHiddenContent(t.content, canSeeHidden);
-        threadContentDisplay.textContent = renderedContent;
+        const htmlContent = bbcodeToHtml(renderedContent);
+        threadContentDisplay.innerHTML = htmlContent;
 
         // likes / replies logic (unchanged)
         const { data: userData } = await supabaseClient.auth.getUser();
