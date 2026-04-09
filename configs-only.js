@@ -18,9 +18,11 @@ async function loadConfigsThreads() {
     return;
   }
 
-  // HARD filter: only rows whose section === 'configs'
+  // HARD filter: only section === 'configs'
   const configsOnly = data.filter(
-    (row) => typeof row.section === 'string' && row.section.toLowerCase() === 'configs'
+    (row) =>
+      typeof row.section === 'string' &&
+      row.section.toLowerCase() === 'configs'
   );
 
   if (configsOnly.length === 0) {
