@@ -1,4 +1,4 @@
-// threadcreation.js  (ACCOUNTS)
+// threadcreation.js (ACCOUNTS)
 const form = document.getElementById('new-thread-form');
 
 if (form) {

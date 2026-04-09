@@ -11,7 +11,6 @@
       background: radial-gradient(circle at top, #151826 0, #05060a 55%);
     }
 
-    /* user pill + avatar (top right) – same as index/accounts/profile */
     .user-pill {
       display: inline-flex;
       align-items: center;
@@ -45,7 +44,6 @@
       box-shadow: 0 0 22px rgba(0,0,0,0.75);
     }
 
-    /* Big avatar box on profile (if used anywhere on this page) */
     .profile-avatar-large {
       width: 86px;
       height: 86px;
@@ -116,7 +114,6 @@
       border-color: rgba(96,165,250,0.7);
     }
 
-    /* avatar preview in header */
     .user-header-card {
       display: inline-flex;
       align-items: center;
@@ -228,7 +225,6 @@
       font-size: 0.8rem;
     }
 
-    /* colour palette */
     .color-palette {
       position: absolute;
       z-index: 9999;
@@ -355,13 +351,11 @@
                   <button type="button" class="toolbar-btn" id="btn-hide-text">
                     <i class="fa fa-user-secret"></i> Hide text
                   </button>
-                  <!-- colour button -->
                   <button type="button" class="toolbar-btn" data-format="color" id="btn-color">
                     <i class="fa fa-palette"></i>
                   </button>
                 </div>
 
-                <!-- colour palette popup -->
                 <div id="color-palette" class="color-palette" style="display:none;">
                   <button data-color="#ffffff" style="background:#ffffff;"></button>
                   <button data-color="#000000" style="background:#000000;"></button>
@@ -383,7 +377,7 @@
               </div>
 
               <div class="hint-line">
-                Hidden text appears as <code>[HIDDEN]secret[/HIDDEN]</code> here. On the thread page you gate it by rank / replies.
+                Hidden text appears as <code>[HIDDEN]secret[/HIDDEN]</code>.
               </div>
 
               <div class="bottom-actions">
