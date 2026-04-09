@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>New Thread • Configs • Darkside.ax</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+  <link href="styles.css" rel="stylesheet">
+  <style>
+    body {
+      background: radial-gradient(circle at top, #151826 0, #05060a 55%);
+    }
+
+    .user-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      background: #111827;
+      border: 1px solid #1f2937;
+      color: #e5e7eb;
+      cursor: pointer;
+      font-size: 0.8rem;
+    }
+    .user-pill img.user-avatar-header {
+      width: 22px;
+      height: 22px;
+      border-radius: 999px;
+      object-fit: cover;
+      border: 1px solid #1f2937;
+      display: block;
+    }
+
+    .new-thread-shell {
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    .new-thread-card {
+      background: #10131c;
+      border-radius: 8px;
+      border: 1px solid #22263a;
+      box-shadow: 0 0 22px rgba(0,0,0,0.75);
+    }
+
+    .profile-avatar-large {
+      width: 86px;
+      height: 86px;
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    #profile-avatar img {
+      width: 100%;
+      height: 100%;
+      max-width: 86px;
+      max-height: 86px;
+      object-fit: cover;
+      display: block;
+    }
+
+    .new-thread-card .card-body { padding: 0; }
+
+    .editor-header-bar {
+      background: linear-gradient(90deg,#5865f2,#7c3aed);
+      color: #fff;
+      padding: 10px 14px;
+      border-radius: 8px 8px 0 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.9rem;
+    }
+
+    .editor-header-left {
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      font-size: 0.85rem;
+    }
+
+    .editor-header-user {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.8rem;
+    }
+
+    .header-username { font-weight: 600; }
+
+    .user-rank-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 3px 8px;
+      border-radius: 999px;
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      border: 1px solid transparent;
+    }
+
+    .user-rank-badge i { font-size: 0.7rem; }
+
+    .rank-admin {
+      background: rgba(248,113,113,0.18);
+      color: #fee2e2;
+      border-color: rgba(248,113,113,0.7);
+    }
+
+    .rank-member {
+      background: rgba(96,165,250,0.18);
+      color: #bfdbfe;
+      border-color: rgba(96,165,250,0.7);
+    }
+
+    .user-header-card {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .author-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid #181c2d;
+    }
+
+    .editor-container {
+      border-radius: 0 0 8px 8px;
+      border-top: 1px solid #262a3d;
+      background: #05070c;
+    }
+
+    .editor-row-label {
+      padding: 7px 12px;
+      border-bottom: 1px solid #191b26;
+      font-size: 0.8rem;
+      background: #141722;
+      color: #d1d5ff;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .editor-input {
+      width: 100%;
+      padding: 8px 12px;
+      border: none;
+      border-bottom: 1px solid #191b26;
+      background: #10131c;
+      color: #e5e7ff;
+      font-size: 0.9rem;
+    }
+
+    .editor-input::placeholder { color: #6b7280; }
+    .editor-input:focus { outline: none; }
+
+    .meta-row {
+      padding: 8px 12px;
+      border-bottom: 1px solid #191b26;
+      background: #0c0f18;
+    }
+
+    .meta-row .form-label {
+      font-size: 0.75rem;
+      color: #9ca3c9;
+    }
+
+    .editor-toolbar {
+      padding: 6px 8px;
+      border-top: 1px solid #191b26;
+      border-bottom: 1px solid #191b26;
+      background: #10131c;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+    }
+
+    .toolbar-btn {
+      background: #171a26;
+      border: 1px solid #262a3d;
+      color: #cbd0ff;
+      padding: 3px 7px;
+      border-radius: 3px;
+      font-size: 0.78rem;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .toolbar-btn:hover { background: #22263a; }
+
+    .toolbar-btn i { font-size: 0.75rem; }
+
+    .editor-textarea {
+      width: 100%;
+      min-height: 260px;
+      border: none;
+      resize: vertical;
+      background: #05070d;
+      color: #e5e7ff;
+      font-size: 0.9rem;
+      line-height: 1.55;
+      padding: 8px 12px 12px;
+      font-family: "Roboto Mono", Consolas, monospace;
+    }
+
+    .editor-textarea:focus { outline: none; }
+
+    .hint-line {
+      font-size: 0.78rem;
+      color: #9ca3c9;
+      padding: 6px 12px 0;
+    }
+
+    .bottom-actions {
+      padding: 10px 12px 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.8rem;
+    }
+
+    .color-palette {
+      position: absolute;
+      z-index: 9999;
+      background: #05070d;
+      border: 1px solid #181c2d;
+      border-radius: 4px;
+      padding: 6px;
+      display: grid;
+      grid-template-columns: repeat(5, 18px);
+      gap: 4px;
+    }
+
+    .color-palette button {
+      width: 18px;
+      height: 18px;
+      border-radius: 2px;
+      border: 1px solid #111827;
+      cursor: pointer;
+      padding: 0;
+    }
+  </style>
+</head>
+<body>
+
+<div id="page">
+  <!-- HEADER -->
+  <header id="header">
+    <div class="wrapper header-inner">
+      <div class="header-left">
+        <div class="header-logo">
+          <span class="logo-text">Darkside.ax</span>
+          <span class="logo-slogan">Beyond the Limits</span>
+        </div>
+      </div>
+      <div class="header-right">
+        <ul class="top-links">
+          <li><a href="#">Rules</a></li>
+        </ul>
+        <div class="auth-links">
+          <a href="login.html" class="btn btn-small btn-outline">
+            <i class="fa fa-sign-in-alt"></i> Login
+          </a>
+          <a href="#" class="btn btn-small btn-primary">
+            <i class="fa fa-user-plus"></i> Register
+          </a>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- NAVBAR -->
+  <nav id="navbar">
+    <div class="wrapper navbar-inner">
+      <ul class="nav-main">
+        <li><a href="index.html"><i class="fa fa-home"></i> Home</a></li>
+        <li><a href="configs.html" class="active"><i class="fa fa-sliders-h"></i> Configs</a></li>
+        <li><a href="accounts.html"><i class="fa fa-user-tag"></i> Accounts</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <!-- CONTENT -->
+  <main id="container">
+    <div class="wrapper">
+      <div class="new-thread-shell">
+        <div class="new-thread-card">
+          <div class="card-body">
+
+            <div class="editor-header-bar">
+              <div class="editor-header-left">Post a new Config Thread</div>
+              <div class="editor-header-user">
+                <div class="user-header-card">
+                  <img id="create-thread-avatar-img" class="author-avatar" src="images/default-avatar.png" alt="Avatar">
+                  <div>
+                    <span class="header-username" id="user-name-display">User</span>
+                    <span class="user-rank-badge rank-member" id="user-rank-badge">
+                      <i class="fa fa-user"></i>
+                      <span id="user-rank-text">Member</span>
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <form id="new-thread-form">
+              <div class="editor-container">
+
+                <div class="editor-row-label">
+                  <span>Subject</span>
+                </div>
+                <input
+                  type="text"
+                  id="thread-title"
+                  class="editor-input"
+                  required
+                  placeholder="Enter thread title..."
+                >
+
+                <div class="meta-row">
+                  <label class="form-label" for="thread-tag">Tag</label>
+                  <select id="thread-tag" class="form-control" required>
+                    <option value="OB">OB</option>
+                    <option value="Sentry">Sentry</option>
+                    <option value="SilverBullet">SilverBullet</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
+
+                <div class="editor-row-label">
+                  <span>Message</span>
+                  <span style="font-size:0.75rem;color:#9ca3c9;">Highlight text then click Hide.</span>
+                </div>
+
+                <div class="editor-toolbar">
+                  <button type="button" class="toolbar-btn" data-format="bold">
+                    <i class="fa fa-bold"></i>
+                  </button>
+                  <button type="button" class="toolbar-btn" data-format="italic">
+                    <i class="fa fa-italic"></i>
+                  </button>
+                  <button type="button" class="toolbar-btn" data-format="underline">
+                    <i class="fa fa-underline"></i>
+                  </button>
+                  <button type="button" class="toolbar-btn" id="btn-hide-text">
+                    <i class="fa fa-user-secret"></i> Hide text
+                  </button>
+                  <button type="button" class="toolbar-btn" data-format="color" id="btn-color">
+                    <i class="fa fa-palette"></i>
+                  </button>
+                </div>
+
+                <div id="color-palette" class="color-palette" style="display:none;">
+                  <button data-color="#ffffff" style="background:#ffffff;"></button>
+                  <button data-color="#000000" style="background:#000000;"></button>
+                  <button data-color="#ff0000" style="background:#ff0000;"></button>
+                  <button data-color="#ffa500" style="background:#ffa500;"></button>
+                  <button data-color="#ffff00" style="background:#ffff00;"></button>
+                  <button data-color="#00ff00" style="background:#00ff00;"></button>
+                  <button data-color="#00ffff" style="background:#00ffff;"></button>
+                  <button data-color="#0000ff" style="background:#0000ff;"></button>
+                  <button data-color="#ff00ff" style="background:#ff00ff;"></button>
+                </div>
+
+                <textarea
+                  id="thread-content"
+                  class="editor-textarea"
+                  required
+                  placeholder="Describe the config, target, rules, combo format, etc.&#10;&#10;Highlight any sensitive part and click 'Hide text' to wrap it in [HIDDEN] tags."
+                ></textarea>
+              </div>
+
+              <div class="hint-line">
+                Hidden text appears as <code>[HIDDEN]secret[/HIDDEN]</code> here.
+              </div>
+
+              <div class="bottom-actions">
+                <span id="thread-status" class="small-link"></span>
+                <div>
+                  <button type="submit" class="btn btn-primary" id="thread-submit">
+                    <i class="fa fa-paper-plane"></i> Create Thread
+                  </button>
+                  <a href="configs.html" class="small-link" style="margin-left:10px;">
+                    <i class="fa fa-arrow-left"></i> Back to Configs
+                  </a>
+                </div>
+              </div>
+            </form>
+
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script type="module">
+  import './scripts.js';
+  import './threadcreation-configs.js';
+  import { initCreateThreadAvatar } from './avatars.js';
+
+  document.addEventListener('DOMContentLoaded', () => {
+    initCreateThreadAvatar();
+  });
+</script>
+</body>
+</html>

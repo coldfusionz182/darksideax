@@ -1,4 +1,4 @@
-// api/create-thread.js  (accounts only)
+// api/create-config-thread.js
 import { createClient } from '@supabase/supabase-js';
 
 const supabaseUrl = 'https://ffmkkwskvjvytdddevmm.supabase.co';
@@ -25,6 +25,9 @@ export default async function handler(req, res) {
       return;
     }
 
+    // always configs for this endpoint
+    const safeSection = 'configs';
+
     const { data, error } = await supabase
       .from('threads')
       .insert([
@@ -33,14 +36,15 @@ export default async function handler(req, res) {
           tag,
           author,
           content,
-          section: 'accounts',
+          section: safeSection,
+          // replies/views default in DB
         }
       ])
       .select()
       .single();
 
     if (error) {
-      console.error('Supabase insert error (accounts):', error);
+      console.error('Supabase insert error (configs):', error);
       res
         .status(500)
         .json({ success: false, error: error.message });
@@ -49,7 +53,7 @@ export default async function handler(req, res) {
 
     res.status(200).json({ success: true, thread: data });
   } catch (err) {
-    console.error('create-thread handler error:', err);
+    console.error('create-config-thread handler error:', err);
     res
       .status(500)
       .json({ success: false, error: 'Server error' });
