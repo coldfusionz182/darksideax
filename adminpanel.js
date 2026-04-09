@@ -3,7 +3,6 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { SUPABASE_ANON_KEY } from './keys.js';
 
 const SUPABASE_URL = 'https://ffmkkwskvjvytdddevmm.supabase.co';
-
 const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // helper: current user + role from public.users
@@ -49,7 +48,7 @@ async function loadAdmins() {
   return data || [];
 }
 
-function renderAdminsTable(admins) {
+function renderAdminsTable(admins, currentUser) {
   const tbody = document.getElementById('admins-tbody');
   const statAdminCount = document.getElementById('stat-admin-count');
 
@@ -84,13 +83,18 @@ function renderAdminsTable(admins) {
       tdActions.style.textAlign = 'right';
       tdActions.className = 'admin-actions-cell';
 
-      if (a.role === 'admin') {
+      const isOwnerRow = a.role === 'owner';
+      const isCurrentOwner = currentUser.role === 'owner';
+
+      if (!isOwnerRow) {
+        // Any non-owner (admin) row: both owner and admins can demote
         const btnRemove = document.createElement('button');
         btnRemove.className = 'btn-row btn-row-danger';
         btnRemove.innerHTML = `<i class="fa fa-user-minus"></i> Remove`;
         btnRemove.addEventListener('click', () => handleDemoteAdmin(a.id, a.email));
         tdActions.appendChild(btnRemove);
       } else {
+        // Owner row: cannot be modified by admins, only owner sees it as non-clickable
         const span = document.createElement('span');
         span.className = 'btn-row btn-row-muted';
         span.innerHTML = `<i class="fa fa-crown"></i> Owner`;
@@ -113,6 +117,25 @@ async function handleDemoteAdmin(userId, email) {
   if (!confirm(`Remove admin rights from ${email}?`)) return;
 
   try {
+    const current = await getCurrentUserWithRole();
+    if (!current || (current.role !== 'owner' && current.role !== 'admin')) {
+      alert('You do not have permission to perform this action.');
+      return;
+    }
+
+    // Safety: never allow demoting the owner from the client
+    const { data: targetUser, error: fetchErr } = await supabaseClient
+      .from('users')
+      .select('role')
+      .eq('id', userId)
+      .maybeSingle();
+
+    if (fetchErr) throw fetchErr;
+    if (targetUser?.role === 'owner') {
+      alert('You cannot modify the owner.');
+      return;
+    }
+
     const { error } = await supabaseClient
       .from('users')
       .update({ role: 'user' })
@@ -122,18 +145,23 @@ async function handleDemoteAdmin(userId, email) {
 
     document.getElementById('stat-last-action').textContent =
       'Removed admin: ' + (email || userId);
-    await refreshAdmins();
+    await refreshAdmins(current);
   } catch (err) {
     console.error('demote admin error', err);
     alert('Failed to remove admin: ' + err.message);
   }
 }
 
-async function handleAddAdmin() {
+async function handleAddAdmin(currentUser) {
   const email = prompt('Enter email of user to promote to admin:');
   if (!email) return;
 
   try {
+    if (!currentUser || (currentUser.role !== 'owner' && currentUser.role !== 'admin')) {
+      alert('You do not have permission to perform this action.');
+      return;
+    }
+
     const { data, error } = await supabaseClient
       .from('users')
       .select('id, email, role')
@@ -148,6 +176,12 @@ async function handleAddAdmin() {
 
     const userId = data.id;
 
+    // Safety: never promote the owner (no-op)
+    if (data.role === 'owner') {
+      alert('This user is already the owner.');
+      return;
+    }
+
     const { error: updErr } = await supabaseClient
       .from('users')
       .update({ role: 'admin' })
@@ -157,20 +191,20 @@ async function handleAddAdmin() {
 
     document.getElementById('stat-last-action').textContent =
       'Promoted to admin: ' + email;
-    await refreshAdmins();
+    await refreshAdmins(currentUser);
   } catch (err) {
     console.error('add admin error', err);
     alert('Failed to add admin: ' + err.message);
   }
 }
 
-async function refreshAdmins() {
+async function refreshAdmins(currentUser) {
   const admins = await loadAdmins();
-  renderAdminsTable(admins);
+  renderAdminsTable(admins, currentUser);
 }
 
 // --- Create user via backend endpoint ---
-async function handleCreateUser() {
+async function handleCreateUser(currentUser) {
   const emailInput = document.getElementById('create-email');
   const passInput = document.getElementById('create-password');
   const roleSelect = document.getElementById('create-role');
@@ -182,6 +216,11 @@ async function handleCreateUser() {
 
   if (!email || !password) {
     statusEl.textContent = 'Email and password are required.';
+    return;
+  }
+
+  if (!currentUser || (currentUser.role !== 'owner' && currentUser.role !== 'admin')) {
+    statusEl.textContent = 'You do not have permission to create users.';
     return;
   }
 
@@ -207,7 +246,7 @@ async function handleCreateUser() {
     passInput.value = '';
     roleSelect.value = 'user';
 
-    await refreshAdmins();
+    await refreshAdmins(currentUser);
   } catch (err) {
     console.error('create user error', err);
     statusEl.textContent = 'Error: ' + err.message;
@@ -225,7 +264,8 @@ async function initAdminPanel() {
   const current = await getCurrentUserWithRole();
   console.log('current user for adminpanel', current);
 
-  if (!current || current.role !== 'owner') {
+  // Page visible only to owner + admins
+  if (!current || (current.role !== 'owner' && current.role !== 'admin')) {
     if (main) main.style.display = 'none';
     if (deniedSection) deniedSection.style.display = 'block';
     return;
@@ -234,17 +274,27 @@ async function initAdminPanel() {
   if (deniedSection) deniedSection.style.display = 'none';
 
   if (userInfo) {
+    const roleLabel =
+      current.role === 'owner'
+        ? 'OWNER'
+        : current.role === 'admin'
+        ? 'ADMIN'
+        : current.role.toUpperCase();
+
     userInfo.innerHTML = `
       <span><i class="fa fa-user-circle"></i> <strong>${current.username}</strong></span>
-      <span class="badge-role">OWNER</span>
+      <span class="badge-role">${roleLabel}</span>
     `;
   }
 
-  if (btnAddAdmin) btnAddAdmin.addEventListener('click', handleAddAdmin);
-  if (btnRefresh) btnRefresh.addEventListener('click', refreshAdmins);
-  if (btnCreateUser) btnCreateUser.addEventListener('click', handleCreateUser);
+  if (btnAddAdmin)
+    btnAddAdmin.addEventListener('click', () => handleAddAdmin(current));
+  if (btnRefresh)
+    btnRefresh.addEventListener('click', () => refreshAdmins(current));
+  if (btnCreateUser)
+    btnCreateUser.addEventListener('click', () => handleCreateUser(current));
 
-  await refreshAdmins();
+  await refreshAdmins(current);
 }
 
 document.addEventListener('DOMContentLoaded', () => {

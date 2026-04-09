@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Darkside.ax - Owner Admin Panel</title>
+  <title>Darkside - Admin Panel</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   <!-- Icons & Fonts -->
@@ -611,7 +611,7 @@
     <div class="admin-logo">
       <div class="admin-logo-main">
         <i class="fa fa-ghost"></i>
-        <span>Darkside.ax</span>
+        <span>Darkside</span>
       </div>
       <div class="admin-logo-sub">Owner Operations Console</div>
       <div class="admin-logo-pill">
@@ -636,7 +636,7 @@
     </ul>
 
     <div class="admin-footer">
-      <span>Darkside.ax &copy; 2026</span>
+      <span>Darkside &copy; 2026</span>
       <span>Stay in the shadows.</span>
     </div>
   </aside>
@@ -691,7 +691,7 @@
         <div class="admin-card-title-wrap">
           <div class="admin-card-title">
             <i class="fa fa-user-shield"></i>
-            Admin roster
+            Admins
           </div>
           <div class="admin-card-sub">
             Everyone with elevated powers. You can only promote or demote from this console.
@@ -734,61 +734,49 @@
       </div>
     </section>
 
-    <!-- Create user card -->
-    <section class="admin-card" id="admin-create-user-card">
+    <!-- Newest threads card -->
+    <section class="admin-card" id="admin-threads-card">
       <div class="admin-card-header">
         <div class="admin-card-title-wrap">
           <div class="admin-card-title">
-            <i class="fa fa-user-plus"></i>
-            Create user
+            <i class="fa fa-list"></i>
+            Newest threads
           </div>
           <div class="admin-card-sub">
-            Create a new account and optionally assign an initial role. This calls a secure backend endpoint.
+            Latest activity across the forum. Owner and admins can delete threads directly from here.
           </div>
+        </div>
+        <div class="admin-toolbar">
+          <div class="admin-search">
+            <input type="text" id="threads-search-input" placeholder="Filter by title or author…">
+            <i class="fa fa-search"></i>
+          </div>
+          <button id="btn-threads-refresh" class="btn-owner-ghost">
+            <i class="fa fa-rotate-right"></i>
+            Refresh
+          </button>
         </div>
       </div>
 
-      <div style="display:flex; flex-direction:column; gap:10px; max-width:420px;">
-        <div style="display:flex; flex-direction:column; gap:4px;">
-          <label for="create-email" style="font-size:0.8rem;">Email</label>
-          <input
-            type="email"
-            id="create-email"
-            style="padding:6px 10px; border-radius:999px; border:1px solid rgba(255,255,255,0.08); background:#05060a; color:#fff; font-size:0.8rem;"
-            placeholder="user@example.com"
-          >
-        </div>
-
-        <div style="display:flex; flex-direction:column; gap:4px;">
-          <label for="create-password" style="font-size:0.8rem;">Password</label>
-          <input
-            type="password"
-            id="create-password"
-            style="padding:6px 10px; border-radius:999px; border:1px solid rgba(255,255,255,0.08); background:#05060a; color:#fff; font-size:0.8rem;"
-            placeholder="Initial password"
-          >
-        </div>
-
-        <div style="display:flex; flex-direction:column; gap:0.4rem;">
-          <label for="create-role" style="font-size:0.8rem;">Initial role</label>
-          <select
-            id="create-role"
-            style="padding:6px 10px; border-radius:999px; border:1px solid rgba(255,255,255,0.08); background:#05060a; color:#fff; font-size:0.8rem;"
-          >
-            <option value="user">User</option>
-            <option value="admin">Admin</option>
-          </select>
-        </div>
-
-        <div style="display:flex; align-items:center; gap:8px; margin-top:4px;">
-          <button id="btn-create-user" class="btn-owner-primary">
-            <i class="fa fa-check"></i>
-            Create
-          </button>
-          <span id="create-user-status" style="font-size:0.78rem; color:var(--admin-text-muted);">
-            Enter email and password, then click Create.
-          </span>
-        </div>
+      <div class="admin-table-wrap">
+        <table class="admin-table">
+          <thead>
+          <tr>
+            <th>Title</th>
+            <th>Author</th>
+            <th>Tag</th>
+            <th>Created</th>
+            <th style="text-align:right;">Actions</th>
+          </tr>
+          </thead>
+          <tbody id="threads-tbody">
+          <tr>
+            <td colspan="5" class="admin-empty">
+              Loading newest threads…
+            </td>
+          </tr>
+          </tbody>
+        </table>
       </div>
     </section>
 
@@ -797,8 +785,8 @@
       <div class="admin-denied">
         <h2><i class="fa fa-ban"></i> Access denied</h2>
         <p>
-          This console is reserved for the <strong>Owner</strong> of Darkside.ax. Your session
-          does not have the required role.
+          This console is reserved for the <strong>Owner</strong> and <strong>Admins</strong> of Darkside.
+          Your session does not have the required role.
         </p>
         <p>
           If you believe this is a mistake, contact the owner directly off‑site.
