@@ -249,6 +249,11 @@ a:hover {
   font-size: 13px;
 }
 
+#shoutbox-messages {
+  max-height: 220px;      /* adjust to taste */
+  overflow-y: auto;
+}
+
 .shoutbox-header i {
   color: #f5d76e;
   margin-right: 6px;

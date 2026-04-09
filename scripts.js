@@ -87,29 +87,56 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function renderShout(row) {
-    const line = document.createElement('div');
-    line.className = 'shout-line';
+  const line = document.createElement('div');
+  line.className = 'shout-line';
 
-    const userSpan = document.createElement('span');
-    userSpan.className = 'shout-user rank-member';
-    userSpan.textContent = row.username;
+  const userSpan = document.createElement('span');
+  userSpan.className = 'shout-user rank-member';
+  userSpan.textContent = row.username;
 
-    const timeSpan = document.createElement('span');
-    timeSpan.className = 'shout-time';
-    const d = new Date(row.created_at);
-    const hh = d.getHours().toString().padStart(2, '0');
-    const mm = d.getMinutes().toString().padStart(2, '0');
-    timeSpan.textContent = `${hh}:${mm}`;
+  const timeSpan = document.createElement('span');
+  timeSpan.className = 'shout-time';
+  const d = new Date(row.created_at);
+  const hh = d.getHours().toString().padStart(2, '0');
+  const mm = d.getMinutes().toString().padStart(2, '0');
+  timeSpan.textContent = `${hh}:${mm}`;
 
-    const textSpan = document.createElement('span');
-    textSpan.className = 'shout-text';
-    textSpan.textContent = row.message;
+  const textSpan = document.createElement('span');
+  textSpan.className = 'shout-text';
+  textSpan.textContent = row.message;
 
-    line.appendChild(userSpan);
-    line.appendChild(timeSpan);
-    line.appendChild(textSpan);
-    shoutBox.appendChild(line);
+  line.appendChild(userSpan);
+  line.appendChild(timeSpan);
+  line.appendChild(textSpan);
+
+  if (window.dsUserRole === 'admin') {
+    const delBtn = document.createElement('button');
+    delBtn.className = 'btn btn-small btn-outline shout-delete-btn';
+    delBtn.innerHTML = '<i class="fa fa-trash"></i>';
+    delBtn.style.marginLeft = '8px';
+
+    delBtn.addEventListener('click', async () => {
+      if (!confirm('Delete this shout?')) return;
+
+      try {
+        const { error } = await supabaseClient
+          .from('shouts')
+          .delete()
+          .eq('id', row.id);
+        if (error) throw error;
+
+        line.remove();
+      } catch (err) {
+        console.error('delete shout error', err);
+        alert('Failed to delete shout.');
+      }
+    });
+
+    line.appendChild(delBtn);
   }
+
+  shoutBox.appendChild(line);
+}
 
   async function loadShouts() {
     if (!shoutBox) return;
