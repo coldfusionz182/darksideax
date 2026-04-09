@@ -114,7 +114,7 @@ function renderAdminsTable(admins, currentUser) {
 }
 
 async function handleDemoteAdmin(userId, email) {
-  // no confirm dialog per your request
+  // no confirm dialog
   try {
     const current = await getCurrentUserWithRole();
     if (!current || (current.role !== 'owner' && current.role !== 'admin')) {
@@ -309,9 +309,20 @@ async function handleDeleteThread(threadId, title, currentUser) {
       return;
     }
 
+    // get Supabase access token for this session
+    const { data: sessionData } = await supabaseClient.auth.getSession();
+    const token = sessionData?.session?.access_token;
+    if (!token) {
+      alert('No token, please re‑login.');
+      return;
+    }
+
     const res = await fetch('/api/delete-thread', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
       body: JSON.stringify({ id: threadId }),
     });
 
@@ -339,7 +350,7 @@ async function initAdminPanel() {
   const userInfo = document.getElementById('admin-user-info');
   const btnAddAdmin = document.getElementById('btn-add-admin');
   const btnRefresh = document.getElementById('btn-refresh');
-  const btnCreateUser = document.getElementById('btn-create-user'); // can be unused now
+  const btnCreateUser = document.getElementById('btn-create-user'); // unused, safe to keep
   const threadsSearchInput = document.getElementById('threads-search-input');
   const btnThreadsRefresh = document.getElementById('btn-threads-refresh');
 
@@ -374,7 +385,6 @@ async function initAdminPanel() {
   if (btnRefresh)
     btnRefresh.addEventListener('click', () => refreshAdmins(current));
 
-  // Newest threads: search + refresh
   if (threadsSearchInput)
     threadsSearchInput.addEventListener('input', () => renderThreadsTable(current));
   if (btnThreadsRefresh)
