@@ -6,6 +6,32 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
   <link href="styles.css" rel="stylesheet">
+  <style>
+    .shoutbox-body {
+      max-height: 260px;
+      overflow-y: auto;
+      background: #05060b;
+      border-radius: 4px;
+      padding: 6px 8px;
+    }
+    .shout-line {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.83rem;
+      padding: 2px 0;
+    }
+    .shout-user {
+      font-weight: 600;
+    }
+    .shout-time {
+      color: #9ca3c9;
+      font-size: 0.75rem;
+    }
+    .shout-text {
+      color: #e5e7f0;
+    }
+  </style>
 </head>
 <body>
 
@@ -20,7 +46,6 @@
         </div>
       </div>
       <div class="header-right">
-        <!-- Only Rules link -->
         <ul class="top-links">
           <li><a href="#">Rules</a></li>
         </ul>
@@ -83,40 +108,33 @@
         </aside>
       </section>
 
-      <!-- SHOUTBOX -->
+      <!-- SHOUTBOX (Supabase-backed) -->
       <section class="shoutbox card-panel">
         <div class="shoutbox-header">
           <div class="shoutbox-title">
-            <i class="fa fa-bullhorn"></i> Shoutbox
+            <i class="fa fa-comments"></i> Shoutbox
           </div>
-          <div class="shoutbox-meta">
-            <span class="dot online"></span> 23 users chatting
-          </div>
-        </div>
-        <div class="shoutbox-body" id="shoutbox-messages">
-          <div class="shout-line">
-            <span class="shout-user rank-admin">Ghost</span>
-            <span class="shout-time">02:13</span>
-            <span class="shout-text">Welcome to Darkside.ax, keep it clean and respect the rules.</span>
-          </div>
-          <div class="shout-line">
-            <span class="shout-user rank-member">ProxyLord</span>
-            <span class="shout-time">02:12</span>
-            <span class="shout-text">Looking for solid ISP proxies, DM me your best providers.</span>
-          </div>
-          <div class="shout-line">
-            <span class="shout-user rank-member">uhq4</span>
-            <span class="shout-time">02:11</span>
-            <span class="shout-text">New doxing guide dropped in Hacking Tutorials.</span>
+          <div class="shoutbox-meta" id="shoutbox-meta">
+            <span class="dot online"></span> Live chat · login to post
           </div>
         </div>
-        <form class="shoutbox-form" onsubmit="return false;">
-          <input type="text" id="shout-input" class="shout-input" placeholder="Type your message and press Enter..." maxlength="180">
+
+        <div class="shoutbox-body" id="shoutbox-messages"></div>
+
+        <form class="shoutbox-form" id="shoutbox-form">
+          <input
+            type="text"
+            id="shout-input"
+            class="shout-input"
+            placeholder="Type your message and press Enter..."
+            maxlength="180"
+          >
           <button type="submit" class="btn btn-small btn-primary" id="shout-send">
             <i class="fa fa-paper-plane"></i>
           </button>
         </form>
-        <div class="shoutbox-footer">
+
+        <div class="shoutbox-footer" id="shoutbox-footer">
           Shoutbox is for quick chat only. No advertising, no support requests, no spam. Violations will result in mutes.
         </div>
       </section>
