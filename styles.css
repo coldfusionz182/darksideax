@@ -1,0 +1,695 @@
+/* Base */
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background-color: #101010;
+  color: #ddd;
+  font-family: "Roboto", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 14px;
+}
+
+a {
+  color: #6fb3ff;
+  text-decoration: none;
+}
+
+a:hover {
+  color: #ffffff;
+  text-decoration: underline;
+}
+
+.wrapper {
+  width: 100%;
+  max-width: 1180px;
+  margin: 0 auto;
+}
+
+/* Header */
+#header {
+  background: linear-gradient(135deg, #151515 0, #111 60%);
+  border-bottom: 1px solid #222;
+}
+
+.header-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 0;
+}
+
+.header-logo .logo-text {
+  font-size: 22px;
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: 0.5px;
+}
+
+.header-logo .logo-slogan {
+  display: block;
+  font-size: 11px;
+  color: #888;
+  margin-top: 2px;
+}
+
+.top-links {
+  list-style: none;
+  margin: 0 0 4px 0;
+  padding: 0;
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+.top-links li a {
+  font-size: 12px;
+  color: #aaa;
+}
+
+.top-links li a:hover {
+  color: #fff;
+}
+
+.auth-links {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+/* Buttons */
+.btn {
+  display: inline-block;
+  padding: 6px 14px;
+  border-radius: 3px;
+  font-size: 12px;
+  cursor: pointer;
+  border: 1px solid transparent;
+  background: none;
+}
+
+.btn-small {
+  padding: 4px 10px;
+  font-size: 12px;
+}
+
+.btn-primary {
+  background-color: #386b8d;
+  border-color: #386b8d;
+  color: #fff;
+}
+
+.btn-primary:hover {
+  background-color: #488db9;
+  border-color: #488db9;
+}
+
+.btn-outline {
+  background: transparent;
+  border-color: #555;
+  color: #ddd;
+}
+
+.btn-outline:hover {
+  border-color: #888;
+}
+
+/* Navbar */
+#navbar {
+  background-color: #1a1a1a;
+  border-bottom: 1px solid #222;
+}
+
+.navbar-inner {
+  padding: 8px 0;
+}
+
+.nav-main {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.nav-main li a {
+  font-size: 13px;
+  color: #bbb;
+  padding: 4px 0;
+}
+
+.nav-main li a.active,
+.nav-main li a:hover {
+  color: #ffffff;
+}
+
+/* Container */
+#container {
+  background-color: #101010;
+  padding: 15px 0 40px 0;
+}
+
+/* Card panels */
+.card-panel {
+  background-color: #151515;
+  border-radius: 6px;
+  border: 1px solid #222;
+  box-shadow: 0 0 14px rgba(0, 0, 0, 0.5);
+  padding: 10px 12px;
+}
+
+.card-title {
+  font-size: 13px;
+  margin: 0 0 6px 0;
+  color: #ddd;
+}
+
+/* Top index section */
+.index-top {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+  margin-bottom: 15px;
+}
+
+.welcome {
+  flex: 2;
+}
+
+.welcome h1 {
+  margin: 0 0 8px 0;
+  font-size: 20px;
+}
+
+.welcome p {
+  margin: 0 0 8px 0;
+  color: #aaa;
+}
+
+.welcome-highlights {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-size: 13px;
+  color: #c0c0c0;
+}
+
+.welcome-highlights li {
+  margin-bottom: 4px;
+}
+
+.welcome-highlights i {
+  color: #6fb3ff;
+  margin-right: 6px;
+}
+
+.stats-box {
+  flex: 1;
+  font-size: 12px;
+}
+
+.stat-line {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+.stat-label {
+  color: #888;
+}
+
+.stat-value {
+  color: #ddd;
+  font-weight: 600;
+}
+
+.stat-footnote {
+  margin-top: 6px;
+  font-size: 11px;
+  color: #777;
+}
+
+/* SHOUTBOX */
+.shoutbox {
+  margin-bottom: 20px;
+  background: radial-gradient(circle at top left, #1e2630 0, #141414 60%);
+}
+
+.shoutbox-header {
+  padding: 8px 10px;
+  border-bottom: 1px solid #242424;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(0, 0, 0, 0.35);
+  font-size: 13px;
+}
+
+.shoutbox-header i {
+  color: #f5d76e;
+  margin-right: 6px;
+}
+
+.shoutbox-meta {
+  font-size: 11px;
+  color: #aaa;
+}
+
+.dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  margin-right: 4px;
+}
+
+.dot.online {
+  background-color: #4cd964;
+}
+
+.shoutbox-body {
+  max-height: 180px;
+  overflow-y: auto;
+  padding: 8px 10px;
+  font-size: 12px;
+}
+
+.shout-line {
+  margin-bottom: 4px;
+}
+
+.shout-user {
+  font-weight: 700;
+  margin-right: 6px;
+}
+
+.shout-time {
+  color: #888;
+  font-size: 11px;
+  margin-right: 6px;
+}
+
+.shout-text {
+  color: #ddd;
+}
+
+.shoutbox-form {
+  display: flex;
+  padding: 8px 10px;
+  border-top: 1px solid #242424;
+  gap: 6px;
+}
+
+.shout-input {
+  flex: 1;
+  padding: 6px 8px;
+  border-radius: 3px;
+  border: 1px solid #333;
+  background-color: #111;
+  color: #ddd;
+  font-size: 12px;
+}
+
+.shout-input:focus {
+  outline: none;
+  border-color: #386b8d;
+}
+
+.shoutbox-footer {
+  border-top: 1px solid #242424;
+  padding: 6px 10px;
+  font-size: 11px;
+  color: #888;
+}
+
+/* Category / forum tables */
+.category {
+  margin-bottom: 22px;
+}
+
+.cat-header {
+  background-color: #181818;
+  border: 1px solid #222;
+  padding: 6px 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.cat-link {
+  font-size: 11px;
+  color: #888;
+}
+
+.cat-link:hover {
+  color: #fff;
+}
+
+.card-table {
+  padding: 0;
+}
+
+.forum-table {
+  width: 100%;
+  border-collapse: collapse;
+  background-color: #111;
+  border-radius: 0 0 6px 6px;
+  overflow: hidden;
+}
+
+.forum-table thead th {
+  background-color: #1b1b1b;
+  color: #aaa;
+  text-transform: uppercase;
+  font-size: 11px;
+  padding: 6px 8px;
+  border-bottom: 1px solid #222;
+}
+
+.forum-table tbody td {
+  padding: 8px 8px;
+  vertical-align: top;
+  border-bottom: 1px solid #191919;
+  font-size: 13px;
+}
+
+.forum-row:hover {
+  background-color: #161616;
+}
+
+.forum-row.alt {
+  background-color: #121212;
+}
+
+.col-icon {
+  width: 40px;
+  text-align: center;
+}
+
+.forum-icon {
+  width: 26px;
+  height: 26px;
+  border-radius: 4px;
+  background: linear-gradient(135deg, #386b8d, #264a63);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 14px;
+}
+
+.col-main {
+  width: 45%;
+}
+
+.forum-title a {
+  font-size: 14px;
+  font-weight: 700;
+  color: #e0e0e0;
+}
+
+.forum-desc {
+  font-size: 12px;
+  color: #999;
+  margin-top: 3px;
+}
+
+.col-stats {
+  width: 90px;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.stats-count {
+  font-size: 14px;
+  color: #e0e0e0;
+}
+
+.stats-desc {
+  font-size: 11px;
+  color: #888;
+}
+
+.col-last {
+  width: 240px;
+  font-size: 12px;
+}
+
+.last-title a {
+  color: #c8e0ff;
+}
+
+.last-meta {
+  color: #888;
+  margin-top: 3px;
+}
+
+/* Thread list specific */
+.thread-table .col-thread-main {
+  width: 50%;
+}
+
+.thread-table .thread-title a {
+  font-weight: 700;
+  color: #e0e0e0;
+}
+
+.thread-table .thread-title a:hover {
+  color: #ffffff;
+}
+
+.thread-meta {
+  font-size: 11px;
+  color: #888;
+  margin-top: 2px;
+}
+
+.thread-tag {
+  display: inline-block;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  margin-right: 6px;
+  background-color: #223646;
+  color: #9fd0ff;
+}
+
+/* Thread controls */
+.thread-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.thread-controls-left,
+.thread-controls-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.control-label {
+  font-size: 12px;
+  color: #aaa;
+}
+
+.control-select {
+  background-color: #141414;
+  color: #ddd;
+  border-radius: 3px;
+  border: 1px solid #333;
+  padding: 4px 8px;
+  font-size: 12px;
+}
+
+.control-select:focus {
+  outline: none;
+  border-color: #386b8d;
+}
+
+/* Ranks */
+.rank-admin {
+  color: #ff7675;
+}
+
+.rank-member {
+  color: #cbe2ff;
+}
+
+/* Bottom links/footer */
+.index-bottom {
+  margin-top: 25px;
+  font-size: 12px;
+  color: #888;
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+
+.index-links a {
+  color: #888;
+}
+
+.index-links a:hover {
+  color: #fff;
+}
+
+/* Login page */
+.login-body {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(circle at top, #1f1f1f 0, #101010 60%);
+}
+
+.login-wrapper {
+  width: 100%;
+  max-width: 420px;
+  padding: 20px;
+}
+
+.login-card {
+  background-color: #151515;
+  border: 1px solid #222;
+  border-radius: 6px;
+  color: #ddd;
+  box-shadow: 0 0 18px rgba(0, 0, 0, 0.65);
+}
+
+.login-card .card-body {
+  padding: 22px;
+}
+
+.login-logo {
+  text-align: center;
+  margin-bottom: 10px;
+}
+
+.login-logo .logo-text {
+  font-size: 20px;
+  font-weight: 700;
+  display: block;
+}
+
+.login-logo .logo-slogan {
+  font-size: 11px;
+  color: #888;
+}
+
+.login-card h3 {
+  margin-top: 5px;
+  margin-bottom: 15px;
+  text-align: center;
+}
+
+.form-label {
+  font-size: 12px;
+  color: #aaa;
+  display: block;
+  margin-top: 8px;
+  margin-bottom: 3px;
+}
+
+.form-control {
+  width: 100%;
+  padding: 7px 9px;
+  border-radius: 3px;
+  border: 1px solid #333;
+  background-color: #101010;
+  color: #ddd;
+  font-size: 13px;
+}
+
+.form-control:focus {
+  border-color: #386b8d;
+  outline: none;
+}
+
+.login-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+  margin-top: 8px;
+  margin-bottom: 10px;
+}
+
+.small-link {
+  font-size: 12px;
+}
+
+.login-card .btn-primary {
+  width: 100%;
+  margin-top: 4px;
+}
+
+.login-footer {
+  text-align: center;
+  margin-top: 12px;
+  font-size: 12px;
+  color: #aaa;
+}
+
+.login-back {
+  text-align: center;
+  margin-top: 10px;
+  font-size: 12px;
+}
+
+/* Card helper */
+.card {
+  border-radius: 6px;
+}
+.card-body {
+  padding: 15px;
+}
+
+/* Responsive */
+@media (max-width: 800px) {
+  .forum-table thead {
+    display: none;
+  }
+
+  .forum-table,
+  .forum-table tbody,
+  .forum-table tr,
+  .forum-table td {
+    display: block;
+    width: 100%;
+  }
+
+  .forum-row {
+    margin-bottom: 10px;
+  }
+
+  .col-icon {
+    float: left;
+    width: auto;
+  }
+
+  .col-main,
+  .col-thread-main {
+    margin-left: 40px;
+    margin-bottom: 8px;
+  }
+
+  .col-stats,
+  .col-last {
+    text-align: left;
+    width: 100%;
+  }
+
+  .index-top {
+    flex-direction: column;
+  }
+}

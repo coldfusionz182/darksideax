@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Your Profile • Darkside.ax</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+  <link href="styles.css" rel="stylesheet">
+  <style>
+    body {
+      background: radial-gradient(circle at top, #20263a 0, #0b0d12 55%, #050608 100%);
+    }
+
+    .profile-wrapper { margin-top: 10px; }
+
+    .profile-banner {
+      background: #11131f;
+      border-radius: 4px;
+      margin-bottom: 12px;
+      overflow: hidden;
+    }
+
+    .profile-banner-inner {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 18px 20px;
+      background: linear-gradient(90deg, #1c2140, #2e3bb0);
+    }
+
+    .profile-banner-left {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .profile-avatar-large {
+      width: 86px;
+      height: 86px;
+      border-radius: 4px;
+      background: #000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 40px;
+      color: #f9fafb;
+      box-shadow: 0 0 0 2px rgba(0,0,0,0.5);
+    }
+
+    .profile-username-big {
+      font-size: 1.4rem;
+      font-weight: 600;
+    }
+
+    .profile-rank-text {
+      font-size: 0.9rem;
+      color: #fbb4ff;
+    }
+
+    .profile-banner-right {
+      display: flex;
+      gap: 30px;
+    }
+
+    .profile-banner-stat {
+      text-align: center;
+    }
+
+    .banner-stat-number {
+      font-size: 1.2rem;
+      font-weight: 600;
+    }
+
+    .banner-stat-label {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      opacity: 0.8;
+    }
+
+    /* main grid */
+    .profile-grid {
+      display: grid;
+      grid-template-columns: 320px minmax(0, 1fr);
+      gap: 14px;
+    }
+
+    .profile-stat-cards {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .profile-stat-box {
+      background: #0c0e16;
+      border-radius: 4px;
+      padding: 12px;
+      text-align: center;
+    }
+
+    .profile-stat-number {
+      color: #36e26b;
+      font-size: 1.2rem;
+      font-weight: 600;
+    }
+
+    .profile-stat-label {
+      font-size: 0.8rem;
+      color: #9ca3c9;
+    }
+
+    .profile-info-card {
+      padding: 0;
+    }
+
+    .profile-info-header {
+      background: #2f3ec3;
+      padding: 8px 12px;
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+
+    .profile-info-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 6px 12px;
+      font-size: 0.83rem;
+      border-top: 1px solid #10121d;
+    }
+
+    .info-label { color: #9ca3c9; }
+    .info-value { color: #e5e7ff; }
+    .info-online { color: #4ade80; }
+
+    .profile-wide-card { margin-bottom: 10px; }
+
+    .profile-tab-header {
+      background: #2f3ec3;
+      padding: 8px 12px;
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+
+    .profile-stat-grid-wide {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      padding: 12px;
+      gap: 12px;
+      font-size: 0.85rem;
+      text-align: center;
+    }
+
+    .wide-stat-number {
+      font-size: 1.1rem;
+      font-weight: 600;
+    }
+
+    .wide-stat-label {
+      color: #9ca3c9;
+    }
+
+    .profile-groups-row {
+      padding: 12px;
+      display: flex;
+      gap: 10px;
+    }
+
+    .group-pill {
+      padding: 4px 12px;
+      border-radius: 3px;
+      font-size: 0.8rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .group-pill-main {
+      background: #e4418f;
+      color: #fff;
+    }
+
+    .group-pill-secondary {
+      background: #facc15;
+      color: #111827;
+    }
+
+    @media (max-width: 900px) {
+      .profile-grid {
+        grid-template-columns: 1fr;
+      }
+      .profile-banner-inner {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+      }
+      .profile-banner-right {
+        width: 100%;
+        justify-content: space-between;
+        flex-wrap: wrap;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div id="page">
+  <!-- HEADER -->
+  <header id="header">
+    <div class="wrapper header-inner">
+      <div class="header-left">
+        <div class="header-logo">
+          <span class="logo-text">Darkside.ax</span>
+          <span class="logo-slogan">Beyond the Limits</span>
+        </div>
+      </div>
+      <div class="header-right">
+        <ul class="top-links">
+          <li><a href="#">Rules</a></li>
+        </ul>
+        <div class="auth-links">
+          <a href="login.html" class="btn btn-small btn-outline">
+            <i class="fa fa-sign-in-alt"></i> Login
+          </a>
+          <a href="#" class="btn btn-small btn-primary">
+            <i class="fa fa-user-plus"></i> Register
+          </a>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- NAVBAR -->
+  <nav id="navbar">
+    <div class="wrapper navbar-inner">
+      <ul class="nav-main">
+        <li><a href="index.html"><i class="fa fa-home"></i> Home</a></li>
+        <li><a href="accounts.html"><i class="fa fa-user-tag"></i> Accounts</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <!-- CONTENT -->
+  <main id="container">
+    <div class="wrapper profile-wrapper">
+
+      <!-- Banner / header strip -->
+      <section class="profile-banner">
+        <div class="profile-banner-inner">
+          <div class="profile-banner-left">
+            <div class="profile-avatar-large" id="profile-avatar">
+              <i class="fa fa-user-ninja"></i>
+            </div>
+            <div>
+              <div class="profile-username-big" id="profile-username">Loading...</div>
+              <div class="profile-rank-text" id="profile-rank-text">Infinity</div>
+            </div>
+          </div>
+          <div class="profile-banner-right">
+            <div class="profile-banner-stat">
+              <div class="banner-stat-number" id="banner-threads">0</div>
+              <div class="banner-stat-label">Threads</div>
+            </div>
+            <div class="profile-banner-stat">
+              <div class="banner-stat-number" id="banner-posts">0</div>
+              <div class="banner-stat-label">Posts</div>
+            </div>
+            <div class="profile-banner-stat">
+              <div class="banner-stat-number" id="banner-vouches">0</div>
+              <div class="banner-stat-label">Vouches</div>
+            </div>
+            <div class="profile-banner-stat">
+              <div class="banner-stat-number" id="banner-credits">0</div>
+              <div class="banner-stat-label">Credits</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Below banner: two columns -->
+      <section class="profile-grid">
+        <!-- LEFT COLUMN -->
+        <div class="profile-col-left">
+          <!-- Reputation / likes cards -->
+          <div class="profile-stat-cards">
+            <div class="profile-stat-box">
+              <div class="profile-stat-number" id="profile-rep">99</div>
+              <div class="profile-stat-label">Reputation</div>
+            </div>
+            <div class="profile-stat-box">
+              <div class="profile-stat-number" id="profile-likes-total">0</div>
+              <div class="profile-stat-label">Likes</div>
+            </div>
+          </div>
+
+          <!-- Information panel -->
+          <section class="card-panel profile-info-card">
+            <header class="profile-info-header">
+              <span>Information</span>
+            </header>
+            <div class="profile-info-row">
+              <span class="info-label">Status:</span>
+              <span class="info-value info-online">Online</span>
+            </div>
+            <div class="profile-info-row">
+              <span class="info-label">UID:</span>
+              <span class="info-value" id="info-uid">–</span>
+            </div>
+            <div class="profile-info-row">
+              <span class="info-label">Registration Date:</span>
+              <span class="info-value" id="info-registered">–</span>
+            </div>
+            <div class="profile-info-row">
+              <span class="info-label">Last Visit:</span>
+              <span class="info-value" id="info-last-visit">–</span>
+            </div>
+            <div class="profile-info-row">
+              <span class="info-label">Likes Given:</span>
+              <span class="info-value" id="info-likes-given">0</span>
+            </div>
+            <div class="profile-info-row">
+              <span class="info-label">Referrals:</span>
+              <span class="info-value" id="info-referrals">0</span>
+            </div>
+            <div class="profile-info-row">
+              <span class="info-label">Reported Posts:</span>
+              <span class="info-value" id="info-reported">0</span>
+            </div>
+            <div class="profile-info-row">
+              <span class="info-label">Warning Level:</span>
+              <span class="info-value" id="info-warnings">0%</span>
+            </div>
+          </section>
+        </div>
+
+        <!-- RIGHT COLUMN -->
+        <div class="profile-col-right">
+          <!-- Statistics card -->
+          <section class="card-panel profile-wide-card">
+            <header class="profile-tab-header">
+              <span>Statistics</span>
+            </header>
+            <div class="profile-stat-grid-wide">
+              <div>
+                <div class="wide-stat-number" id="stat-threads">0</div>
+                <div class="wide-stat-label">Threads</div>
+              </div>
+              <div>
+                <div class="wide-stat-number" id="stat-replies">0</div>
+                <div class="wide-stat-label">Posts</div>
+              </div>
+              <div>
+                <div class="wide-stat-number" id="stat-vouches">0</div>
+                <div class="wide-stat-label">Vouches</div>
+              </div>
+              <div>
+                <div class="wide-stat-number" id="stat-credits">0</div>
+                <div class="wide-stat-label">Credits</div>
+              </div>
+            </div>
+          </section>
+
+          <!-- Groups card -->
+          <section class="card-panel profile-wide-card">
+            <header class="profile-tab-header">
+              <span>Groups</span>
+            </header>
+            <div class="profile-groups-row">
+              <span class="group-pill group-pill-main">∞ Infinity</span>
+              <span class="group-pill group-pill-secondary">
+                <i class="fa fa-trophy"></i> Contributor
+              </span>
+            </div>
+          </section>
+        </div>
+      </section>
+
+      <footer class="index-bottom" style="margin-top:20px;">
+        <div class="index-links">
+          <a href="accounts.html"><i class="fa fa-arrow-left"></i> Back to Accounts</a>
+        </div>
+        <div class="copyright">
+          &copy; 2026 Darkside.ax. Profile system powered by Supabase.
+        </div>
+      </footer>
+
+    </div>
+  </main>
+</div>
+
+<script type="module" src="scripts.js"></script>
+</body>
+</html>

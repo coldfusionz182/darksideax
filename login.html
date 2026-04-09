@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Login • Darkside.ax</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+  <link href="styles.css" rel="stylesheet">
+  <style>
+    body {
+      background: radial-gradient(circle at top, #20263a 0, #0b0d12 55%, #050608 100%);
+    }
+    .login-wrapper {
+      max-width: 420px;
+      margin: 60px auto;
+    }
+    .login-card {
+      background: rgba(10, 12, 20, 0.96);
+      border-radius: 6px;
+      box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.03), 0 20px 40px rgba(0, 0, 0, 0.6);
+      padding: 24px 26px 26px;
+      position: relative;
+      overflow: hidden;
+    }
+    .login-card::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, #5865f2, #00c6ff);
+      opacity: 0.08;
+      pointer-events: none;
+    }
+    .login-card-inner {
+      position: relative;
+      z-index: 1;
+    }
+    .login-title-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+    .login-title-row h1 {
+      font-size: 1.4rem;
+      margin: 0;
+    }
+    .login-subtitle {
+      font-size: 0.85rem;
+      color: #a0a4c0;
+      margin-bottom: 18px;
+    }
+    .login-input-group {
+      margin-bottom: 14px;
+    }
+    .login-input-group label {
+      display: block;
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #9ba3c1;
+      margin-bottom: 4px;
+    }
+    .login-input-group .input-text {
+      width: 100%;
+      background: #050811;
+      border: 1px solid #181c2d;
+      padding: 8px 10px;
+      border-radius: 4px;
+      color: #f5f6ff;
+      font-size: 0.9rem;
+    }
+    .login-input-group .input-text:focus {
+      outline: none;
+      border-color: #5865f2;
+      box-shadow: 0 0 0 1px rgba(88, 101, 242, 0.5);
+    }
+    .login-meta-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin: 4px 0 14px;
+      font-size: 0.8rem;
+      color: #8b90ab;
+    }
+    .login-meta-row a {
+      color: #c7cbff;
+      text-decoration: none;
+    }
+    .login-meta-row a:hover {
+      text-decoration: underline;
+    }
+    .btn-login {
+      width: 100%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 9px 12px;
+      border-radius: 4px;
+      border: none;
+      cursor: pointer;
+      background: linear-gradient(135deg, #5865f2, #00c6ff);
+      color: #fff;
+      font-size: 0.92rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+    .btn-login:disabled {
+      opacity: 0.6;
+      cursor: default;
+    }
+    .login-status {
+      margin-top: 10px;
+      font-size: 0.82rem;
+      min-height: 1.4em;
+    }
+    .login-status.error {
+      color: #ff6b81;
+    }
+    .login-status.ok {
+      color: #4fd17b;
+    }
+  </style>
+</head>
+<body>
+  <div id="page">
+    <header id="header">
+      <div class="wrapper header-inner">
+        <div class="header-left">
+          <div class="header-logo">
+            <span class="logo-text">Darkside.ax</span>
+            <span class="logo-slogan">Beyond the Limits</span>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main id="container">
+      <div class="wrapper">
+        <div class="login-wrapper">
+          <section class="login-card">
+            <div class="login-card-inner">
+              <div class="login-title-row">
+                <h1><i class="fa fa-user-shield"></i> Member Login</h1>
+                <span style="font-size:0.8rem;color:#9ca3c9;">Access the underground</span>
+              </div>
+              <p class="login-subtitle">
+                Sign in with your Darkside.ax account to post, share accounts, and manage your threads.
+              </p>
+
+              <form id="login-form">
+                <div class="login-input-group">
+                  <label for="login-email">Email</label>
+                  <input type="email" id="login-email" class="input-text" autocomplete="email" required>
+                </div>
+
+                <div class="login-input-group">
+                  <label for="login-password">Password</label>
+                  <input type="password" id="login-password" class="input-text" autocomplete="current-password" required>
+                </div>
+
+                <div class="login-meta-row">
+                  <span>New here? Registration is closed.</span>
+                  <a href="index.html"><i class="fa fa-arrow-left"></i> Back to forum</a>
+                </div>
+
+                <button type="submit" class="btn-login" id="login-submit">
+                  <i class="fa fa-sign-in-alt"></i>
+                  <span>Login</span>
+                </button>
+
+                <div id="login-status" class="login-status"></div>
+              </form>
+            </div>
+          </section>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script type="module">
+    import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+
+    const supabaseUrl = 'https://ffmkkwskvjvytdddevmm.supabase.co';
+    const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZmbWtrd3Nrdmp2eXRkZGRldm1tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU2NjU4OTUsImV4cCI6MjA5MTI0MTg5NX0.6Ogv0QubiShMDK1uDTN-QKFkmmE6Fv3Iu4WzBSSIT7M';
+
+    const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+    const form = document.getElementById('login-form');
+    const emailEl = document.getElementById('login-email');
+    const passEl = document.getElementById('login-password');
+    const statusEl = document.getElementById('login-status');
+    const submitBtn = document.getElementById('login-submit');
+
+    function setStatus(text, kind = '') {
+      statusEl.textContent = text;
+      statusEl.className = 'login-status' + (kind ? ' ' + kind : '');
+    }
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      submitBtn.disabled = true;
+      setStatus('Logging in...', '');
+
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: emailEl.value.trim(),
+        password: passEl.value
+      });
+
+      if (error) {
+        console.error(error);
+        setStatus('Login failed: ' + error.message, 'error');
+        submitBtn.disabled = false;
+        return;
+      }
+
+      const accessToken = data.session?.access_token;
+      if (accessToken) {
+        localStorage.setItem('ds_access_token', accessToken);
+      }
+
+      setStatus('Logged in, redirecting...', 'ok');
+      setTimeout(() => {
+        window.location.href = 'accounts.html';
+      }, 800);
+    });
+  </script>
+</body>
+</html>

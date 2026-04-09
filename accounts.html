@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Accounts • Darkside.ax</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+  <link href="styles.css" rel="stylesheet">
+</head>
+<body>
+
+<div id="page">
+  <!-- HEADER -->
+  <header id="header">
+    <div class="wrapper header-inner">
+      <div class="header-left">
+        <div class="header-logo">
+          <span class="logo-text">Darkside.ax</span>
+          <span class="logo-slogan">Beyond the Limits</span>
+        </div>
+      </div>
+      <div class="header-right">
+        <ul class="top-links">
+          <li><a href="#">Rules</a></li>
+        </ul>
+        <div class="auth-links">
+          <a href="login.html" class="btn btn-small btn-outline">
+            <i class="fa fa-sign-in-alt"></i> Login
+          </a>
+          <a href="#" class="btn btn-small btn-primary">
+            <i class="fa fa-user-plus"></i> Register
+          </a>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- NAVBAR -->
+  <nav id="navbar">
+    <div class="wrapper navbar-inner">
+      <ul class="nav-main">
+        <li><a href="index.html"><i class="fa fa-home"></i> Home</a></li>
+        <li><a href="accounts.html" class="active"><i class="fa fa-user-tag"></i> Accounts</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <!-- CONTENT -->
+  <main id="container">
+    <div class="wrapper">
+      <!-- Section header -->
+      <section class="index-top">
+        <div class="welcome card-panel">
+          <h1>Accounts</h1>
+          <p>Share your owned accounts with the community. Streaming, gaming, VPN, music and more.</p>
+        </div>
+      </section>
+
+      <!-- Controls -->
+      <section class="thread-controls card-panel">
+        <div class="thread-controls-left">
+          <a href="new-thread.html" class="btn btn-small btn-primary">
+            <i class="fa fa-plus"></i> New Thread
+          </a>
+        </div>
+        <div class="thread-controls-right">
+          <label class="control-label" for="sort-select">Sort by:</label>
+          <select id="sort-select" class="control-select">
+            <option value="newest">Creation date (newest)</option>
+            <option value="oldest">Creation date (oldest)</option>
+            <option value="replies">Replies (most)</option>
+          </select>
+        </div>
+      </section>
+
+      <!-- THREAD LIST -->
+      <section class="category">
+        <header class="cat-header">
+          <span>Accounts Threads</span>
+          <span class="cat-link">Share your owned accounts with the community.</span>
+        </header>
+        <div class="cat-body card-panel card-table">
+          <table class="forum-table thread-table">
+            <thead>
+              <tr>
+                <th class="col-icon"></th>
+                <th class="col-thread-main">Thread / Author</th>
+                <th class="col-stats">Replies</th>
+                <th class="col-stats">Views</th>
+                <th class="col-last">Last Post</th>
+              </tr>
+            </thead>
+            <tbody id="thread-list">
+              <!-- Filled via scripts.js -->
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- FOOTER -->
+      <footer class="index-bottom">
+        <div class="index-links">
+          <a href="#">Mark all threads read</a> ·
+          <a href="#">Forum Team</a> ·
+          <a href="#">Contact</a>
+        </div>
+        <div class="copyright">
+          &copy; 2026 Darkside.ax. Theme inspired by dark community forums.
+        </div>
+      </footer>
+    </div>
+  </main>
+</div>
+
+<script type="module" src="scripts.js"></script>
+</body>
+</html>

@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>New Thread • Accounts • Darkside.ax</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+  <link href="styles.css" rel="stylesheet">
+</head>
+<body>
+
+<div id="page">
+  <!-- HEADER -->
+  <header id="header">
+    <div class="wrapper header-inner">
+      <div class="header-left">
+        <div class="header-logo">
+          <span class="logo-text">Darkside.ax</span>
+          <span class="logo-slogan">Beyond the Limits</span>
+        </div>
+      </div>
+      <div class="header-right">
+        <ul class="top-links">
+          <li><a href="#">Rules</a></li>
+        </ul>
+        <div class="auth-links">
+          <a href="login.html" class="btn btn-small btn-outline">
+            <i class="fa fa-sign-in-alt"></i> Login
+          </a>
+          <a href="#" class="btn btn-small btn-primary">
+            <i class="fa fa-user-plus"></i> Register
+          </a>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- NAVBAR -->
+  <nav id="navbar">
+    <div class="wrapper navbar-inner">
+      <ul class="nav-main">
+        <li><a href="index.html"><i class="fa fa-home"></i> Home</a></li>
+        <li><a href="accounts.html" class="active"><i class="fa fa-user-tag"></i> Accounts</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <!-- CONTENT -->
+  <main id="container">
+    <div class="wrapper">
+      <section class="login-wrapper">
+        <div class="login-card card card-panel">
+          <div class="card-body">
+            <h3 class="text-center mb-4">Create New Accounts Thread</h3>
+
+            <form id="new-thread-form">
+              <label class="form-label">Title</label>
+              <input type="text" id="thread-title" class="form-control" required placeholder="[DROP] 500+ Disney+ UHD">
+
+              <label class="form-label">Tag</label>
+              <select id="thread-tag" class="form-control" required>
+                <option value="Streaming">Streaming</option>
+                <option value="Gaming">Gaming</option>
+                <option value="Music">Music</option>
+                <option value="VPN">VPN</option>
+                <option value="Other">Other</option>
+              </select>
+
+              <label class="form-label">Author</label>
+              <input type="text" id="thread-author" class="form-control" required placeholder="Your username">
+
+              <label class="form-label">Content</label>
+              <textarea id="thread-content" class="form-control" rows="5" required placeholder="Describe the accounts, rules, etc."></textarea>
+
+              <div class="login-row" style="margin-top: 12px;">
+                <div id="thread-status" class="small-link"></div>
+              </div>
+
+              <button type="submit" class="btn btn-primary" id="thread-submit">
+                <i class="fa fa-paper-plane"></i> Create Thread
+              </button>
+
+              <div class="login-back" style="margin-top: 12px;">
+                <a href="accounts.html"><i class="fa fa-arrow-left"></i> Back to Accounts</a>
+              </div>
+            </form>
+
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+</div>
+
+<script type="module" src="scripts.js"></script>
+</body>
+</html>

@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Darkside.ax - Beyond the Limits</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+  <link href="styles.css" rel="stylesheet">
+</head>
+<body>
+
+<div id="page">
+  <!-- HEADER -->
+  <header id="header">
+    <div class="wrapper header-inner">
+      <div class="header-left">
+        <div class="header-logo">
+          <span class="logo-text">Darkside.ax</span>
+          <span class="logo-slogan">Beyond the Limits</span>
+        </div>
+      </div>
+      <div class="header-right">
+        <!-- Only Rules link -->
+        <ul class="top-links">
+          <li><a href="#">Rules</a></li>
+        </ul>
+        <div class="auth-links">
+          <a href="login.html" class="btn btn-small btn-outline">
+            <i class="fa fa-sign-in-alt"></i> Login
+          </a>
+          <a href="#" class="btn btn-small btn-primary">
+            <i class="fa fa-user-plus"></i> Register
+          </a>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- NAVBAR -->
+  <nav id="navbar">
+    <div class="wrapper navbar-inner">
+      <ul class="nav-main">
+        <li><a href="index.html" class="active"><i class="fa fa-home"></i> Home</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <!-- CONTENT -->
+  <main id="container">
+    <div class="wrapper">
+      <!-- Top section: welcome + stats -->
+      <section class="index-top">
+        <div class="welcome card-panel">
+          <h1>Welcome to Darkside.ax</h1>
+          <p>Darkside.ax is a cracking and hacking forum with a focus on high quality hits, tools and tutorials. Share your work, learn from others and stay under the radar.</p>
+          <ul class="welcome-highlights">
+            <li><i class="fa fa-shield-alt"></i> Focused on quality configs, tools and hits</li>
+            <li><i class="fa fa-users"></i> Active underground community</li>
+            <li><i class="fa fa-comment-dots"></i> Live shoutbox for quick chat</li>
+          </ul>
+        </div>
+        <aside class="stats-box card-panel">
+          <h2 class="card-title"><i class="fa fa-chart-bar"></i> Forum Stats</h2>
+          <div class="stat-line">
+            <span class="stat-label">Members</span>
+            <span class="stat-value">12,345</span>
+          </div>
+          <div class="stat-line">
+            <span class="stat-label">Threads</span>
+            <span class="stat-value">54,321</span>
+          </div>
+          <div class="stat-line">
+            <span class="stat-label">Posts</span>
+            <span class="stat-value">987,654</span>
+          </div>
+          <div class="stat-line">
+            <span class="stat-label">Online</span>
+            <span class="stat-value">213</span>
+          </div>
+          <div class="stat-footnote">
+            42 members · 171 guests
+          </div>
+        </aside>
+      </section>
+
+      <!-- SHOUTBOX -->
+      <section class="shoutbox card-panel">
+        <div class="shoutbox-header">
+          <div class="shoutbox-title">
+            <i class="fa fa-bullhorn"></i> Shoutbox
+          </div>
+          <div class="shoutbox-meta">
+            <span class="dot online"></span> 23 users chatting
+          </div>
+        </div>
+        <div class="shoutbox-body" id="shoutbox-messages">
+          <div class="shout-line">
+            <span class="shout-user rank-admin">Ghost</span>
+            <span class="shout-time">02:13</span>
+            <span class="shout-text">Welcome to Darkside.ax, keep it clean and respect the rules.</span>
+          </div>
+          <div class="shout-line">
+            <span class="shout-user rank-member">ProxyLord</span>
+            <span class="shout-time">02:12</span>
+            <span class="shout-text">Looking for solid ISP proxies, DM me your best providers.</span>
+          </div>
+          <div class="shout-line">
+            <span class="shout-user rank-member">uhq4</span>
+            <span class="shout-time">02:11</span>
+            <span class="shout-text">New doxing guide dropped in Hacking Tutorials.</span>
+          </div>
+        </div>
+        <form class="shoutbox-form" onsubmit="return false;">
+          <input type="text" id="shout-input" class="shout-input" placeholder="Type your message and press Enter..." maxlength="180">
+          <button type="submit" class="btn btn-small btn-primary" id="shout-send">
+            <i class="fa fa-paper-plane"></i>
+          </button>
+        </form>
+        <div class="shoutbox-footer">
+          Shoutbox is for quick chat only. No advertising, no support requests, no spam. Violations will result in mutes.
+        </div>
+      </section>
+
+      <div id="forums"></div>
+
+      <!-- Cracking category -->
+      <section class="category">
+        <header class="cat-header">
+          <span>Cracking</span>
+          <a href="cracking.html" class="cat-link">View section &raquo;</a>
+        </header>
+        <div class="cat-body card-panel card-table">
+          <table class="forum-table">
+            <thead>
+              <tr>
+                <th class="col-forum" colspan="2">Forum</th>
+                <th class="col-stats">Posts</th>
+                <th class="col-stats">Threads</th>
+                <th class="col-last">Last Post</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr class="forum-row">
+                <td class="col-icon">
+                  <div class="forum-icon"><i class="fa fa-bolt"></i></div>
+                </td>
+                <td class="col-main">
+                  <div class="forum-title">
+                    <a href="cracking-general.html">Cracking General</a>
+                  </div>
+                  <div class="forum-desc">
+                    Discuss configs, methods, hits and general cracking talk.
+                  </div>
+                </td>
+                <td class="col-stats">
+                  <span class="stats-count">174,891</span><br>
+                  <span class="stats-desc">Posts</span>
+                </td>
+                <td class="col-stats">
+                  <span class="stats-count">3,594</span><br>
+                  <span class="stats-desc">Threads</span>
+                </td>
+                <td class="col-last">
+                  <div class="last-title">
+                    <a href="#">Best proxy setup for configs?</a>
+                  </div>
+                  <div class="last-meta">
+                    by <a href="#">Ghost</a> · 12 minutes ago
+                  </div>
+                </td>
+              </tr>
+
+              <tr class="forum-row alt">
+                <td class="col-icon">
+                  <div class="forum-icon"><i class="fa fa-list"></i></div>
+                </td>
+                <td class="col-main">
+                  <div class="forum-title">
+                    <a href="configs-wordlists.html">Configs &amp; Wordlists</a>
+                  </div>
+                  <div class="forum-desc">
+                    Share configs for checkers, combo lists and wordlists.
+                  </div>
+                </td>
+                <td class="col-stats">
+                  <span class="stats-count">315,671</span><br>
+                  <span class="stats-desc">Posts</span>
+                </td>
+                <td class="col-stats">
+                  <span class="stats-count">1,830</span><br>
+                  <span class="stats-desc">Threads</span>
+                </td>
+                <td class="col-last">
+                  <div class="last-title">
+                    <a href="#">Massive HQ combo dump</a>
+                  </div>
+                  <div class="last-meta">
+                    by <a href="#">ProxyLord</a> · 38 minutes ago
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Accounts category -->
+      <section class="category">
+        <header class="cat-header">
+          <span>Accounts</span>
+          <a href="accounts.html" class="cat-link">View section &raquo;</a>
+        </header>
+        <div class="cat-body card-panel card-table">
+          <table class="forum-table">
+            <thead>
+              <tr>
+                <th class="col-forum" colspan="2">Forum</th>
+                <th class="col-stats">Posts</th>
+                <th class="col-stats">Threads</th>
+                <th class="col-last">Last Post</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr class="forum-row">
+                <td class="col-icon">
+                  <div class="forum-icon"><i class="fa fa-user-tag"></i></div>
+                </td>
+                <td class="col-main">
+                  <div class="forum-title">
+                    <a href="accounts.html">Accounts</a>
+                  </div>
+                  <div class="forum-desc">
+                    Share your owned accounts with the community.
+                  </div>
+                </td>
+                <td class="col-stats">
+                  <span class="stats-count">339,651</span><br>
+                  <span class="stats-desc">Posts</span>
+                </td>
+                <td class="col-stats">
+                  <span class="stats-count">3,362</span><br>
+                  <span class="stats-desc">Threads</span>
+                </td>
+                <td class="col-last">
+                  <div class="last-title">
+                    <a href="#">Ultimate accounts dump thread</a>
+                  </div>
+                  <div class="last-meta">
+                    by <a href="#">uhq4</a> · 1 hour ago
+                  </div>
+                </td>
+              </tr>
+
+              <tr class="forum-row alt">
+                <td class="col-icon">
+                  <div class="forum-icon"><i class="fa fa-graduation-cap"></i></div>
+                </td>
+                <td class="col-main">
+                  <div class="forum-title">
+                    <a href="hacking-tutorials.html">Hacking Tutorials</a>
+                  </div>
+                  <div class="forum-desc">
+                    Guides, tutorials and writeups for beginners and advanced users.
+                  </div>
+                </td>
+                <td class="col-stats">
+                  <span class="stats-count">210,002</span><br>
+                  <span class="stats-desc">Posts</span>
+                </td>
+                <td class="col-stats">
+                  <span class="stats-count">1,909</span><br>
+                  <span class="stats-desc">Threads</span>
+                </td>
+                <td class="col-last">
+                  <div class="last-title">
+                    <a href="#">ALL AI JAILBREAK PROMPTS</a>
+                  </div>
+                  <div class="last-meta">
+                    by <a href="#">ruo888</a> · 59 minutes ago
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- FOOTER -->
+      <footer class="index-bottom">
+        <div class="index-links">
+          <a href="#">Mark all forums read</a> ·
+          <a href="#">Forum Team</a> ·
+          <a href="#">Contact</a>
+        </div>
+        <div class="copyright">
+          &copy; 2026 Darkside.ax
+        </div>
+      </footer>
+
+    </div>
+  </main>
+</div>
+
+<script type="module" src="scripts.js"></script>
+</body>
+</html>

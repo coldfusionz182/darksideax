@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Thread • Darkside.ax</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+  <link href="styles.css" rel="stylesheet">
+  <style>
+    .thread-header-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+    }
+    .thread-tag-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 3px 8px;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      background: rgba(88, 101, 242, 0.1);
+      color: #c3c7ff;
+    }
+    .thread-main-card {
+      display: grid;
+      grid-template-columns: 220px minmax(0, 1fr);
+      gap: 16px;
+    }
+    .thread-sidebar {
+      border-right: 1px solid #181c2d;
+      padding-right: 12px;
+      font-size: 0.85rem;
+      color: #9ca3c9;
+    }
+    .thread-sidebar .author-name {
+      font-size: 1.05rem;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+    .thread-sidebar .author-rank {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #ffd37a;
+      margin-bottom: 8px;
+    }
+    .thread-sidebar .author-meta {
+      margin-top: 8px;
+      font-size: 0.8rem;
+    }
+    .thread-post-body-main {
+      font-size: 0.95rem;
+      line-height: 1.6;
+      white-space: pre-wrap;
+    }
+    .thread-post-actions {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 14px;
+      font-size: 0.85rem;
+    }
+    .btn-like {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 10px;
+      border-radius: 999px;
+      border: 1px solid #303856;
+      background: #101321;
+      cursor: pointer;
+      font-size: 0.8rem;
+      color: #cbd0ff;
+    }
+    .btn-like.liked {
+      border-color: #22c55e;
+      background: rgba(34, 197, 94, 0.12);
+      color: #bbf7d0;
+    }
+    .reply-wrapper {
+      margin-top: 18px;
+    }
+    .reply-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+      font-size: 0.9rem;
+    }
+    .reply-form textarea {
+      width: 100%;
+      background: #050811;
+      border: 1px solid #181c2d;
+      border-radius: 4px;
+      padding: 8px 10px;
+      min-height: 80px;
+      resize: vertical;
+      color: #f5f6ff;
+      font-size: 0.9rem;
+    }
+    .reply-form textarea:focus {
+      outline: none;
+      border-color: #5865f2;
+      box-shadow: 0 0 0 1px rgba(88, 101, 242, 0.5);
+    }
+    .reply-actions {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 8px;
+      font-size: 0.8rem;
+    }
+    .replies-list {
+      margin-top: 16px;
+      border-top: 1px solid #181c2d;
+      padding-top: 10px;
+      font-size: 0.9rem;
+    }
+    .reply-item {
+      border-bottom: 1px solid #101321;
+      padding: 8px 0;
+    }
+    .reply-meta {
+      font-size: 0.78rem;
+      color: #a0a4c0;
+      margin-bottom: 4px;
+    }
+    .reply-body {
+      white-space: pre-wrap;
+    }
+
+    @media (max-width: 768px) {
+      .thread-main-card {
+        grid-template-columns: 1fr;
+      }
+      .thread-sidebar {
+        border-right: none;
+        border-bottom: 1px solid #181c2d;
+        padding-bottom: 10px;
+        margin-bottom: 10px;
+      }
+    }
+  </style>
+</head>
+<body>
+<div id="page">
+  <!-- HEADER -->
+  <header id="header">
+    <div class="wrapper header-inner">
+      <div class="header-left">
+        <div class="header-logo">
+          <span class="logo-text">Darkside.ax</span>
+          <span class="logo-slogan">Beyond the Limits</span>
+        </div>
+      </div>
+      <div class="header-right">
+        <ul class="top-links">
+          <li><a href="#">Rules</a></li>
+        </ul>
+        <div class="auth-links">
+          <a href="login.html" class="btn btn-small btn-outline">
+            <i class="fa fa-sign-in-alt"></i> Login
+          </a>
+          <a href="#" class="btn btn-small btn-primary">
+            <i class="fa fa-user-plus"></i> Register
+          </a>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- NAVBAR -->
+  <nav id="navbar">
+    <div class="wrapper navbar-inner">
+      <ul class="nav-main">
+        <li><a href="index.html"><i class="fa fa-home"></i> Home</a></li>
+        <li><a href="accounts.html" class="active"><i class="fa fa-user-tag"></i> Accounts</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <!-- CONTENT -->
+  <main id="container">
+    <div class="wrapper">
+      <section class="category">
+        <header class="cat-header">
+          <div class="thread-header-bar">
+            <span id="thread-title-display">Loading thread...</span>
+            <span class="thread-tag-pill" id="thread-tag-pill" style="display:none;">
+              <i class="fa fa-tag"></i><span id="thread-tag-text"></span>
+            </span>
+          </div>
+          <span class="cat-link" id="thread-meta-display"></span>
+        </header>
+
+        <div class="cat-body card-panel">
+          <div class="thread-main-card">
+            <aside class="thread-sidebar">
+              <div class="author-name" id="thread-author-name">Author</div>
+              <div class="author-rank">Thread Owner</div>
+              <div class="author-meta">
+                <div id="thread-created-at"></div>
+              </div>
+            </aside>
+
+            <div>
+              <article id="thread-content-display" class="thread-post-body-main">
+                <!-- Filled via scripts.js -->
+              </article>
+
+              <div class="thread-post-actions">
+                <button class="btn-like" id="thread-like-btn">
+                  <i class="fa fa-heart"></i>
+                  <span id="thread-like-text">Like</span>
+                </button>
+                <span id="thread-like-count">0 likes</span>
+              </div>
+
+              <div class="reply-wrapper">
+                <div class="reply-header">
+                  <span><i class="fa fa-comments"></i> Replies</span>
+                  <span id="reply-info-text">Login to leave a reply.</span>
+                </div>
+
+                <form id="reply-form" class="reply-form">
+                  <textarea id="reply-text" placeholder="Write your reply..."></textarea>
+                  <div class="reply-actions">
+                    <span id="reply-status"></span>
+                    <button type="submit" class="btn btn-primary btn-small" id="reply-submit">
+                      <i class="fa fa-paper-plane"></i> Post Reply
+                    </button>
+                  </div>
+                </form>
+
+                <div class="replies-list" id="replies-list">
+                  <!-- later: replies will render here -->
+                  <div class="reply-item" id="replies-placeholder">
+                    <div class="reply-meta">No replies yet. Be the first to drop one.</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card-panel" style="margin-top:15px;">
+            <a href="accounts.html"><i class="fa fa-arrow-left"></i> Back to Accounts</a>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+</div>
+
+<script type="module" src="scripts.js"></script>
+</body>
+</html>
