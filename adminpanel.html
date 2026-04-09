@@ -101,8 +101,8 @@
 
     .admin-logo-main span {
       background: linear-gradient(135deg, #ffffff, #7de4ff);
-      -webkit-background-clip: text; /* for WebKit */
-      background-clip: text;         /* standard */
+      -webkit-background-clip: text;
+      background-clip: text;
       color: transparent;
     }
 
@@ -314,13 +314,6 @@
       color: var(--admin-success);
     }
 
-    .admin-stat-icon {
-      margin-left: auto;
-      font-size: 1rem;
-      opacity: 0.65;
-      color: var(--admin-accent);
-    }
-
     /* MAIN CARD */
     .admin-card {
       margin-top: 6px;
@@ -438,7 +431,6 @@
       border-color: rgba(255, 255, 255, 0.18);
     }
 
-    /* TABLE */
     .admin-table-wrap {
       margin-top: 6px;
       border-radius: var(--admin-radius-md);
@@ -551,7 +543,6 @@
       color: var(--admin-text-muted);
     }
 
-    /* ACCESS DENIED STATE */
     .admin-denied {
       margin-top: 40px;
       text-align: center;
@@ -588,67 +579,27 @@
       color: var(--admin-text-muted);
     }
 
-    /* RESPONSIVE */
     @media (max-width: 900px) {
-      .admin-wrapper {
-        grid-template-columns: 70px minmax(0, 1fr);
-      }
-
-      .admin-sidebar {
-        padding-inline: 10px;
-      }
-
+      .admin-wrapper { grid-template-columns: 70px minmax(0, 1fr); }
+      .admin-sidebar { padding-inline: 10px; }
       .admin-logo-sub,
       .admin-logo-pill,
       .admin-menu span,
-      .admin-footer {
-        display: none;
-      }
-
-      .admin-menu li a {
-        justify-content: center;
-        padding-inline: 0;
-      }
-
-      .admin-main {
-        padding-inline: 14px;
-      }
-
-      .admin-stats-row {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-      }
+      .admin-footer { display: none; }
+      .admin-menu li a { justify-content: center; padding-inline: 0; }
+      .admin-main { padding-inline: 14px; }
+      .admin-stats-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     }
 
     @media (max-width: 640px) {
-      .admin-wrapper {
-        grid-template-columns: 1fr;
-      }
-
-      .admin-sidebar {
-        display: none;
-      }
-
-      .admin-main {
-        padding: 14px 12px 18px;
-      }
-
-      .admin-header {
-        flex-direction: column;
-        align-items: flex-start;
-      }
-
-      .admin-stats-row {
-        grid-template-columns: 1fr;
-      }
-
-      table.admin-table {
-        font-size: 0.74rem;
-      }
-
+      .admin-wrapper { grid-template-columns: 1fr; }
+      .admin-sidebar { display: none; }
+      .admin-main { padding: 14px 12px 18px; }
+      .admin-header { flex-direction: column; align-items: flex-start; }
+      .admin-stats-row { grid-template-columns: 1fr; }
+      table.admin-table { font-size: 0.74rem; }
       table.admin-table th,
-      table.admin-table td {
-        padding-inline: 6px;
-      }
+      table.admin-table td { padding-inline: 6px; }
     }
   </style>
 </head>
@@ -709,7 +660,6 @@
           OWNER SESSION
         </div>
         <div class="admin-user-meta" id="admin-user-info">
-          <!-- filled by JS: current owner email + role -->
           <span><i class="fa fa-user-circle"></i> <strong>Loading…</strong></span>
           <span class="badge-role">OWNER</span>
         </div>
@@ -735,7 +685,7 @@
       </article>
     </section>
 
-    <!-- Main admins card -->
+    <!-- Admin roster card -->
     <section class="admin-card" id="admin-card">
       <div class="admin-card-header">
         <div class="admin-card-title-wrap">
@@ -774,7 +724,6 @@
           </tr>
           </thead>
           <tbody id="admins-tbody">
-          <!-- JS will render rows here -->
           <tr>
             <td colspan="4" class="admin-empty">
               Loading admin list…
@@ -785,7 +734,65 @@
       </div>
     </section>
 
-    <!-- Access denied container, filled by JS if user is not owner -->
+    <!-- Create user card -->
+    <section class="admin-card" id="admin-create-user-card">
+      <div class="admin-card-header">
+        <div class="admin-card-title-wrap">
+          <div class="admin-card-title">
+            <i class="fa fa-user-plus"></i>
+            Create user
+          </div>
+          <div class="admin-card-sub">
+            Create a new account and optionally assign an initial role. This calls a secure backend endpoint.
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex; flex-direction:column; gap:10px; max-width:420px;">
+        <div style="display:flex; flex-direction:column; gap:4px;">
+          <label for="create-email" style="font-size:0.8rem;">Email</label>
+          <input
+            type="email"
+            id="create-email"
+            style="padding:6px 10px; border-radius:999px; border:1px solid rgba(255,255,255,0.08); background:#05060a; color:#fff; font-size:0.8rem;"
+            placeholder="user@example.com"
+          >
+        </div>
+
+        <div style="display:flex; flex-direction:column; gap:4px;">
+          <label for="create-password" style="font-size:0.8rem;">Password</label>
+          <input
+            type="password"
+            id="create-password"
+            style="padding:6px 10px; border-radius:999px; border:1px solid rgba(255,255,255,0.08); background:#05060a; color:#fff; font-size:0.8rem;"
+            placeholder="Initial password"
+          >
+        </div>
+
+        <div style="display:flex; flex-direction:column; gap:0.4rem;">
+          <label for="create-role" style="font-size:0.8rem;">Initial role</label>
+          <select
+            id="create-role"
+            style="padding:6px 10px; border-radius:999px; border:1px solid rgba(255,255,255,0.08); background:#05060a; color:#fff; font-size:0.8rem;"
+          >
+            <option value="user">User</option>
+            <option value="admin">Admin</option>
+          </select>
+        </div>
+
+        <div style="display:flex; align-items:center; gap:8px; margin-top:4px;">
+          <button id="btn-create-user" class="btn-owner-primary">
+            <i class="fa fa-check"></i>
+            Create
+          </button>
+          <span id="create-user-status" style="font-size:0.78rem; color:var(--admin-text-muted);">
+            Enter email and password, then click Create.
+          </span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Access denied -->
     <section id="admin-access-denied" style="display:none;">
       <div class="admin-denied">
         <h2><i class="fa fa-ban"></i> Access denied</h2>
@@ -803,7 +810,6 @@
   </main>
 </div>
 
-<!-- Supabase + logic for fetching user & admins -->
 <script type="module" src="adminpanel.js"></script>
 </body>
 </html>

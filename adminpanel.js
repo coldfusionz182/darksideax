@@ -1,10 +1,8 @@
 // adminpanel.js
-
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { SUPABASE_ANON_KEY } from './keys.js';
 
 const SUPABASE_URL = 'https://ffmkkwskvjvytdddevmm.supabase.co';
-const SUPABASE_ANON_KEY =
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZmbWtrd3Nrdmp2eXRkZGRldm1tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU2NjU4OTUsImV4cCI6MjA5MTI0MTg5NX0.6Ogv0QubiShMDK1uDTN-QKFkmmE6Fv3Iu4WzBSSIT7M';
 
 const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -56,7 +54,6 @@ function renderAdminsTable(admins) {
   const statAdminCount = document.getElementById('stat-admin-count');
 
   if (!tbody) return;
-
   tbody.innerHTML = '';
 
   if (!admins.length) {
@@ -73,11 +70,13 @@ function renderAdminsTable(admins) {
 
       const tdEmail = document.createElement('td');
       tdEmail.textContent = a.email || '(no email)';
+
       const tdRole = document.createElement('td');
       tdRole.innerHTML =
         a.role === 'owner'
           ? `<span class="badge-role-owner">OWNER</span>`
           : `<span class="badge-role-admin">ADMIN</span>`;
+
       const tdUid = document.createElement('td');
       tdUid.textContent = a.id;
 
@@ -143,7 +142,7 @@ async function handleAddAdmin() {
 
     if (error) throw error;
     if (!data) {
-      alert('No entry in public.users for that email. Insert it first.');
+      alert('No entry in public.users for that email. Create the user first.');
       return;
     }
 
@@ -170,12 +169,58 @@ async function refreshAdmins() {
   renderAdminsTable(admins);
 }
 
+// --- Create user via backend endpoint ---
+async function handleCreateUser() {
+  const emailInput = document.getElementById('create-email');
+  const passInput = document.getElementById('create-password');
+  const roleSelect = document.getElementById('create-role');
+  const statusEl = document.getElementById('create-user-status');
+
+  const email = emailInput.value.trim();
+  const password = passInput.value.trim();
+  const role = roleSelect.value;
+
+  if (!email || !password) {
+    statusEl.textContent = 'Email and password are required.';
+    return;
+  }
+
+  statusEl.textContent = 'Creating user...';
+
+  const { data: sessionData } = await supabaseClient.auth.getSession();
+  const token = sessionData?.session?.access_token || null;
+
+  try {
+    const res = await fetch('/api/create-user', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password, role, token }),
+    });
+
+    const json = await res.json();
+    if (!res.ok || !json.success) {
+      throw new Error(json.error || 'Failed to create user');
+    }
+
+    statusEl.textContent = `User created: ${json.user.email} (${json.user.role})`;
+    emailInput.value = '';
+    passInput.value = '';
+    roleSelect.value = 'user';
+
+    await refreshAdmins();
+  } catch (err) {
+    console.error('create user error', err);
+    statusEl.textContent = 'Error: ' + err.message;
+  }
+}
+
 async function initAdminPanel() {
   const main = document.querySelector('.admin-main');
   const deniedSection = document.getElementById('admin-access-denied');
   const userInfo = document.getElementById('admin-user-info');
   const btnAddAdmin = document.getElementById('btn-add-admin');
   const btnRefresh = document.getElementById('btn-refresh');
+  const btnCreateUser = document.getElementById('btn-create-user');
 
   const current = await getCurrentUserWithRole();
   console.log('current user for adminpanel', current);
@@ -195,12 +240,9 @@ async function initAdminPanel() {
     `;
   }
 
-  if (btnAddAdmin) {
-    btnAddAdmin.addEventListener('click', handleAddAdmin);
-  }
-  if (btnRefresh) {
-    btnRefresh.addEventListener('click', refreshAdmins);
-  }
+  if (btnAddAdmin) btnAddAdmin.addEventListener('click', handleAddAdmin);
+  if (btnRefresh) btnRefresh.addEventListener('click', refreshAdmins);
+  if (btnCreateUser) btnCreateUser.addEventListener('click', handleCreateUser);
 
   await refreshAdmins();
 }
