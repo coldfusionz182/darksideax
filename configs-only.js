@@ -1,6 +1,4 @@
 // configs-only.js
-// Fetch only threads where section = 'configs' via /api/list-threads
-
 const threadListEl = document.getElementById('thread-list');
 const sortSelectEl = document.getElementById('sort-select');
 
@@ -9,14 +7,23 @@ async function loadConfigsThreads() {
 
   const sort = sortSelectEl?.value || 'newest';
 
-  // base API call – already filtered by section=configs on the server
-  let url = '/api/list-threads?section=configs&limit=50';
-
-  // (optional) client-side sort handling if you want to change order locally later
-  const resp = await fetch(url);
+  const resp = await fetch('/api/list-threads?section=configs&limit=50');
   const data = await resp.json();
 
-  if (!Array.isArray(data) || data.length === 0) {
+  if (!Array.isArray(data)) {
+    threadListEl.innerHTML = `
+      <tr class="thread-row">
+        <td colspan="4">Failed to load config threads.</td>
+      </tr>`;
+    return;
+  }
+
+  // HARD filter: only rows whose section === 'configs'
+  const configsOnly = data.filter(
+    (row) => typeof row.section === 'string' && row.section.toLowerCase() === 'configs'
+  );
+
+  if (configsOnly.length === 0) {
     threadListEl.innerHTML = `
       <tr class="thread-row">
         <td colspan="4">No config threads yet. Be the first to post!</td>
@@ -24,19 +31,17 @@ async function loadConfigsThreads() {
     return;
   }
 
-  // if you want sort options to affect order, you can sort `data` here:
   if (sort === 'oldest') {
-    data.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+    configsOnly.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
   } else if (sort === 'replies') {
-    data.sort((a, b) => (b.replies ?? 0) - (a.replies ?? 0));
+    configsOnly.sort((a, b) => (b.replies ?? 0) - (a.replies ?? 0));
   } else {
-    // newest already from API, but we can enforce:
-    data.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+    configsOnly.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
   }
 
   threadListEl.innerHTML = '';
 
-  data.forEach((row, idx) => {
+  configsOnly.forEach((row, idx) => {
     const tr = document.createElement('tr');
     tr.className = 'thread-row' + (idx % 2 === 1 ? ' alt' : '');
 
@@ -78,10 +83,8 @@ async function loadConfigsThreads() {
   });
 }
 
-// reload on sort change
 if (sortSelectEl) {
   sortSelectEl.addEventListener('change', loadConfigsThreads);
 }
 
-// initial load
 loadConfigsThreads();

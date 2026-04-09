@@ -7,14 +7,23 @@ async function loadAccountThreads() {
 
   const sort = sortSelectEl?.value || 'newest';
 
-  // base URL filtered to accounts
-  let url = '/api/list-threads?section=accounts&limit=50';
-
-  // you can also use sort on the client if needed; server currently sorts by created_at desc
-  const resp = await fetch(url);
+  const resp = await fetch('/api/list-threads?section=accounts&limit=50');
   const data = await resp.json();
 
-  if (!Array.isArray(data) || data.length === 0) {
+  if (!Array.isArray(data)) {
+    threadListEl.innerHTML = `
+      <tr class="thread-row">
+        <td colspan="4">Failed to load account threads.</td>
+      </tr>`;
+    return;
+  }
+
+  // HARD filter: only rows whose section === 'accounts'
+  const accountsOnly = data.filter(
+    (row) => typeof row.section === 'string' && row.section.toLowerCase() === 'accounts'
+  );
+
+  if (accountsOnly.length === 0) {
     threadListEl.innerHTML = `
       <tr class="thread-row">
         <td colspan="4">No account threads yet. Be the first to post!</td>
@@ -22,9 +31,17 @@ async function loadAccountThreads() {
     return;
   }
 
+  if (sort === 'oldest') {
+    accountsOnly.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+  } else if (sort === 'replies') {
+    accountsOnly.sort((a, b) => (b.replies ?? 0) - (a.replies ?? 0));
+  } else {
+    accountsOnly.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+  }
+
   threadListEl.innerHTML = '';
 
-  data.forEach((row, idx) => {
+  accountsOnly.forEach((row, idx) => {
     const tr = document.createElement('tr');
     tr.className = 'thread-row' + (idx % 2 === 1 ? ' alt' : '');
 
@@ -66,10 +83,8 @@ async function loadAccountThreads() {
   });
 }
 
-// optional: re‑load on sort change
 if (sortSelectEl) {
   sortSelectEl.addEventListener('change', loadAccountThreads);
 }
 
-// initial load
 loadAccountThreads();
