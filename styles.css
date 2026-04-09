@@ -534,6 +534,29 @@ a:hover {
   width: auto;
 }
 
+/* Container behaves like the old Login button */
+.user-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 3px;
+  background: #111827;
+  border: 1px solid #374151;
+  cursor: pointer;
+}
+
+/* Avatar inside the pill – same height as button */
+.user-avatar-header {
+  width: 24px;
+  height: 24px;
+  min-width: 24px;
+  min-height: 24px;
+  border-radius: 3px;
+  object-fit: cover;
+  display: block;
+}
+
 .thread-table .col-stats {
   width: 80px;          /* compact like old layout */
   text-align: center;
