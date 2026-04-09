@@ -6,6 +6,174 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
   <link href="styles.css" rel="stylesheet">
+  <style>
+    body {
+      background: radial-gradient(circle at top, #151826 0, #05060a 55%);
+    }
+
+    .new-thread-shell {
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    .new-thread-card {
+      background: #10131c;
+      border-radius: 8px;
+      border: 1px solid #22263a;
+      box-shadow: 0 0 22px rgba(0,0,0,0.75);
+    }
+
+    .new-thread-card .card-body { padding: 0; }
+
+    .editor-header-bar {
+      background: linear-gradient(90deg,#5865f2,#7c3aed);
+      color: #fff;
+      padding: 10px 14px;
+      border-radius: 8px 8px 0 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.9rem;
+    }
+
+    .editor-header-left {
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      font-size: 0.85rem;
+    }
+
+    .editor-header-user {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.8rem;
+    }
+
+    .header-username { font-weight: 600; }
+
+    .user-rank-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 3px 8px;
+      border-radius: 999px;
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      border: 1px solid transparent;
+    }
+
+    .user-rank-badge i { font-size: 0.7rem; }
+
+    .rank-admin {
+      background: rgba(248,113,113,0.18);
+      color: #fee2e2;
+      border-color: rgba(248,113,113,0.7);
+    }
+
+    .rank-member {
+      background: rgba(96,165,250,0.18);
+      color: #bfdbfe;
+      border-color: rgba(96,165,250,0.7);
+    }
+
+    .editor-container {
+      border-radius: 0 0 8px 8px;
+      border-top: 1px solid #262a3d;
+      background: #05070c;
+    }
+
+    .editor-row-label {
+      padding: 7px 12px;
+      border-bottom: 1px solid #191b26;
+      font-size: 0.8rem;
+      background: #141722;
+      color: #d1d5ff;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .editor-input {
+      width: 100%;
+      padding: 8px 12px;
+      border: none;
+      border-bottom: 1px solid #191b26;
+      background: #10131c;
+      color: #e5e7ff;
+      font-size: 0.9rem;
+    }
+
+    .editor-input::placeholder { color: #6b7280; }
+    .editor-input:focus { outline: none; }
+
+    .meta-row {
+      padding: 8px 12px;
+      border-bottom: 1px solid #191b26;
+      background: #0c0f18;
+    }
+
+    .meta-row .form-label {
+      font-size: 0.75rem;
+      color: #9ca3c9;
+    }
+
+    .editor-toolbar {
+      padding: 6px 8px;
+      border-top: 1px solid #191b26;
+      border-bottom: 1px solid #191b26;
+      background: #10131c;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+    }
+
+    .toolbar-btn {
+      background: #171a26;
+      border: 1px solid #262a3d;
+      color: #cbd0ff;
+      padding: 3px 7px;
+      border-radius: 3px;
+      font-size: 0.78rem;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .toolbar-btn:hover { background: #22263a; }
+
+    .toolbar-btn i { font-size: 0.75rem; }
+
+    .editor-textarea {
+      width: 100%;
+      min-height: 260px;
+      border: none;
+      resize: vertical;
+      background: #05070d;
+      color: #e5e7ff;
+      font-size: 0.9rem;
+      line-height: 1.55;
+      padding: 8px 12px 12px;
+      font-family: "Roboto Mono", Consolas, monospace;
+    }
+
+    .editor-textarea:focus { outline: none; }
+
+    .hint-line {
+      font-size: 0.78rem;
+      color: #9ca3c9;
+      padding: 6px 12px 0;
+    }
+
+    .bottom-actions {
+      padding: 10px 12px 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.8rem;
+    }
+  </style>
 </head>
 <body>
 
@@ -48,50 +216,99 @@
   <!-- CONTENT -->
   <main id="container">
     <div class="wrapper">
-      <section class="login-wrapper">
-        <div class="login-card card card-panel">
+      <div class="new-thread-shell">
+        <div class="new-thread-card">
           <div class="card-body">
-            <h3 class="text-center mb-4">Create New Accounts Thread</h3>
+
+            <div class="editor-header-bar">
+              <div class="editor-header-left">Post a new Thread</div>
+              <div class="editor-header-user">
+                <span class="header-username" id="user-name-display">User</span>
+                <span class="user-rank-badge rank-member" id="user-rank-badge">
+                  <i class="fa fa-user"></i>
+                  <span id="user-rank-text">Member</span>
+                </span>
+              </div>
+            </div>
 
             <form id="new-thread-form">
-              <label class="form-label">Title</label>
-              <input type="text" id="thread-title" class="form-control" required placeholder="[DROP] 500+ Disney+ UHD">
+              <div class="editor-container">
 
-              <label class="form-label">Tag</label>
-              <select id="thread-tag" class="form-control" required>
-                <option value="Streaming">Streaming</option>
-                <option value="Gaming">Gaming</option>
-                <option value="Music">Music</option>
-                <option value="VPN">VPN</option>
-                <option value="Other">Other</option>
-              </select>
+                <div class="editor-row-label">
+                  <span>Subject</span>
+                </div>
+                <input
+                  type="text"
+                  id="thread-title"
+                  class="editor-input"
+                  required
+                  placeholder="Enter thread title..."
+                >
 
-              <label class="form-label">Author</label>
-              <input type="text" id="thread-author" class="form-control" required placeholder="Your username">
+                <div class="meta-row">
+                  <label class="form-label" for="thread-tag">Tag</label>
+                  <select id="thread-tag" class="form-control" required>
+                    <option value="Streaming">Streaming</option>
+                    <option value="Gaming">Gaming</option>
+                    <option value="Music">Music</option>
+                    <option value="VPN">VPN</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
 
-              <label class="form-label">Content</label>
-              <textarea id="thread-content" class="form-control" rows="5" required placeholder="Describe the accounts, rules, etc."></textarea>
+                <div class="editor-row-label">
+                  <span>Message</span>
+                  <span style="font-size:0.75rem;color:#9ca3c9;">Highlight text then click Hide.</span>
+                </div>
 
-              <div class="login-row" style="margin-top: 12px;">
-                <div id="thread-status" class="small-link"></div>
+                <div class="editor-toolbar">
+                  <button type="button" class="toolbar-btn" data-format="bold">
+                    <i class="fa fa-bold"></i>
+                  </button>
+                  <button type="button" class="toolbar-btn" data-format="italic">
+                    <i class="fa fa-italic"></i>
+                  </button>
+                  <button type="button" class="toolbar-btn" data-format="underline">
+                    <i class="fa fa-underline"></i>
+                  </button>
+                  <button type="button" class="toolbar-btn" id="btn-hide-text">
+                    <i class="fa fa-user-secret"></i> Hide text
+                  </button>
+                </div>
+
+                <textarea
+                  id="thread-content"
+                  class="editor-textarea"
+                  required
+                  placeholder="Describe the accounts, rules, warranty, how to redeem, etc.&#10;&#10;Highlight any sensitive part (combos, tokens, keys) and click 'Hide text' to wrap it in [HIDDEN] tags."
+                ></textarea>
               </div>
 
-              <button type="submit" class="btn btn-primary" id="thread-submit">
-                <i class="fa fa-paper-plane"></i> Create Thread
-              </button>
+              <div class="hint-line">
+                Hidden text appears as <code>[HIDDEN]secret[/HIDDEN]</code> here. On the thread page you gate it by rank / replies.
+              </div>
 
-              <div class="login-back" style="margin-top: 12px;">
-                <a href="accounts.html"><i class="fa fa-arrow-left"></i> Back to Accounts</a>
+              <div class="bottom-actions">
+                <span id="thread-status" class="small-link"></span>
+                <div>
+                  <button type="submit" class="btn btn-primary" id="thread-submit">
+                    <i class="fa fa-paper-plane"></i> Create Thread
+                  </button>
+                  <a href="accounts.html" class="small-link" style="margin-left:10px;">
+                    <i class="fa fa-arrow-left"></i> Back to Accounts
+                  </a>
+                </div>
               </div>
             </form>
 
           </div>
         </div>
-      </section>
+      </div>
     </div>
   </main>
 </div>
 
 <script type="module" src="scripts.js"></script>
+<script type="module" src="threadcreation.js"></script>
 </body>
 </html>

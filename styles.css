@@ -540,6 +540,15 @@ a:hover {
   white-space: nowrap;
 }
 
+/* accounts thread table header – full-width bar */
+.thread-table thead tr {
+  background-color: #1b1b1b;   /* same as your th background */
+}
+
+.thread-table thead th {
+  background-color: transparent;  /* let the <tr> color show */
+}
+
 .thread-meta {
   font-size: 11px;
   color: #888;
