@@ -90,221 +90,273 @@ document.addEventListener('DOMContentLoaded', () => {
   showAdminNavIfAllowed();
 
   // ===================== SHOUTBOX (index.html) =====================
-// ===================== SHOUTBOX (index.html) =====================
-const shoutInput = document.getElementById('shout-input');
-const shoutSendBtn = document.getElementById('shout-send');
-const shoutBox = document.getElementById('shoutbox-messages');
-const shoutForm = document.getElementById('shoutbox-form');
-const shoutMeta = document.getElementById('shoutbox-meta');
-const shoutFooter = document.getElementById('shoutbox-footer');
+  const shoutInput = document.getElementById('shout-input');
+  const shoutSendBtn = document.getElementById('shout-send');
+  const shoutBox = document.getElementById('shoutbox-messages');
+  const shoutForm = document.getElementById('shoutbox-form');
+  const shoutMeta = document.getElementById('shoutbox-meta');
+  const shoutFooter = document.getElementById('shoutbox-footer');
 
-async function fetchCurrentUserProfileWithRole() {
-  const { data, error } = await supabaseClient.auth.getUser();
-  if (error || !data?.user) return null;
+  async function fetchCurrentUserProfile() {
+    const { data, error } = await supabaseClient.auth.getUser();
+    if (error || !data?.user) return null;
 
-  const user = data.user;
-
-  const [{ data: profile }, { data: userRow }] = await Promise.all([
-    supabaseClient
+    const user = data.user;
+    const { data: profile } = await supabaseClient
       .from('profiles')
       .select('username')
       .eq('id', user.id)
-      .maybeSingle(),
-    supabaseClient
+      .maybeSingle();
+
+    return {
+      id: user.id,
+      username: profile?.username || user.email,
+    };
+  }
+
+  // NEW helper: load full current user with role for shout permissions
+  async function fetchCurrentUserProfileWithRole() {
+    const base = await fetchCurrentUserProfile();
+    if (!base) return null;
+    const { data: userRow } = await supabaseClient
       .from('users')
       .select('role')
-      .eq('id', user.id)
-      .maybeSingle(),
-  ]);
+      .eq('id', base.id)
+      .maybeSingle();
+    return { ...base, role: userRow?.role || 'user' };
+  }
 
-  return {
-    id: user.id,
-    username: profile?.username || user.email,
-    role: userRow?.role || 'user',
-  };
-}
+  function createShoutContextMenu() {
+    let menu = document.getElementById('shout-context-menu');
+    if (menu) return menu;
 
-function createShoutContextMenu() {
-  let menu = document.getElementById('shout-context-menu');
-  if (menu) return menu;
-
-  menu = document.createElement('div');
-  menu.id = 'shout-context-menu';
-  menu.className = 'shout-context-menu';
-  menu.style.position = 'absolute';
-  menu.style.zIndex = '9999';
-  menu.style.display = 'none';
-  menu.innerHTML = `<div class="shout-context-item">Delete message</div>`;
-  document.body.appendChild(menu);
-
-  document.addEventListener('click', () => {
+    menu = document.createElement('div');
+    menu.id = 'shout-context-menu';
+    menu.className = 'shout-context-menu';
+    menu.style.position = 'absolute';
+    menu.style.zIndex = '9999';
     menu.style.display = 'none';
-  });
+    menu.innerHTML = `<div class="shout-context-item">Delete message</div>`;
+    document.body.appendChild(menu);
 
-  return menu;
-}
+    document.addEventListener('click', () => {
+      menu.style.display = 'none';
+    });
 
-function canCurrentUserDeleteShout(currentUser, shoutRow) {
-  if (!currentUser) return false;
+    return menu;
+  }
 
-  // owner can delete any shout
-  if (currentUser.role === 'owner') return true;
+  function canCurrentUserDeleteShout(currentUser, shoutRow) {
+    if (!currentUser) return false;
 
-  // admins: can delete own shouts and normal users' shouts, not owner/admin shouts
-  if (currentUser.role === 'admin') {
-    if (shoutRow.user_role === 'owner' || shoutRow.user_role === 'admin') {
+    // owner can delete any shout
+    if (currentUser.role === 'owner') return true;
+
+    // admins: can delete own shouts and normal users' shouts, not owner/admin shouts
+    if (currentUser.role === 'admin') {
+      if (shoutRow.user_role === 'owner' || shoutRow.user_role === 'admin') {
+        return false;
+      }
+      if (shoutRow.user_id === currentUser.id) return true;
+      if (!shoutRow.user_role || shoutRow.user_role === 'user') return true;
       return false;
     }
-    if (shoutRow.user_id === currentUser.id) return true;
-    if (!shoutRow.user_role || shoutRow.user_role === 'user') return true;
-    return false;
+
+    // normal users: only their own shouts
+    return shoutRow.user_id === currentUser.id;
   }
 
-  // normal users: only their own shouts
-  return shoutRow.user_id === currentUser.id;
-}
+  function renderShout(row, currentUser) {
+    const line = document.createElement('div');
+    line.className = 'shout-line';
 
-function renderShout(row, currentUser) {
-  const line = document.createElement('div');
-  line.className = 'shout-line';
+    const userSpan = document.createElement('span');
+    userSpan.className = 'shout-user rank-member';
+    userSpan.textContent = row.username;
 
-  const userSpan = document.createElement('span');
-  userSpan.className = 'shout-user rank-member';
-  userSpan.textContent = row.username;
+    const timeSpan = document.createElement('span');
+    timeSpan.className = 'shout-time';
+    const d = new Date(row.created_at);
+    const hh = d.getHours().toString().padStart(2, '0');
+    const mm = d.getMinutes().toString().padStart(2, '0');
+    timeSpan.textContent = `${hh}:${mm}`;
 
-  const timeSpan = document.createElement('span');
-  timeSpan.className = 'shout-time';
-  const d = new Date(row.created_at);
-  const hh = d.getHours().toString().padStart(2, '0');
-  const mm = d.getMinutes().toString().padStart(2, '0');
-  timeSpan.textContent = `${hh}:${mm}`;
+    const textSpan = document.createElement('span');
+    textSpan.className = 'shout-text';
+    textSpan.textContent = row.message;
 
-  const textSpan = document.createElement('span');
-  textSpan.className = 'shout-text';
-  textSpan.textContent = row.message;
+    line.appendChild(userSpan);
+    line.appendChild(timeSpan);
+    line.appendChild(textSpan);
+    shoutBox.appendChild(line);
 
-  line.appendChild(userSpan);
-  line.appendChild(timeSpan);
-  line.appendChild(textSpan);
-  shoutBox.appendChild(line);
+    const canDelete = canCurrentUserDeleteShout(currentUser, row);
+    if (!canDelete) return;
 
-  // attach context menu only if current user is allowed to delete this shout
-  const canDelete = canCurrentUserDeleteShout(currentUser, row);
-  if (!canDelete) return;
+    const menu = createShoutContextMenu();
+    const menuItem = menu.querySelector('.shout-context-item');
 
-  const menu = createShoutContextMenu();
-  const menuItem = menu.querySelector('.shout-context-item');
+    userSpan.addEventListener('contextmenu', (e) => {
+      e.preventDefault();
+      menu.style.display = 'block';
+      const rect = userSpan.getBoundingClientRect();
+      menu.style.left = `${rect.right + 6}px`;
+      menu.style.top = `${rect.top}px`;
 
-  userSpan.addEventListener('contextmenu', (e) => {
-    e.preventDefault();
-    menu.style.display = 'block';
-    menu.style.left = `${e.pageX + 6}px`;
-    menu.style.top = `${e.pageY}px`;
+      const handler = async () => {
+        menu.style.display = 'none';
+        menuItem.removeEventListener('click', handler);
 
-    // bind click for this specific shout
-    const handler = async () => {
-      menu.style.display = 'none';
-      menuItem.removeEventListener('click', handler);
+        try {
+          const { error } = await supabaseClient
+            .from('shouts')
+            .delete()
+            .eq('id', row.id);
+          if (error) throw error;
+          line.remove();
+        } catch (err) {
+          console.error('delete shout error', err);
+          alert('Failed to delete shout.');
+        }
+      };
+
+      menuItem.addEventListener('click', handler);
+    });
+  }
+
+  async function loadAdmins() {
+    const { data, error } = await supabaseClient
+      .from('users')
+      .select('id, email, role')
+      .in('role', ['admin', 'owner']);
+    if (error) {
+      console.error('loadAdmins error', error);
+      return [];
+    }
+    return data || [];
+  }
+
+  async function initAdminPanel() {
+    const current = await getCurrentUserWithRole();
+    const panel = document.getElementById('admin-panel');
+    const list = document.getElementById('admin-list');
+    const actions = document.getElementById('admin-actions');
+
+    if (!panel || !list || !actions) return;
+
+    if (!current || !['admin', 'owner'].includes(current.role)) {
+      panel.style.display = 'none';
+      return;
+    }
+
+    panel.style.display = 'block';
+
+    const admins = await loadAdmins();
+    list.innerHTML = admins
+      .map(
+        (a) => `
+      <div class="admin-row">
+        <span>${a.email || a.id}</span>
+        <span class="badge badge-${a.role}">${a.role}</span>
+      </div>
+    `,
+      )
+      .join('');
+
+    if (current.role === 'owner') {
+      actions.innerHTML = `
+        <button id="add-admin" class="btn btn-small btn-primary">Add admin</button>
+        <button id="remove-admin" class="btn btn-small btn-outline">Remove admin</button>
+      `;
+      document.getElementById('add-admin').onclick = () =>
+        alert('Add admin not implemented yet');
+      document.getElementById('remove-admin').onclick = () =>
+        alert('Remove admin not implemented yet');
+    } else {
+      actions.innerHTML = `<p>You can view admins but only the Owner can change them.</p>`;
+    }
+  }
+
+  initAdminPanel();
+
+  async function loadShouts(currentUser) {
+    if (!shoutBox) return;
+
+    const { data, error } = await supabaseClient
+      .from('shouts')
+      .select('id, user_id, user_role, username, message, created_at')
+      .order('created_at', { ascending: false })
+      .limit(50);
+
+    if (error) {
+      console.error('loadShouts error', error);
+      return;
+    }
+
+    shoutBox.innerHTML = '';
+    data.slice().reverse().forEach((row) => renderShout(row, currentUser));
+    shoutBox.scrollTop = shoutBox.scrollHeight;
+  }
+
+  async function setupShoutbox() {
+    if (!shoutInput || !shoutSendBtn || !shoutBox || !shoutForm) return;
+
+    const me = await fetchCurrentUserProfileWithRole();
+    if (!me) {
+      shoutInput.disabled = true;
+      shoutSendBtn.disabled = true;
+      if (shoutFooter) shoutFooter.textContent = 'Login to chat in the shoutbox.';
+    } else if (shoutMeta) {
+      shoutMeta.textContent = `Logged in as ${me.username} · live chat`;
+    }
+
+    await loadShouts(me);
+
+    // poll every 2 seconds as a fallback
+    setInterval(() => {
+      loadShouts(me);
+    }, 2000);
+
+    supabaseClient
+      .channel('public:shouts')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'shouts' },
+        (payload) => {
+          renderShout(payload.new, me);
+          shoutBox.scrollTop = shoutBox.scrollHeight;
+        },
+      )
+      .subscribe();
+
+    shoutForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const meNow = await fetchCurrentUserProfileWithRole();
+      if (!meNow) return;
+
+      const text = shoutInput.value.trim();
+      if (!text) return;
+      if (text.length > 180) return;
+
+      const msg = text;
+      shoutInput.value = '';
 
       try {
-        const { error } = await supabaseClient
-          .from('shouts')
-          .delete()
-          .eq('id', row.id);
-
+        const { error } = await supabaseClient.from('shouts').insert({
+          user_id: meNow.id,
+          user_role: meNow.role,
+          username: meNow.username,
+          message: msg,
+        });
         if (error) throw error;
-
-        line.remove();
       } catch (err) {
-        console.error('delete shout error', err);
-        alert('Failed to delete shout.');
+        console.error('send shout error', err);
       }
-    };
-
-    menuItem.addEventListener('click', handler);
-  });
-}
-
-async function loadShouts(currentUser) {
-  if (!shoutBox) return;
-
-  const { data, error } = await supabaseClient
-    .from('shouts')
-    .select('id, user_id, user_role, username, message, created_at')
-    .order('created_at', { ascending: false })
-    .limit(50);
-
-  if (error) {
-    console.error('loadShouts error', error);
-    return;
+    });
   }
 
-  shoutBox.innerHTML = '';
-  data.slice().reverse().forEach((row) => renderShout(row, currentUser));
-  shoutBox.scrollTop = shoutBox.scrollHeight;
-}
-
-async function setupShoutbox() {
-  if (!shoutInput || !shoutSendBtn || !shoutBox || !shoutForm) return;
-
-  const me = await fetchCurrentUserProfileWithRole();
-  window.dsUserRole = me?.role || 'guest';
-
-  if (!me) {
-    shoutInput.disabled = true;
-    shoutSendBtn.disabled = true;
-    if (shoutFooter) shoutFooter.textContent = 'Login to chat in the shoutbox.';
-  } else if (shoutMeta) {
-    shoutMeta.textContent = `Logged in as ${me.username} · live chat`;
-  }
-
-  await loadShouts(me);
-
-  // poll every 2 seconds as a fallback
-  setInterval(() => {
-    loadShouts(me);
-  }, 2000);
-
-  supabaseClient
-    .channel('public:shouts')
-    .on(
-      'postgres_changes',
-      { event: 'INSERT', schema: 'public', table: 'shouts' },
-      (payload) => {
-        renderShout(payload.new, me);
-        shoutBox.scrollTop = shoutBox.scrollHeight;
-      },
-    )
-    .subscribe();
-
-  shoutForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-
-    const meNow = await fetchCurrentUserProfileWithRole();
-    if (!meNow) return;
-
-    const text = shoutInput.value.trim();
-    if (!text) return;
-    if (text.length > 180) return;
-
-    const msg = text;
-    shoutInput.value = '';
-
-    try {
-      const { error } = await supabaseClient.from('shouts').insert({
-        user_id: meNow.id,
-        user_role: meNow.role,
-        username: meNow.username,
-        message: msg,
-      });
-      if (error) throw error;
-    } catch (err) {
-      console.error('send shout error', err);
-    }
-  });
-}
-
-setupShoutbox();
+  setupShoutbox();
 
   // ===================== Accounts thread list (accounts.html) =====================
   const threadListBody = document.getElementById('thread-list');
@@ -441,6 +493,7 @@ setupShoutbox();
 
   if (threadListBody) {
     if (sortSelect) {
+      sortThreads(sortSelect.value);
       sortSelect.addEventListener('change', () => sortThreads(sortSelect.value));
     }
     loadThreads();
@@ -932,58 +985,57 @@ setupShoutbox();
   }
 
   // ===================== INDEX: Current Staff (from public.users) =====================
-  // ===================== INDEX: Current Staff (from public.users) =====================
-async function loadCurrentStaff() {
-  const container = document.getElementById('current-staff-list');
-  if (!container) return; // not on index.html
+  async function loadCurrentStaff() {
+    const container = document.getElementById('current-staff-list');
+    if (!container) return; // not on index.html
 
-  try {
-    const { data, error } = await supabaseClient
-      .from('users')
-      .select('email, role, username')
-      .in('role', ['admin', 'owner'])
-      .order('role', { ascending: false }); // owner first, then admins
+    try {
+      const { data, error } = await supabaseClient
+        .from('users')
+        .select('email, role, username')
+        .in('role', ['admin', 'owner'])
+        .order('role', { ascending: false }); // owner first, then admins
 
-    if (error) {
-      console.error('loadCurrentStaff error', error);
-      return;
-    }
+      if (error) {
+        console.error('loadCurrentStaff error', error);
+        return;
+      }
 
-    container.innerHTML = '';
+      container.innerHTML = '';
 
-    if (!data || data.length === 0) {
-      container.textContent = 'No staff members found.';
-      return;
-    }
+      if (!data || data.length === 0) {
+        container.textContent = 'No staff members found.';
+        return;
+      }
 
-    data.forEach((u) => {
-      const line = document.createElement('div');
-      line.className = 'staff-line';
+      data.forEach((u) => {
+        const line = document.createElement('div');
+        line.className = 'staff-line';
 
-      const displayName =
-        (u.username && u.username.trim()) ||
-        (u.email ? u.email.split('@')[0] : 'user');
+        const displayName =
+          (u.username && u.username.trim()) ||
+          (u.email ? u.email.split('@')[0] : 'user');
 
-      const roleLabel =
-        u.role === 'owner'
-          ? 'Owner'
-          : u.role === 'admin'
-          ? 'Admin'
-          : u.role || 'Staff';
+        const roleLabel =
+          u.role === 'owner'
+            ? 'Owner'
+            : u.role === 'admin'
+            ? 'Admin'
+            : u.role || 'Staff';
 
-      line.innerHTML = `
+        line.innerHTML = `
         <span class="staff-name">
           <a href="mailto:${u.email}">${displayName}</a>
         </span>
         <span class="staff-role">${roleLabel}</span>
       `;
 
-      container.appendChild(line);
-    });
-  } catch (err) {
-    console.error('loadCurrentStaff error', err);
+        container.appendChild(line);
+      });
+    } catch (err) {
+      console.error('loadCurrentStaff error', err);
+    }
   }
-}
 
-loadCurrentStaff();
+  loadCurrentStaff();
 });
