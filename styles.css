@@ -546,12 +546,11 @@ a:hover {
   cursor: pointer;
 }
 
-/* Avatar inside the pill – same height as button */
 .user-avatar-header {
-  width: 24px;
-  height: 24px;
-  min-width: 24px;
-  min-height: 24px;
+  width: 28px;        /* keep width */
+  height: 10px;       /* make shorter vertically */
+  min-width: 28px;
+  min-height: 20px;
   border-radius: 3px;
   object-fit: cover;
   display: block;
