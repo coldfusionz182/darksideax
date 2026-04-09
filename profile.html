@@ -184,6 +184,39 @@
       color: #111827;
     }
 
+    .profile-lists {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .profile-lists ul {
+      list-style: none;
+      margin: 0;
+      padding: 8px 12px 10px;
+      font-size: 0.85rem;
+    }
+
+    .profile-lists li {
+      margin-bottom: 6px;
+    }
+
+    .profile-lists .meta {
+      font-size: 0.78rem;
+      color: #9ca3c9;
+    }
+
+    .badge-pill {
+      display: inline-block;
+      margin-right: 6px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: #1f2937;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
     @media (max-width: 900px) {
       .profile-grid {
         grid-template-columns: 1fr;
@@ -197,6 +230,9 @@
         width: 100%;
         justify-content: space-between;
         flex-wrap: wrap;
+      }
+      .profile-lists {
+        grid-template-columns: 1fr;
       }
     }
   </style>
@@ -243,7 +279,7 @@
   <main id="container">
     <div class="wrapper profile-wrapper">
 
-      <!-- Banner / header strip -->
+      <!-- Banner -->
       <section class="profile-banner">
         <div class="profile-banner-inner">
           <div class="profile-banner-left">
@@ -252,7 +288,8 @@
             </div>
             <div>
               <div class="profile-username-big" id="profile-username">Loading...</div>
-              <div class="profile-rank-text" id="profile-rank-text">Infinity</div>
+              <!-- ID changed to match scripts.js -->
+              <div class="profile-rank-text" id="profile-role-text">Member</div>
             </div>
           </div>
           <div class="profile-banner-right">
@@ -276,11 +313,11 @@
         </div>
       </section>
 
-      <!-- Below banner: two columns -->
+      <!-- Grid -->
       <section class="profile-grid">
-        <!-- LEFT COLUMN -->
+        <!-- LEFT -->
         <div class="profile-col-left">
-          <!-- Reputation / likes cards -->
+          <!-- Rep / likes -->
           <div class="profile-stat-cards">
             <div class="profile-stat-box">
               <div class="profile-stat-number" id="profile-rep">99</div>
@@ -292,7 +329,7 @@
             </div>
           </div>
 
-          <!-- Information panel -->
+          <!-- Info -->
           <section class="card-panel profile-info-card">
             <header class="profile-info-header">
               <span>Information</span>
@@ -302,12 +339,16 @@
               <span class="info-value info-online">Online</span>
             </div>
             <div class="profile-info-row">
+              <span class="info-label">Email:</span>
+              <span class="info-value" id="profile-email">–</span>
+            </div>
+            <div class="profile-info-row">
               <span class="info-label">UID:</span>
               <span class="info-value" id="info-uid">–</span>
             </div>
             <div class="profile-info-row">
-              <span class="info-label">Registration Date:</span>
-              <span class="info-value" id="info-registered">–</span>
+              <span class="info-label">Joined:</span>
+              <span class="info-value" id="profile-joined">–</span>
             </div>
             <div class="profile-info-row">
               <span class="info-label">Last Visit:</span>
@@ -332,9 +373,9 @@
           </section>
         </div>
 
-        <!-- RIGHT COLUMN -->
+        <!-- RIGHT -->
         <div class="profile-col-right">
-          <!-- Statistics card -->
+          <!-- Stats -->
           <section class="card-panel profile-wide-card">
             <header class="profile-tab-header">
               <span>Statistics</span>
@@ -349,8 +390,9 @@
                 <div class="wide-stat-label">Posts</div>
               </div>
               <div>
-                <div class="wide-stat-number" id="stat-vouches">0</div>
-                <div class="wide-stat-label">Vouches</div>
+                <!-- ID changed to stat-likes to match scripts.js -->
+                <div class="wide-stat-number" id="stat-likes">0</div>
+                <div class="wide-stat-label">Likes</div>
               </div>
               <div>
                 <div class="wide-stat-number" id="stat-credits">0</div>
@@ -359,7 +401,7 @@
             </div>
           </section>
 
-          <!-- Groups card -->
+          <!-- Groups -->
           <section class="card-panel profile-wide-card">
             <header class="profile-tab-header">
               <span>Groups</span>
@@ -370,6 +412,30 @@
                 <i class="fa fa-trophy"></i> Contributor
               </span>
             </div>
+          </section>
+
+          <!-- Recent activity lists -->
+          <section class="profile-lists">
+            <section class="card-panel profile-wide-card">
+              <header class="profile-tab-header">
+                <span>Recent Threads</span>
+              </header>
+              <ul id="profile-threads-list"></ul>
+            </section>
+
+            <section class="card-panel profile-wide-card">
+              <header class="profile-tab-header">
+                <span>Recent Replies</span>
+              </header>
+              <ul id="profile-replies-list"></ul>
+            </section>
+
+            <section class="card-panel profile-wide-card">
+              <header class="profile-tab-header">
+                <span>Recent Likes</span>
+              </header>
+              <ul id="profile-likes-list"></ul>
+            </section>
           </section>
         </div>
       </section>
