@@ -546,6 +546,36 @@ a:hover {
   cursor: pointer;
 }
 
+/* Shoutbox avatar + layout */
+.shout-line {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.shout-avatar {
+  width: 20px;        /* same height as text line-ish */
+  height: 20px;
+  min-width: 20px;
+  min-height: 20px;
+  border-radius: 50%;
+  overflow: hidden;
+  flex-shrink: 0;
+  border: 1px solid #1f2937;
+}
+
+.shout-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* keep your existing text layout but allow for avatar on left */
+.shout-user.rank-member {
+  margin-right: 4px;
+}
+
 .user-avatar-header {
   width: 28px;        /* keep width */
   height: 10px;       /* make shorter vertically */

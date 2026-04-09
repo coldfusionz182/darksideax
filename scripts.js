@@ -103,137 +103,189 @@ document.addEventListener('DOMContentLoaded', () => {
   showAdminNavIfAllowed();
 
   // ===================== SHOUTBOX (index.html) =====================
-  const shoutInput = document.getElementById('shout-input');
-  const shoutSendBtn = document.getElementById('shout-send');
-  const shoutBox = document.getElementById('shoutbox-messages');
-  const shoutForm = document.getElementById('shoutbox-form');
-  const shoutMeta = document.getElementById('shoutbox-meta');
-  const shoutFooter = document.getElementById('shoutbox-footer');
+const shoutInput = document.getElementById('shout-input');
+const shoutSendBtn = document.getElementById('shout-send');
+const shoutBox = document.getElementById('shoutbox-messages');
+const shoutForm = document.getElementById('shoutbox-form');
+const shoutMeta = document.getElementById('shoutbox-meta');
+const shoutFooter = document.getElementById('shoutbox-footer');
 
-  async function fetchCurrentUserProfile() {
-    const { data, error } = await supabaseClient.auth.getUser();
-    if (error || !data?.user) return null;
+async function fetchCurrentUserProfile() {
+  const { data, error } = await supabaseClient.auth.getUser();
+  if (error || !data?.user) return null;
 
-    const user = data.user;
-    const { data: profile } = await supabaseClient
-      .from('profiles')
-      .select('username')
-      .eq('id', user.id)
-      .maybeSingle();
+  const user = data.user;
+  const { data: profile } = await supabaseClient
+    .from('profiles')
+    .select('username')
+    .eq('id', user.id)
+    .maybeSingle();
 
-    return {
-      id: user.id,
-      username: profile?.username || user.email,
-    };
-  }
+  return {
+    id: user.id,
+    username: profile?.username || user.email,
+  };
+}
 
-  // include role for shout permissions
-  async function fetchCurrentUserProfileWithRole() {
-    const base = await fetchCurrentUserProfile();
-    if (!base) return null;
-    const { data: userRow } = await supabaseClient
-      .from('users')
-      .select('role')
-      .eq('id', base.id)
-      .maybeSingle();
-    return { ...base, role: userRow?.role || 'user' };
-  }
+// include role for shout permissions
+async function fetchCurrentUserProfileWithRole() {
+  const base = await fetchCurrentUserProfile();
+  if (!base) return null;
+  const { data: userRow } = await supabaseClient
+    .from('users')
+    .select('role')
+    .eq('id', base.id)
+    .maybeSingle();
+  return { ...base, role: userRow?.role || 'user' };
+}
 
-  function createShoutContextMenu() {
-    let menu = document.getElementById('shout-context-menu');
-    if (menu) return menu;
+function createShoutContextMenu() {
+  let menu = document.getElementById('shout-context-menu');
+  if (menu) return menu;
 
-    menu = document.createElement('div');
-    menu.id = 'shout-context-menu';
-    menu.className = 'shout-context-menu';
-    menu.style.position = 'absolute';
-    menu.style.zIndex = '9999';
+  menu = document.createElement('div');
+  menu.id = 'shout-context-menu';
+  menu.className = 'shout-context-menu';
+  menu.style.position = 'absolute';
+  menu.style.zIndex = '9999';
+  menu.style.display = 'none';
+  menu.innerHTML = `<div class="shout-context-item">Delete message</div>`;
+  document.body.appendChild(menu);
+
+  document.addEventListener('click', () => {
     menu.style.display = 'none';
-    menu.innerHTML = `<div class="shout-context-item">Delete message</div>`;
-    document.body.appendChild(menu);
+  });
 
-    document.addEventListener('click', () => {
-      menu.style.display = 'none';
-    });
+  return menu;
+}
 
-    return menu;
+// adjust this if you want admins blocked from specific owner ID
+const OWNER_ID = 'PUT_OWNER_USER_ID_HERE';
+
+function canCurrentUserDeleteShout(currentUser, row) {
+  if (!currentUser) return false;
+
+  // owner can delete any shout
+  if (currentUser.role === 'owner') return true;
+
+  if (currentUser.role === 'admin') {
+    if (row.user_id === OWNER_ID) return false;
+    return true;
   }
 
-  // adjust this if you want admins blocked from specific owner ID
-  const OWNER_ID = 'PUT_OWNER_USER_ID_HERE';
+  // normal users: only their own shouts
+  return row.user_id === currentUser.id;
+}
 
-  function canCurrentUserDeleteShout(currentUser, row) {
-    if (!currentUser) return false;
+// --- avatar cache for shouts ---
+const shoutAvatarCache = {};
+const DEFAULT_SHOUT_AVATAR = 'images/default-avatar.png';
 
-    // owner can delete any shout
-    if (currentUser.role === 'owner') return true;
+async function getAvatarForUser(userId) {
+  if (!userId) return DEFAULT_SHOUT_AVATAR;
 
-    if (currentUser.role === 'admin') {
-      if (row.user_id === OWNER_ID) return false;
-      return true;
+  if (shoutAvatarCache[userId] !== undefined) {
+    return shoutAvatarCache[userId] || DEFAULT_SHOUT_AVATAR;
+  }
+
+  try {
+    const { data, error } = await supabaseClient
+      .from('users')
+      .select('avatar_url')
+      .eq('id', userId)
+      .maybeSingle();
+
+    if (error) {
+      console.error('shout avatar lookup error', error);
+      shoutAvatarCache[userId] = null;
+      return DEFAULT_SHOUT_AVATAR;
     }
 
-    // normal users: only their own shouts
-    return row.user_id === currentUser.id;
+    const url = data?.avatar_url || null;
+    shoutAvatarCache[userId] = url;
+    return url || DEFAULT_SHOUT_AVATAR;
+  } catch (e) {
+    console.error('shout avatar fetch error', e);
+    shoutAvatarCache[userId] = null;
+    return DEFAULT_SHOUT_AVATAR;
   }
+}
 
-  function renderShout(row, currentUser) {
-    const line = document.createElement('div');
-    line.className = 'shout-line';
+async function renderShout(row, currentUser) {
+  const line = document.createElement('div');
+  line.className = 'shout-line';
 
-    const userSpan = document.createElement('span');
-    userSpan.className = 'shout-user rank-member';
-    userSpan.textContent = row.username;
+  // avatar on the left
+  const avatarWrapper = document.createElement('div');
+  avatarWrapper.className = 'shout-avatar';
+  const avatarImg = document.createElement('img');
+  avatarImg.src = DEFAULT_SHOUT_AVATAR;
+  avatarWrapper.appendChild(avatarImg);
+  line.appendChild(avatarWrapper);
 
-    const timeSpan = document.createElement('span');
-    timeSpan.className = 'shout-time';
-    const d = new Date(row.created_at);
-    const hh = d.getHours().toString().padStart(2, '0');
-    const mm = d.getMinutes().toString().padStart(2, '0');
-    timeSpan.textContent = `${hh}:${mm}`;
+  // text container (username, time, message)
+  const textContainer = document.createElement('div');
 
-    const textSpan = document.createElement('span');
-    textSpan.className = 'shout-text';
-    textSpan.textContent = row.message;
+  const userSpan = document.createElement('span');
+  userSpan.className = 'shout-user rank-member';
+  userSpan.textContent = row.username;
 
-    line.appendChild(userSpan);
-    line.appendChild(timeSpan);
-    line.appendChild(textSpan);
-    shoutBox.appendChild(line);
+  const timeSpan = document.createElement('span');
+  timeSpan.className = 'shout-time';
+  const d = new Date(row.created_at);
+  const hh = d.getHours().toString().padStart(2, '0');
+  const mm = d.getMinutes().toString().padStart(2, '0');
+  timeSpan.textContent = `${hh}:${mm}`;
 
-    const canDelete = canCurrentUserDeleteShout(currentUser, row);
-    if (!canDelete) return;
+  const textSpan = document.createElement('span');
+  textSpan.className = 'shout-text';
+  textSpan.textContent = row.message;
 
-    const menu = createShoutContextMenu();
-    const menuItem = menu.querySelector('.shout-context-item');
+  textContainer.appendChild(userSpan);
+  textContainer.appendChild(timeSpan);
+  textContainer.appendChild(textSpan);
 
-    userSpan.addEventListener('contextmenu', (e) => {
-      e.preventDefault();
-      menu.style.display = 'block';
-      const rect = userSpan.getBoundingClientRect();
-      menu.style.left = `${rect.right + 6}px`;
-      menu.style.top = `${rect.top}px`;
+  line.appendChild(textContainer);
+  shoutBox.appendChild(line);
 
-      const handler = async () => {
-        menu.style.display = 'none';
-        menuItem.removeEventListener('click', handler);
+  // async avatar load, non-blocking
+  getAvatarForUser(row.user_id).then((url) => {
+    avatarImg.src = url || DEFAULT_SHOUT_AVATAR;
+  });
 
-        try {
-          const { error } = await supabaseClient
-            .from('shouts')
-            .delete()
-            .eq('id', row.id);
-          if (error) throw error;
-          line.remove();
-        } catch (err) {
-          console.error('delete shout error', err);
-          alert('Failed to delete shout.');
-        }
-      };
+  const canDelete = canCurrentUserDeleteShout(currentUser, row);
+  if (!canDelete) return;
 
-      menuItem.addEventListener('click', handler);
-    });
-  }
+  const menu = createShoutContextMenu();
+  const menuItem = menu.querySelector('.shout-context-item');
+
+  userSpan.addEventListener('contextmenu', (e) => {
+    e.preventDefault();
+    menu.style.display = 'block';
+    const rect = userSpan.getBoundingClientRect();
+    menu.style.left = `${rect.right + 6}px`;
+    menu.style.top = `${rect.top}px`;
+
+    const handler = async () => {
+      menu.style.display = 'none';
+      menuItem.removeEventListener('click', handler);
+
+      try {
+        const { error } = await supabaseClient
+          .from('shouts')
+          .delete()
+          .eq('id', row.id);
+        if (error) throw error;
+        line.remove();
+      } catch (err) {
+        console.error('delete shout error', err);
+        alert('Failed to delete shout.');
+      }
+    };
+
+    menuItem.addEventListener('click', handler);
+  });
+}
 
   async function loadAdmins() {
     const { data, error } = await supabaseClient
