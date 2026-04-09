@@ -61,7 +61,7 @@ async function updateHeaderAuthState() {
     <button class="btn btn-small btn-outline" id="logout-btn">
       <i class="fa fa-sign-out-alt"></i> Logout
     </button>
-  `;
+ `;
 
   const logoutBtn = document.getElementById('logout-btn');
   if (logoutBtn) {
@@ -502,6 +502,22 @@ document.addEventListener('DOMContentLoaded', () => {
     loadThreads();
   }
 
+  // ===================== helper: render [HIDDEN] blocks =====================
+  function renderHiddenContent(rawContent, canSeeHidden) {
+    if (!rawContent) return '';
+
+    if (canSeeHidden) {
+      // show inner text, strip tags
+      return rawContent.replace(/\[HIDDEN\](.*?)\[\/HIDDEN\]/gis, '$1');
+    }
+
+    // guests / users without access see placeholder
+    return rawContent.replace(
+      /\[HIDDEN\](.*?)\[\/HIDDEN\]/gis,
+      '[Hidden content – login and reply to this thread to view]'
+    );
+  }
+
   // ===================== Single thread view (thread.html) =====================
   const threadTitleDisplay = document.getElementById('thread-title-display');
   const threadMetaDisplay = document.getElementById('thread-meta-display');
@@ -546,23 +562,36 @@ document.addEventListener('DOMContentLoaded', () => {
         )}`;
         threadAuthorName.textContent = t.author;
         threadCreatedAt.textContent = `Posted ${formatDateShort(t.created_at)}`;
-        threadContentDisplay.textContent = t.content;
 
         if (t.tag) {
           threadTagText.textContent = t.tag;
           threadTagPill.style.display = 'inline-flex';
         }
 
+        // decide if this visitor can see hidden content
+        const currentWithRole = await getCurrentUserWithRole().catch(() => null);
+        const user = currentWithRole; // same structure
+
+        let canSeeHidden = false;
+        if (user && (user.role === 'admin' || user.role === 'owner')) {
+          canSeeHidden = true;
+        }
+        // later: add "has replied" checks here
+
+        const renderedContent = renderHiddenContent(t.content, canSeeHidden);
+        threadContentDisplay.textContent = renderedContent;
+
+        // likes / replies logic (unchanged)
         const { data: userData } = await supabaseClient.auth.getUser();
-        const user = userData?.user || null;
-        if (!user) {
+        const rawUser = userData?.user || null;
+        if (!rawUser) {
           replyInfoText.textContent = 'Login to like or reply.';
           replyText.disabled = true;
           replySubmit.disabled = true;
           likeBtn.disabled = true;
           likeBtn.classList.add('disabled');
         } else {
-          replyInfoText.textContent = 'Reply as ' + (user.email || 'member');
+          replyInfoText.textContent = 'Reply as ' + (rawUser.email || 'member');
         }
 
         let liked = false;
@@ -577,8 +606,8 @@ document.addEventListener('DOMContentLoaded', () => {
           likeCount = likes ? likes.length : 0;
           likeCountEl.textContent = `${likeCount} likes`;
 
-          if (user) {
-            liked = !!likes?.find((row) => row.user_id === user.id);
+          if (rawUser) {
+            liked = !!likes?.find((row) => row.user_id === rawUser.id);
             if (liked) {
               likeBtn.classList.add('liked');
               likeText.textContent = 'Liked';
@@ -586,14 +615,14 @@ document.addEventListener('DOMContentLoaded', () => {
           }
         }
 
-        if (user) {
+        if (rawUser) {
           likeBtn.addEventListener('click', async () => {
             likeBtn.disabled = true;
             try {
               if (!liked) {
                 const { error } = await supabaseClient.from('thread_likes').insert({
                   thread_id: threadId,
-                  user_id: user.id,
+                  user_id: rawUser.id,
                 });
                 if (error) throw error;
                 liked = true;
@@ -605,7 +634,7 @@ document.addEventListener('DOMContentLoaded', () => {
                   .from('thread_likes')
                   .delete()
                   .eq('thread_id', threadId)
-                  .eq('user_id', user.id);
+                  .eq('user_id', rawUser.id);
                 if (error) throw error;
                 liked = false;
                 likeBtn.classList.remove('liked');
