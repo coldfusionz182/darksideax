@@ -1084,7 +1084,7 @@ async function renderShout(row, currentUser) {
   try {
     const { data, error } = await supabaseClient
       .from('users')
-      .select('email, role, username, avatar_url')
+      .select('email, role, username, avatar_url, userrank')
       .in('role', ['admin', 'owner'])
       .order('role', { ascending: false });
 
@@ -1109,7 +1109,9 @@ async function renderShout(row, currentUser) {
         (u.email ? u.email.split('@')[0] : 'user');
 
       const roleLabel =
-        u.role === 'owner'
+        u.userrank && u.userrank.trim()
+          ? u.userrank
+          : u.role === 'owner'
           ? 'Owner'
           : u.role === 'admin'
           ? 'Admin'
@@ -1117,13 +1119,14 @@ async function renderShout(row, currentUser) {
 
       const avatarSrc = u.avatar_url || 'images/default-avatar.png';
 
+      // IMPORTANT: use u.username in the profile link
       line.innerHTML = `
         <span class="staff-avatar">
           <img src="${avatarSrc}" alt="${displayName}" class="user-avatar-header">
         </span>
         <span class="staff-name">
           <a
-            href="profile.html?u=${encodeURIComponent(displayName)}"
+            href="profile.html?u=${encodeURIComponent(u.username || displayName)}"
             class="profile-username-link"
           >${displayName}</a>
         </span>
