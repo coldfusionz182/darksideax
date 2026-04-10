@@ -30,7 +30,7 @@ function formatDateShort(iso) {
 }
 
 function mapRoleToLabel(role, userrank) {
-  if (userrank && userrank.trim()) return userrank;
+  if (userrank && userrank.trim()) return userrank; // e.g. "Admin", "Owner"
   switch (role) {
     case 'owner':
       return 'Owner';
@@ -56,7 +56,7 @@ function setAvatar(avatarUrl) {
   }
 }
 
-// ---------- Supabase lookups using `users` ----------
+// ---------- Supabase lookups using public.users ----------
 async function getCurrentAuthUser() {
   const { data, error } = await supabaseClient.auth.getUser();
   if (error || !data?.user) return null;
@@ -65,25 +65,25 @@ async function getCurrentAuthUser() {
 
 async function getUserByUsername(username) {
   const { data, error } = await supabaseClient
-    .from('users')
-    .select('uuid, email, role, username, avatar_url, userrank, created_at')
+    .from('users') // public.users
+    .select('id, email, role, username, avatar_url, userrank, created_at')
     .eq('username', username)
     .maybeSingle();
   if (error) throw error;
   return data;
 }
 
-async function getUserByUuid(uuid) {
+async function getUserById(id) {
   const { data, error } = await supabaseClient
-    .from('users')
-    .select('uuid, email, role, username, avatar_url, userrank, created_at')
-    .eq('uuid', uuid)
+    .from('users') // public.users
+    .select('id, email, role, username, avatar_url, userrank, created_at')
+    .eq('id', id)
     .maybeSingle();
   if (error) throw error;
   return data;
 }
 
-async function getUserContent(username, uuid) {
+async function getUserContent(username, userId) {
   const [{ data: threads }, { data: replies }, { data: likes }] = await Promise.all([
     supabaseClient
       .from('threads')
@@ -98,7 +98,7 @@ async function getUserContent(username, uuid) {
     supabaseClient
       .from('thread_likes')
       .select('id, thread_id, created_at')
-      .eq('user_id', uuid),
+      .eq('user_id', userId),
   ]);
 
   return {
@@ -147,21 +147,21 @@ async function initProfilePage() {
 
   try {
     if (paramUsername) {
-      // ALWAYS: /profile.html?u=NAME -> lookup in public.users by username
-      userRow = await getUserByUsername(paramUsername); // SELECT * FROM users WHERE username = paramUsername
+      // ALWAYS: /profile.html?u=NAME -> load NAME from public.users
+      userRow = await getUserByUsername(paramUsername);
       if (!userRow) {
         profileUsernameEl.textContent = 'Profile not found';
         return;
       }
-      // treat as "own profile" only if the logged in auth user matches this row
-      viewingOwnProfile = !!(authUser && authUser.id === userRow.uuid);
+      // own profile only if logged-in auth user matches this row
+      viewingOwnProfile = !!(authUser && authUser.id === userRow.id);
     } else {
-      // /profile.html (no ?u=) -> own profile only
+      // /profile.html (no ?u) -> own profile only
       if (!authUser) {
         window.location.href = 'login.html';
         return;
       }
-      userRow = await getUserByUuid(authUser.id); // SELECT * FROM users WHERE uuid = authUser.id
+      userRow = await getUserById(authUser.id);
       if (!userRow) {
         profileUsernameEl.textContent = 'Profile not found';
         return;
@@ -186,10 +186,10 @@ async function initProfilePage() {
   if (profileRoleTextEl) profileRoleTextEl.textContent = roleLabel;
   if (profileJoinedEl && joinedAt) profileJoinedEl.textContent = formatDateShort(joinedAt);
 
-  // email + uid only for own profile; others use only public users table
+  // email + id only for own profile
   if (viewingOwnProfile) {
     if (profileEmailEl) profileEmailEl.textContent = userRow.email || '–';
-    if (infoUidEl) infoUidEl.textContent = userRow.uuid || '–';
+    if (infoUidEl) infoUidEl.textContent = userRow.id || '–';
   } else {
     if (profileEmailEl) profileEmailEl.textContent = 'Private';
     if (infoUidEl) infoUidEl.textContent = 'Hidden';
@@ -197,8 +197,8 @@ async function initProfilePage() {
 
   setAvatar(avatarUrl);
 
-  // ----- threads / replies / likes pulled using username + uuid from users -----
-  const { threads, replies, likes } = await getUserContent(username, userRow.uuid);
+  // ----- threads / replies / likes -----
+  const { threads, replies, likes } = await getUserContent(username, userRow.id);
 
   const threadsCount = threads.length;
   const repliesCount = replies.length;
@@ -291,7 +291,7 @@ async function initProfilePage() {
     }
   }
 
-  // avatar editing – only for own profile
+  // avatar editing – only own profile
   if (!viewingOwnProfile) {
     if (avatarInput) {
       avatarInput.disabled = true;
@@ -317,7 +317,7 @@ async function initProfilePage() {
         const { error: upError } = await supabaseClient
           .from('users')
           .update({ avatar_url: url })
-          .eq('uuid', userRow.uuid);
+          .eq('id', userRow.id);
         if (upError) throw upError;
 
         setAvatar(url);
