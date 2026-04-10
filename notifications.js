@@ -24,7 +24,6 @@ async function getCurrentUserProfileWithLastSeen() {
 
   const username = profile?.username || user.email;
 
-  // read last_notifications_seen_at by username
   const { data: userRow, error: uErr } = await supabaseClient
     .from('users')
     .select('last_notifications_seen_at')
@@ -123,7 +122,7 @@ function initNotificationsDom(onMarkAllRead) {
 
   function openDropdown() {
     dropdown.classList.add('open');
-    // mark everything as seen when you open the bell
+    // mark as read when opening the bell
     handleMarkAllRead();
   }
 
@@ -174,7 +173,6 @@ function initNotificationsDom(onMarkAllRead) {
     },
   };
 
-  // Clear button: also marks as read + clears UI
   if (clearBtn) {
     clearBtn.addEventListener('click', async (e) => {
       e.stopPropagation();
@@ -354,29 +352,31 @@ async function refreshNotifications(currentUser, renderNotifications) {
 // -------------- ENTRY POINT --------------
 
 async function startNotifications() {
-  // start with no notifications in UI
-  const dom = initNotificationsDom(null);
-  if (dom) dom.renderNotifications([]);
-
   let currentUser = await getCurrentUserProfileWithLastSeen();
+
+  // init DOM once; pass in mark‑all‑read callback only if logged in
+  const dom = initNotificationsDom(
+    currentUser
+      ? async () => {
+          await updateLastNotificationsSeen(currentUser.username);
+          const nowIso = new Date().toISOString();
+          currentUser = {
+            ...currentUser,
+            lastSeen: nowIso,
+          };
+        }
+      : null
+  );
+
+  if (!dom) return;
+
+  // guests: just empty list
   if (!currentUser) {
-    // guest: nothing further to do
+    dom.renderNotifications([]);
     return;
   }
 
-  // re-init dom with mark-all-read callback now that we know the username
-  const domAuthed = initNotificationsDom(async () => {
-    await updateLastNotificationsSeen(currentUser.username);
-    const nowIso = new Date().toISOString();
-    currentUser = {
-      ...currentUser,
-      lastSeen: nowIso,
-    };
-  });
-
-  if (!domAuthed) return;
-  const { renderNotifications } = domAuthed;
-
+  const { renderNotifications } = dom;
   await refreshNotifications(currentUser, renderNotifications);
 }
 
