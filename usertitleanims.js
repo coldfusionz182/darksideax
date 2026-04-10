@@ -1,6 +1,6 @@
 // usertitleanims.js
 
-// Map role string -> CSS class
+// Map role label -> CSS class
 function getUserTitleClass(roleText) {
   if (!roleText) return '';
   const lower = String(roleText).toLowerCase();
@@ -12,7 +12,6 @@ function getUserTitleClass(roleText) {
 }
 
 // ---------- Build staff role map from Current Staff box ----------
-// Reads #current-staff-list lines rendered by scripts.js
 
 function buildStaffRoleMap() {
   const map = new Map();
@@ -27,11 +26,12 @@ function buildStaffRoleMap() {
     if (!nameSpan || !roleSpan) return;
 
     const name = nameSpan.textContent.trim();
-    const roleLabel = roleSpan.textContent.trim(); // e.g. "Owner", "Admin" or custom rank
+    const roleLabel = roleSpan.textContent.trim(); // e.g. "Owner", "Admin", custom rank
 
     const clsRole = getUserTitleClass(roleLabel);
     if (clsRole) {
-      map.set(name.toLowerCase(), roleLabel); // store label; class decided later
+      // store under lowercase username for matching in shoutbox
+      map.set(name.toLowerCase(), roleLabel);
     }
   });
 
@@ -40,7 +40,7 @@ function buildStaffRoleMap() {
 
 // ---------- 1. Apply effect to staff list usernames ----------
 
-function enhanceStaffListUsernames() {
+function enhanceStaffListUsernames(staffMap) {
   const container = document.getElementById('current-staff-list');
   if (!container) return;
 
@@ -82,36 +82,38 @@ function applyShoutboxUserAnimations(staffMap) {
   });
 }
 
-// ---------- 3. Watch shoutbox for updates and re-apply ----------
+// ---------- 3. Watch for updates and re-apply ----------
 
-function hookIntoShoutboxRendering() {
+function hookIntoStaffAndShoutbox() {
+  const staffContainer = document.getElementById('current-staff-list');
   const shoutBox = document.getElementById('shoutbox-messages');
-  if (!shoutBox) return;
+  if (!staffContainer && !shoutBox) return;
 
   let staffMap = buildStaffRoleMap();
-  enhanceStaffListUsernames();
+  enhanceStaffListUsernames(staffMap);
   applyShoutboxUserAnimations(staffMap);
 
-  // Rebuild staff map if staff list ever changes
-  const staffContainer = document.getElementById('current-staff-list');
+  // Rebuild staff map when staff list changes
   if (staffContainer) {
     const staffObserver = new MutationObserver(() => {
       staffMap = buildStaffRoleMap();
-      enhanceStaffListUsernames();
+      enhanceStaffListUsernames(staffMap);
       applyShoutboxUserAnimations(staffMap);
     });
     staffObserver.observe(staffContainer, { childList: true, subtree: true });
   }
 
-  // Observe shoutbox for DOM changes (new shouts, reloads)
-  const shoutObserver = new MutationObserver(() => {
-    applyShoutboxUserAnimations(staffMap);
-  });
-  shoutObserver.observe(shoutBox, { childList: true, subtree: true });
+  // Re-apply to shoutbox usernames when shoutbox DOM changes
+  if (shoutBox) {
+    const shoutObserver = new MutationObserver(() => {
+      applyShoutboxUserAnimations(staffMap);
+    });
+    shoutObserver.observe(shoutBox, { childList: true, subtree: true });
+  }
 }
 
 // ---------- Init ----------
 
 document.addEventListener('DOMContentLoaded', () => {
-  hookIntoShoutboxRendering();
+  hookIntoStaffAndShoutbox();
 });
