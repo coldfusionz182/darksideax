@@ -6,8 +6,9 @@ const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // global current user for other scripts (threadcreation.js, thread page etc.)
 window.currentUser = null;
+window.supabaseClient = supabaseClient;
 
-// --- helper: current user + role + avatar_url from public.users ---
+
 async function getCurrentUserWithRole() {
   const { data: userData, error } = await supabaseClient.auth.getUser();
   if (error || !userData?.user) return null;
@@ -32,14 +33,15 @@ async function getCurrentUserWithRole() {
     email: user.email,
     username: profile?.username || user.email,
     role: userRow?.role || 'user',
-    avatar_url: userRow?.avatar_url || null, // << from users table
+    avatar_url: userRow?.avatar_url || null,
   };
 
-  // expose globally so other JS files can use it
   window.currentUser = userInfo;
-
   return userInfo;
 }
+
+// make it available to other scripts (like softwareauth.js)
+window.getCurrentUserWithRole = getCurrentUserWithRole;
 
 // --- header auth state ---
 async function updateHeaderAuthState() {
