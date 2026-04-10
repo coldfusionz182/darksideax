@@ -337,7 +337,7 @@
 
                 <div class="editor-row-label">
                   <span>Message</span>
-                  <span style="font-size:0.75rem;color:#9ca3c9;">Highlight text then click Hide.</span>
+                  <span style="font-size:0.75rem;color:#9ca3c9;">Highlight text then click Hide / Color / Link.</span>
                 </div>
 
                 <div class="editor-toolbar">
@@ -353,8 +353,11 @@
                   <button type="button" class="toolbar-btn" id="btn-hide-text">
                     <i class="fa fa-user-secret"></i> Hide text
                   </button>
-                  <button type="button" class="toolbar-btn" data-format="color" id="btn-color">
+                  <button type="button" class="toolbar-btn" id="btn-color">
                     <i class="fa fa-palette"></i>
+                  </button>
+                  <button type="button" class="toolbar-btn" id="btn-link">
+                    <i class="fa fa-link"></i>
                   </button>
                 </div>
 
@@ -374,7 +377,9 @@
                   id="thread-content"
                   class="editor-textarea"
                   required
-                  placeholder="Describe the config, target, rules, combo format, etc.&#10;&#10;Highlight any sensitive part and click 'Hide text' to wrap it in [HIDDEN] tags."
+                  placeholder="Describe the config, target, rules, combo format, etc.
+
+Highlight any sensitive part and click 'Hide text' to wrap it in [HIDDEN] tags."
                 ></textarea>
               </div>
 
@@ -405,9 +410,11 @@
 <script type="module">
   import './scripts.js';
   import { initCreateThreadAvatar } from './avatars.js';
+  import { initPostToolbar } from './PostToolbar.js';
 
   document.addEventListener('DOMContentLoaded', () => {
     initCreateThreadAvatar();
+    initPostToolbar(); // uses default IDs defined above
   });
 
   const form = document.getElementById('new-thread-form');
