@@ -22,30 +22,29 @@ async function getCurrentUserProfileWithLastSeen() {
     .maybeSingle();
   if (pErr) console.error('notifications: profile error', pErr);
 
+  const username = profile?.username || user.email;
+
+  // read last_notifications_seen_at by username
   const { data: userRow, error: uErr } = await supabaseClient
     .from('users')
     .select('last_notifications_seen_at')
-    .eq('id', user.id)
+    .eq('username', username)
     .maybeSingle();
   if (uErr) console.error('notifications: users.last_notifications_seen_at error', uErr);
 
-  const username = profile?.username || user.email;
-
   return {
-    id: user.id,
-    email: user.email,
     username,
     lastSeen: userRow?.last_notifications_seen_at || null,
   };
 }
 
-async function updateLastNotificationsSeen(userId) {
+async function updateLastNotificationsSeen(username) {
   try {
     const nowIso = new Date().toISOString();
     const { error } = await supabaseClient
       .from('users')
       .update({ last_notifications_seen_at: nowIso })
-      .eq('id', userId);
+      .eq('username', username);
 
     if (error) {
       console.error('notifications: failed to update last_notifications_seen_at', error);
@@ -99,7 +98,7 @@ function initNotificationsDom(onMarkAllRead) {
 
       item.addEventListener('click', () => {
         dropdown.classList.remove('open');
-        // optional: window.location.href = `thread.html?id=${n.threadId}`;
+        // optional navigation
       });
 
       listEl.appendChild(item);
@@ -124,7 +123,7 @@ function initNotificationsDom(onMarkAllRead) {
 
   function openDropdown() {
     dropdown.classList.add('open');
-    // opening the bell marks everything as seen
+    // mark everything as seen when you open the bell
     handleMarkAllRead();
   }
 
@@ -269,7 +268,7 @@ async function fetchReplyNotifications(currentUser, myThreadIds, lastSeen) {
     }));
 }
 
-// Rep notifications (rep given to me, using timegiven only)
+// Rep notifications (using timegiven only)
 async function fetchRepNotifications(currentUser, lastSeen) {
   let query = supabaseClient
     .from('rep')
@@ -355,16 +354,19 @@ async function refreshNotifications(currentUser, renderNotifications) {
 // -------------- ENTRY POINT --------------
 
 async function startNotifications() {
+  // start with no notifications in UI
+  const dom = initNotificationsDom(null);
+  if (dom) dom.renderNotifications([]);
+
   let currentUser = await getCurrentUserProfileWithLastSeen();
   if (!currentUser) {
-    const domGuest = initNotificationsDom(() => {});
-    if (domGuest) domGuest.renderNotifications([]);
+    // guest: nothing further to do
     return;
   }
 
-  const dom = initNotificationsDom(async () => {
-    // mark all as read (bell open or clear button)
-    await updateLastNotificationsSeen(currentUser.id);
+  // re-init dom with mark-all-read callback now that we know the username
+  const domAuthed = initNotificationsDom(async () => {
+    await updateLastNotificationsSeen(currentUser.username);
     const nowIso = new Date().toISOString();
     currentUser = {
       ...currentUser,
@@ -372,8 +374,8 @@ async function startNotifications() {
     };
   });
 
-  if (!dom) return;
-  const { renderNotifications } = dom;
+  if (!domAuthed) return;
+  const { renderNotifications } = domAuthed;
 
   await refreshNotifications(currentUser, renderNotifications);
 }
