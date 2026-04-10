@@ -39,8 +39,7 @@ async function loadRepForCurrentUser() {
   const repEl = document.getElementById('profile-rep');
   if (!repEl) return; // not on profile page
 
-  // we want the rep of the profile we are viewing, not always the logged-in user
-  // read username from the page if available
+  // Try to use the profile username being viewed
   const profileUsernameEl = document.getElementById('profile-username');
   let usernameToLoad = null;
 
@@ -51,7 +50,7 @@ async function loadRepForCurrentUser() {
     }
   }
 
-  // fallback to current user
+  // Fallback to current logged-in user
   if (!usernameToLoad) {
     const current = await getCurrentUserWithRole();
     if (!current) {
@@ -180,7 +179,6 @@ async function searchUsersByUsernamePrefix(prefix) {
 
 // insert / increment rep for target username
 async function addRepForUser(targetUsername, delta, givenByUsername) {
-  // try to fetch existing rep row
   const { data, error } = await supabaseClient
     .from('rep')
     .select('id, amount')
@@ -255,7 +253,7 @@ async function initRepGiveBox() {
   // suggestion list
   const suggestions = document.createElement('div');
   suggestions.id = 'rep-username-suggestions';
-   suggestions.style.position = 'absolute';
+  suggestions.style.position = 'absolute';
   suggestions.style.zIndex = '999';
   suggestions.style.background = '#020617';
   suggestions.style.border = '1px solid #111827';
@@ -334,7 +332,6 @@ async function initRepGiveBox() {
       return;
     }
 
-    // verify target exists in public.users
     const { data: userCheck, error: checkErr } = await supabaseClient
       .from('users')
       .select('username')
