@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Darkside - Software Auth Access</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <!-- Same base CSS + roles -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+  <link href="styles.css" rel="stylesheet">
+  <link href="userroles.css" rel="stylesheet">
+
+  <style>
+    .page-inner {
+      max-width: 1120px;
+      margin: 0 auto;
+    }
+
+    .page-header {
+      margin: 15px 0 12px;
+    }
+
+    .page-title {
+      font-size: 20px;
+      font-weight: 600;
+      margin: 0 0 4px 0;
+    }
+
+    .page-subtitle {
+      font-size: 13px;
+      color: #9ca3c9;
+    }
+
+    /* two-column auth layout */
+    .auth-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+
+    @media (max-width: 900px) {
+      .auth-grid {
+        grid-template-columns: minmax(0, 1fr);
+      }
+    }
+
+    .auth-card {
+      background-color: #151515;
+      border-radius: 6px;
+      border: 1px solid #222;
+      box-shadow: 0 0 14px rgba(0, 0, 0, 0.5);
+      padding: 12px 14px;
+      font-size: 13px;
+    }
+
+    .auth-card-header {
+      font-size: 13px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      padding: 6px 10px;
+      margin: -12px -14px 10px;
+      border-radius: 6px 6px 0 0;
+      background: linear-gradient(135deg, #4f46e5, #6366f1);
+      color: #e5e7ff;
+    }
+
+    .auth-section-title {
+      font-size: 13px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 8px;
+    }
+
+    .auth-requirement-row {
+      display: flex;
+      align-items: center;
+      margin-bottom: 6px;
+      border-radius: 4px;
+      overflow: hidden;
+      border: 1px solid #1d3b29;
+      background: linear-gradient(to right, #14532d, #166534);
+    }
+
+    .auth-requirement-icon {
+      width: 36px;
+      min-width: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #bbf7d0;
+      background: rgba(0, 0, 0, 0.25);
+      font-size: 16px;
+    }
+
+    .auth-requirement-text {
+      flex: 1;
+      padding: 6px 10px;
+      font-size: 13px;
+      color: #e5ffe7;
+    }
+
+    .auth-success {
+      margin-top: 10px;
+      padding: 8px 10px;
+      border-radius: 4px;
+      font-size: 13px;
+      background: rgba(16, 185, 129, 0.08);
+      border: 1px solid rgba(16, 185, 129, 0.5);
+      color: #a7f3d0;
+    }
+
+    .auth-success i {
+      margin-right: 6px;
+      color: #34d399;
+    }
+
+    /* Auth key block */
+    .auth-key-block {
+      margin-top: 14px;
+    }
+
+    .auth-key-label {
+      font-size: 13px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 6px;
+    }
+
+    .auth-key-row {
+      display: flex;
+      align-items: stretch;
+      border-radius: 4px;
+      overflow: hidden;
+      border: 1px solid #333;
+      background-color: #050505;
+    }
+
+    .auth-key-value {
+      flex: 1;
+      padding: 8px 10px;
+      font-family: "SF Mono", "Consolas", "Menlo", monospace;
+      font-size: 13px;
+      color: #e5e7eb;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .auth-key-actions {
+      display: flex;
+      align-items: center;
+      border-left: 1px solid #333;
+      background-color: #111827;
+    }
+
+    .auth-key-actions button {
+      border: none;
+      background: transparent;
+      color: #e5e7eb;
+      font-size: 12px;
+      padding: 0 10px;
+      cursor: pointer;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      white-space: nowrap;
+    }
+
+    .auth-key-actions button:hover {
+      background-color: #1f2937;
+    }
+
+    .auth-key-actions button + button {
+      border-left: 1px solid #333;
+    }
+
+    /* Right column FAQ style */
+    .auth-faq-item {
+      margin-bottom: 14px;
+    }
+
+    .auth-faq-question {
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .auth-faq-answer {
+      font-size: 13px;
+      color: #cbd5f5;
+      line-height: 1.5;
+    }
+
+    .auth-faq-answer a {
+      color: #93c5fd;
+    }
+
+    .auth-faq-answer a:hover {
+      color: #ffffff;
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+<div id="page">
+  <!-- HEADER -->
+  <header id="header">
+    <div class="wrapper header-inner">
+      <div class="header-left">
+        <div class="header-logo">
+          <span class="logo-text">Darkside</span>
+          <span class="logo-slogan">Beyond the Limits</span>
+        </div>
+      </div>
+      <div class="header-right">
+        <ul class="top-links">
+          <li><a href="index.html">Home</a></li>
+        </ul>
+        <div class="auth-links">
+          <a href="login.html" class="btn btn-small btn-outline">
+            <i class="fa fa-sign-in-alt"></i> Login
+          </a>
+          <a href="#" class="btn btn-small btn-primary">
+            <i class="fa fa-user-plus"></i> Register
+          </a>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- NAVBAR -->
+  <nav id="navbar">
+    <div class="wrapper navbar-inner">
+      <ul class="nav-main">
+        <li>
+          <a href="index.html">
+            <i class="fa fa-home"></i> Home
+          </a>
+        </li>
+        <li>
+          <a href="software.html">
+            <i class="fa fa-cubes"></i> Software
+          </a>
+        </li>
+        <li>
+          <a href="softwareauth.html" class="active">
+            <i class="fa fa-key"></i> Software Auth Access
+          </a>
+        </li>
+      </ul>
+    </div>
+  </nav>
+
+  <!-- CONTENT -->
+  <main id="container">
+    <div class="wrapper page-inner">
+
+      <div class="page-header">
+        <h1 class="page-title"><i class="fa fa-key"></i> Software Auth Access</h1>
+        <p class="page-subtitle">
+          View and manage your authentication key for Darkside-authenticated tools.
+        </p>
+      </div>
+
+      <section class="auth-grid">
+
+        <!-- Left: requirements + key -->
+        <div class="auth-card">
+          <div class="auth-card-header">
+            Authentication Requirements
+          </div>
+
+          <p style="margin: 0 0 8px;">
+            Access to the Software Auth key is restricted to <strong>Admins</strong> and the <strong>Owner</strong>.
+          </p>
+
+          <div class="auth-requirement-row">
+            <div class="auth-requirement-icon">
+              <i class="fa fa-check"></i>
+            </div>
+            <div class="auth-requirement-text">
+              Darkside account with role <strong>Admin</strong> or <strong>Owner</strong>
+            </div>
+          </div>
+
+          <div class="auth-requirement-row">
+            <div class="auth-requirement-icon">
+              <i class="fa fa-lock"></i>
+            </div>
+            <div class="auth-requirement-text">
+              Key is unique per user and stored securely in our <strong>public.users</strong> table.
+            </div>
+          </div>
+
+          <div class="auth-success">
+            <i class="fa fa-info-circle"></i>
+            If you have permission, you can generate a new Software Auth key below. Otherwise this page will stay read‑only.
+          </div>
+
+          <div class="auth-key-block">
+            <div class="auth-key-label">
+              Software Auth Key
+            </div>
+            <div class="auth-key-row">
+              <div class="auth-key-value" id="auth-key-value">
+                No key generated yet.
+              </div>
+              <div class="auth-key-actions">
+                <button type="button" id="auth-copy-btn">
+                  <i class="fa fa-copy"></i> Copy
+                </button>
+                <button type="button" id="auth-newkey-btn">
+                  <i class="fa fa-sync-alt"></i> Gen Key
+                </button>
+              </div>
+            </div>
+            <div id="auth-status-text" style="margin-top:6px;font-size:12px;color:#9ca3c9;">
+              Click "Gen Key" to create your Software Auth key (Admins & Owner only). Cooldown: 30 seconds between generations.
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: FAQ / info -->
+        <div class="auth-card">
+          <div class="auth-card-header">
+            Auth System Information
+          </div>
+
+          <div class="auth-faq-item">
+            <div class="auth-faq-question">What is the Software Auth key?</div>
+            <div class="auth-faq-answer">
+              The Software Auth key is a 16‑character token stored in <strong>public.users.softwarekey</strong>.
+              It is used by certain Darkside tools to verify that you are allowed to run them.[file:94]
+            </div>
+          </div>
+
+          <div class="auth-faq-item">
+            <div class="auth-faq-question">How is the key generated?</div>
+            <div class="auth-faq-answer">
+              When you click <strong>Gen Key</strong>, a random 16‑character string (A‑Z, 0‑9) is created in your browser,
+              then written to your user row as <code>softwarekey</code> via Supabase.[file:94]
+            </div>
+          </div>
+
+          <div class="auth-faq-item">
+            <div class="auth-faq-question">Why is there a cooldown?</div>
+            <div class="auth-faq-answer">
+              Keys can be regenerated at most once every <strong>30 seconds</strong> to prevent abuse and to keep linked tools stable.
+            </div>
+          </div>
+
+          <div class="auth-faq-item">
+            <div class="auth-faq-question">Can normal members use this page?</div>
+            <div class="auth-faq-answer">
+              No. Only users with role <strong>admin</strong> or <strong>owner</strong> can generate or view a Software Auth key.
+              Others will see an error message and disabled controls.[file:94]
+            </div>
+          </div>
+
+          <div class="auth-faq-item">
+            <div class="auth-faq-question">Can I share my Software Auth key?</div>
+            <div class="auth-faq-answer">
+              Sharing your key is strictly forbidden. It is tied to your Darkside account and may be used to trace abuse back to you.
+              If we detect sharing, the key and account can be revoked.
+            </div>
+          </div>
+        </div>
+
+      </section>
+
+      <footer class="index-bottom">
+        <div class="index-links">
+          <a href="#">Mark all forums read</a> ·
+          <a href="#">Forum Team</a> ·
+          <a href="#">Contact</a>
+        </div>
+        <div class="copyright">
+          &copy; 2026 Darkside
+        </div>
+      </footer>
+
+    </div>
+  </main>
+</div>
+
+<!-- Core app + Supabase helpers -->
+<script type="module" src="scripts.js"></script>
+<!-- Page-specific logic: generates/loads softwarekey, enforces 30s cooldown -->
+<script src="softwareauth.js"></script>
+</body>
+</html>
