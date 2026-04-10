@@ -68,6 +68,7 @@ function initNotificationsDom(onBellOpen) {
   const countEl  = document.getElementById('notif-count');
   const badgeEl  = document.getElementById('notif-badge-count');
   const listEl   = document.getElementById('notif-list');
+  const clearBtn = document.getElementById('notif-clear-btn');
 
   if (!bellBtn || !dropdown || !countEl || !badgeEl || !listEl) return null;
 
@@ -150,7 +151,7 @@ function initNotificationsDom(onBellOpen) {
     closeDropdown();
   });
 
-  return {
+  const api = {
     renderNotifications,
     setCountVisible: (count) => {
       if (count > 0) {
@@ -162,7 +163,30 @@ function initNotificationsDom(onBellOpen) {
         badgeEl.textContent = '0';
       }
     },
+    clearAll: () => {
+      listEl.innerHTML = '';
+      countEl.style.display = 'none';
+      badgeEl.textContent = '0';
+
+      const empty = document.createElement('div');
+      empty.className = 'notif-empty';
+      empty.textContent = 'No notifications yet.';
+      listEl.appendChild(empty);
+    },
   };
+
+  // Clear button: mark all as read + clear UI
+  if (clearBtn) {
+    clearBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (typeof onBellOpen === 'function') {
+        onBellOpen(); // bumps last_notifications_seen_at
+      }
+      api.clearAll();
+    });
+  }
+
+  return api;
 }
 
 // -------------- DATA FETCHERS --------------
@@ -254,7 +278,6 @@ async function fetchRepNotifications(currentUser, lastSeen) {
     .select('id, username, given_by, amount, created_at, timegiven')
     .eq('username', currentUser.username);
 
-  // timegiven is the explicit "when rep was given" timestamp
   if (lastSeen) {
     query = query.gt('timegiven', lastSeen);
   }
