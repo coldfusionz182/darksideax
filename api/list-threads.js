@@ -14,11 +14,11 @@ export default async function handler(req, res) {
   }
 
   try {
-    // optional ?limit=, default 25, max 100
     const limit = Math.min(parseInt(req.query.limit, 10) || 25, 100);
 
-    // optional ?section=configs or ?section=accounts
-    const sectionParam = req.query.section;
+    // optional ?section=configs or ?section=accounts (case-insensitive)
+    const rawSection = (req.query.section || '').toString().toLowerCase();
+
     let query = supabase
       .from('threads')
       .select(
@@ -27,8 +27,8 @@ export default async function handler(req, res) {
       .order('created_at', { ascending: false })
       .limit(limit);
 
-    if (sectionParam === 'configs' || sectionParam === 'accounts') {
-      query = query.eq('section', sectionParam);
+    if (rawSection === 'configs' || rawSection === 'accounts') {
+      query = query.eq('section', rawSection);
     }
 
     const { data, error } = await query;
