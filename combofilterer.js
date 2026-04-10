@@ -8,7 +8,10 @@ async function loadComboThreads() {
 
   const sort = sortSelectEl?.value || 'newest';
 
-  // show temporary loading state while we fetch + process
+  // OPTION A: show nothing at all while loading
+  // threadListEl.innerHTML = '';
+
+  // OPTION B: show a loading message row only (no real data)
   threadListEl.innerHTML = `
     <tr class="thread-row">
       <td colspan="4">Loading combo threads...</td>
@@ -23,6 +26,7 @@ async function loadComboThreads() {
     const data = await resp.json();
 
     if (!Array.isArray(data)) {
+      // after filtering step fails, show error directly (no delay necessary)
       threadListEl.innerHTML = `
         <tr class="thread-row">
           <td colspan="4">Failed to load combo threads.</td>
@@ -30,35 +34,21 @@ async function loadComboThreads() {
       return;
     }
 
-    // HARD filter:
-    // 1) section === 'combo'
-    // 2) tag contains one of: Email:Pass, User:Pass, Url:Email:Pass
     const allowedTags = ['email:pass', 'user:pass', 'url:email:pass'];
 
+    // FILTER FIRST – nothing rendered yet
     const combosOnly = data.filter((row) => {
       const sectionOk =
         typeof row.section === 'string' &&
         row.section.toLowerCase() === 'combo';
 
       const tag = (row.tag || '').toString().toLowerCase();
-
       const tagOk = allowedTags.some((allowed) => tag.includes(allowed));
 
       return sectionOk && tagOk;
     });
 
-    if (combosOnly.length === 0) {
-      // wait 2 seconds before showing "no results"
-      setTimeout(() => {
-        threadListEl.innerHTML = `
-          <tr class="thread-row">
-            <td colspan="4">No combo threads yet. Be the first to post!</td>
-          </tr>`;
-      }, 2000);
-      return;
-    }
-
-    // sort AFTER filtering
+    // apply sorting on filtered array
     if (sort === 'oldest') {
       combosOnly.sort(
         (a, b) => new Date(a.created_at) - new Date(b.created_at)
@@ -73,8 +63,16 @@ async function loadComboThreads() {
       );
     }
 
-    // wait 2 seconds before rendering the final, filtered list
+    // Now wait 2 seconds, then render (or show "no threads")
     setTimeout(() => {
+      if (combosOnly.length === 0) {
+        threadListEl.innerHTML = `
+          <tr class="thread-row">
+            <td colspan="4">No combo threads yet. Be the first to post!</td>
+          </tr>`;
+        return;
+      }
+
       threadListEl.innerHTML = '';
 
       combosOnly.forEach((row, idx) => {
@@ -124,6 +122,7 @@ async function loadComboThreads() {
     }, 2000);
   } catch (err) {
     console.error('loadComboThreads error', err);
+    // optional delay for error as well
     setTimeout(() => {
       threadListEl.innerHTML = `
         <tr class="thread-row">
