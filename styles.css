@@ -534,6 +534,38 @@ a:hover {
   width: auto;
 }
 
+.user-title-owner {
+  position: relative;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  background: linear-gradient(90deg, #a855f7, #ec4899, #6366f1);
+  background-size: 200% 200%;
+  -webkit-background-clip: text;  /* WebKit */
+  background-clip: text;          /* Standard */
+  color: transparent;
+  animation: ownerGradient 3s ease-in-out infinite;
+  text-shadow:
+    0 0 6px rgba(139, 92, 246, 0.9),
+    0 0 18px rgba(236, 72, 153, 0.7);
+}
+
+.user-title-admin {
+  position: relative;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  background: linear-gradient(90deg, #f472b6, #fb7185, #ec4899);
+  background-size: 200% 200%;
+  -webkit-background-clip: text;  /* WebKit */
+  background-clip: text;          /* Standard */
+  color: transparent;
+  animation: adminGradient 3s ease-in-out infinite;
+  text-shadow:
+    0 0 6px rgba(244, 114, 182, 0.9),
+    0 0 18px rgba(251, 113, 133, 0.7);
+}
+
 /* Container behaves like the old Login button */
 .user-pill {
   display: inline-flex;
