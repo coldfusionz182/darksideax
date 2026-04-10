@@ -30,7 +30,7 @@ function formatDateShort(iso) {
 }
 
 function mapRoleToLabel(role, userrank) {
-  if (userrank && userrank.trim()) return userrank; // e.g. "Admin"
+  if (userrank && userrank.trim()) return userrank;
   switch (role) {
     case 'owner':
       return 'Owner';
@@ -147,12 +147,13 @@ async function initProfilePage() {
 
   try {
     if (paramUsername) {
-      // Viewing someone else (or yourself) by username
+      // Viewing someone else (or yourself) by username: /profile.html?u=NAME
       userRow = await getUserByUsername(paramUsername);
       if (!userRow) {
         profileUsernameEl.textContent = 'Profile not found';
         return;
       }
+      // Only treat as "own profile" if logged-in auth user matches this row
       viewingOwnProfile = !!(authUser && authUser.id === userRow.uuid);
     } else {
       // /profile.html → must be own profile
@@ -195,7 +196,7 @@ async function initProfilePage() {
 
   setAvatar(avatarUrl);
 
-  // threads / replies / likes
+  // ----- threads / replies / likes -----
   const { threads, replies, likes } = await getUserContent(username, userRow.uuid);
 
   const threadsCount = threads.length;
