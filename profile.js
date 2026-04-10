@@ -147,21 +147,21 @@ async function initProfilePage() {
 
   try {
     if (paramUsername) {
-      // Viewing someone else (or yourself) by username: /profile.html?u=NAME
-      userRow = await getUserByUsername(paramUsername);
+      // ALWAYS: /profile.html?u=NAME -> lookup in public.users by username
+      userRow = await getUserByUsername(paramUsername); // SELECT * FROM users WHERE username = paramUsername
       if (!userRow) {
         profileUsernameEl.textContent = 'Profile not found';
         return;
       }
-      // Only treat as "own profile" if logged-in auth user matches this row
+      // treat as "own profile" only if the logged in auth user matches this row
       viewingOwnProfile = !!(authUser && authUser.id === userRow.uuid);
     } else {
-      // /profile.html → must be own profile
+      // /profile.html (no ?u=) -> own profile only
       if (!authUser) {
         window.location.href = 'login.html';
         return;
       }
-      userRow = await getUserByUuid(authUser.id);
+      userRow = await getUserByUuid(authUser.id); // SELECT * FROM users WHERE uuid = authUser.id
       if (!userRow) {
         profileUsernameEl.textContent = 'Profile not found';
         return;
@@ -186,6 +186,7 @@ async function initProfilePage() {
   if (profileRoleTextEl) profileRoleTextEl.textContent = roleLabel;
   if (profileJoinedEl && joinedAt) profileJoinedEl.textContent = formatDateShort(joinedAt);
 
+  // email + uid only for own profile; others use only public users table
   if (viewingOwnProfile) {
     if (profileEmailEl) profileEmailEl.textContent = userRow.email || '–';
     if (infoUidEl) infoUidEl.textContent = userRow.uuid || '–';
@@ -196,7 +197,7 @@ async function initProfilePage() {
 
   setAvatar(avatarUrl);
 
-  // ----- threads / replies / likes -----
+  // ----- threads / replies / likes pulled using username + uuid from users -----
   const { threads, replies, likes } = await getUserContent(username, userRow.uuid);
 
   const threadsCount = threads.length;
@@ -290,7 +291,7 @@ async function initProfilePage() {
     }
   }
 
-  // avatar editing – only own profile
+  // avatar editing – only for own profile
   if (!viewingOwnProfile) {
     if (avatarInput) {
       avatarInput.disabled = true;
