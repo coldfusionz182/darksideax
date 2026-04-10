@@ -1,12 +1,7 @@
 // usertitleanims.js
 
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { SUPABASE_ANON_KEY } from './keys.js';
-
-const SUPABASE_URL = 'https://ffmkkwskvjvytdddevmm.supabase.co';
-const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-// ---------- Role → CSS class ----------
+// We assume scripts.js already created supabaseClient and window.currentUser / window.dsUserRole.
+// This file only decorates usernames with CSS classes based on role.
 
 function getUserTitleClass(roleOrRank) {
   if (!roleOrRank) return '';
@@ -18,27 +13,12 @@ function getUserTitleClass(roleOrRank) {
   return '';
 }
 
-function getRoleLabel(userRow) {
-  if (!userRow) return 'Member';
-  if (userRow.userrank && userRow.userrank.trim()) return userRow.userrank.trim();
+// ---------- 1. Header username (top-right) ----------
 
-  switch (userRow.role) {
-    case 'owner':
-      return 'Owner';
-    case 'admin':
-      return 'Admin';
-    default:
-      return 'Member';
-  }
-}
-
-// ---------- 1. Header username (top right) ----------
-
-async function applyHeaderUserAnimation() {
+function applyHeaderUserAnimation() {
   const pill = document.querySelector('.user-pill-name');
   if (!pill) return;
 
-  // scripts.js already sets window.dsUserRole / window.currentUser.
   const role =
     (window.currentUser && window.currentUser.role) || window.dsUserRole || 'user';
 
@@ -47,188 +27,104 @@ async function applyHeaderUserAnimation() {
   if (cls) pill.classList.add(cls);
 }
 
-// ---------- 2. Current Staff list usernames ----------
-// We re-fetch with roles so we know which class to apply.
+// ---------- 2. Staff list usernames ----------
+// We rely on the HTML already rendered by scripts.js and only decorate names.
 
-async function enhanceStaffList() {
+function enhanceStaffListUsernames() {
   const container = document.getElementById('current-staff-list');
   if (!container) return;
 
-  try {
-    const { data, error } = await supabaseClient
-      .from('users')
-      .select('email, role, username, userrank')
-      .in('role', ['admin', 'owner'])
-      .order('role', { ascending: false });
+  const lines = container.querySelectorAll('.staff-line');
 
-    if (error) {
-      console.error('usertitleanims: staff load error', error);
-      return;
-    }
+  lines.forEach((line) => {
+    const nameSpan = line.querySelector('.staff-name');
+    const roleSpan = line.querySelector('.staff-role');
+    if (!nameSpan || !roleSpan) return;
 
-    container.innerHTML = '';
+    const roleText = roleSpan.textContent.trim().toLowerCase();
+    let inferredRole = '';
 
-    if (!data || data.length === 0) {
-      container.textContent = 'No staff members found.';
-      return;
-    }
+    if (roleText === 'owner') inferredRole = 'owner';
+    else if (roleText === 'admin') inferredRole = 'admin';
 
-    data.forEach((u) => {
-      const line = document.createElement('div');
-      line.className = 'staff-line';
+    nameSpan.classList.remove('user-title-owner', 'user-title-admin');
 
-      const displayName =
-        (u.username && u.username.trim()) ||
-        (u.email ? u.email.split('@')[0] : 'user');
-
-      const roleLabel = getRoleLabel(u);
-      const titleClass = getUserTitleClass(u.role || u.userrank);
-
-      const nameSpan = document.createElement('span');
-      nameSpan.className = 'staff-name';
-      nameSpan.textContent = displayName;
-      if (titleClass) nameSpan.classList.add(titleClass);
-
-      const roleSpan = document.createElement('span');
-      roleSpan.className = 'staff-role';
-      roleSpan.textContent = roleLabel;
-
-      line.appendChild(nameSpan);
-      line.appendChild(roleSpan);
-      container.appendChild(line);
-    });
-  } catch (err) {
-    console.error('usertitleanims: enhanceStaffList error', err);
-  }
+    const cls = getUserTitleClass(inferredRole);
+    if (cls) nameSpan.classList.add(cls);
+  });
 }
 
 // ---------- 3. Shoutbox usernames ----------
-// We reload shouts with joined role data and apply classes.
+// After scripts.js renders the shoutbox, usernames are in .profile-username-link.
+// We infer role by matching those names against staff list or a known map.
 
-let shoutLastTimestamp = null;
+function buildStaffRoleMap() {
+  const map = new Map();
+  const container = document.getElementById('current-staff-list');
+  if (!container) return map;
 
-async function loadShoutsWithRoles() {
-  const shoutBox = document.getElementById('shoutbox-messages');
-  if (!shoutBox) return;
+  const lines = container.querySelectorAll('.staff-line');
+  lines.forEach((line) => {
+    const nameSpan = line.querySelector('.staff-name');
+    const roleSpan = line.querySelector('.staff-role');
+    if (!nameSpan || !roleSpan) return;
 
-  // join shouts -> users by user_id
-  const { data, error } = await supabaseClient
-    .from('shouts')
-    .select(
-      `
-      id,
-      user_id,
-      username,
-      message,
-      created_at,
-      users!inner(
-        role,
-        userrank
-      )
-    `
-    )
-    .order('created_at', { ascending: false })
-    .limit(50);
+    const name = nameSpan.textContent.trim();
+    const roleText = roleSpan.textContent.trim().toLowerCase();
 
-  if (error) {
-    console.error('usertitleanims: loadShoutsWithRoles error', error);
-    return;
-  }
+    let inferredRole = '';
+    if (roleText === 'owner') inferredRole = 'owner';
+    else if (roleText === 'admin') inferredRole = 'admin';
 
-  shoutBox.innerHTML = '';
-
-  if (!data || data.length === 0) return;
-
-  data
-    .slice()
-    .reverse()
-    .forEach((row) => {
-      const line = document.createElement('div');
-      line.className = 'shout-line';
-
-      const textContainer = document.createElement('div');
-
-      const userSpan = document.createElement('span');
-      userSpan.className = 'shout-user rank-member';
-
-      const userLink = document.createElement('a');
-      userLink.className = 'profile-username-link';
-      userLink.textContent = row.username || 'user';
-
-      const userRow = row.users || null;
-      const cls = getUserTitleClass(userRow?.role || userRow?.userrank);
-      if (cls) userLink.classList.add(cls);
-
-      userSpan.appendChild(userLink);
-
-      const timeSpan = document.createElement('span');
-      timeSpan.className = 'shout-time';
-      const d = new Date(row.created_at);
-      const hh = d.getHours().toString().padStart(2, '0');
-      const mm = d.getMinutes().toString().padStart(2, '0');
-      timeSpan.textContent = `${hh}:${mm}`;
-
-      const textSpan = document.createElement('span');
-      textSpan.className = 'shout-text';
-      textSpan.textContent = row.message;
-
-      textContainer.appendChild(userSpan);
-      textContainer.appendChild(timeSpan);
-      textContainer.appendChild(textSpan);
-
-      line.appendChild(textContainer);
-      shoutBox.appendChild(line);
-    });
-
-  shoutBox.scrollTop = shoutBox.scrollHeight;
-
-  shoutLastTimestamp = data[0].created_at;
-}
-
-async function hasNewShoutsSinceLastTimestamp() {
-  if (!shoutLastTimestamp) return true;
-
-  const { data, error } = await supabaseClient
-    .from('shouts')
-    .select('created_at')
-    .order('created_at', { ascending: false })
-    .limit(1);
-
-  if (error) {
-    console.error('usertitleanims: hasNewShouts error', error);
-    return false;
-  }
-
-  if (!data || data.length === 0) return false;
-
-  const latest = data[0].created_at;
-  return new Date(latest) > new Date(shoutLastTimestamp);
-}
-
-function setupAnimatedShoutboxPolling() {
-  const shoutBox = document.getElementById('shoutbox-messages');
-  if (!shoutBox) return;
-
-  // initial load
-  loadShoutsWithRoles();
-
-  // poll every 10s, only reload when new shouts exist
-  setInterval(async () => {
-    try {
-      const changed = await hasNewShoutsSinceLastTimestamp();
-      if (changed) {
-        await loadShoutsWithRoles();
-      }
-    } catch (e) {
-      console.error('usertitleanims: shoutbox poll error', e);
+    if (inferredRole) {
+      map.set(name.toLowerCase(), inferredRole);
     }
-  }, 10000);
+  });
+
+  return map;
+}
+
+function applyShoutboxUserAnimations() {
+  const shoutBox = document.getElementById('shoutbox-messages');
+  if (!shoutBox) return;
+
+  const staffMap = buildStaffRoleMap();
+  const links = shoutBox.querySelectorAll('.profile-username-link');
+
+  links.forEach((link) => {
+    const uname = link.textContent.trim();
+    const key = uname.toLowerCase();
+    const role = staffMap.get(key) || ''; // owner/admin if staff
+
+    link.classList.remove('user-title-owner', 'user-title-admin');
+    const cls = getUserTitleClass(role);
+    if (cls) link.classList.add(cls);
+  });
+}
+
+// ---------- 4. Re-apply on shoutbox reload ----------
+
+function hookIntoShoutboxRendering() {
+  const shoutBox = document.getElementById('shoutbox-messages');
+  if (!shoutBox) return;
+
+  const observer = new MutationObserver(() => {
+    applyShoutboxUserAnimations();
+  });
+
+  observer.observe(shoutBox, { childList: true, subtree: true });
 }
 
 // ---------- Init ----------
 
 document.addEventListener('DOMContentLoaded', () => {
   applyHeaderUserAnimation();
-  enhanceStaffList();
-  setupAnimatedShoutboxPolling();
+  enhanceStaffListUsernames();
+  hookIntoShoutboxRendering();
+
+  // If scripts.js ever updates currentUser and fires a custom event,
+  // we can re-apply header styles:
+  window.addEventListener('ds-user-updated', () => {
+    applyHeaderUserAnimation();
+  });
 });

@@ -537,12 +537,12 @@ a:hover {
 .user-title-owner {
   position: relative;
   font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
+  /* no text-transform here – keep original casing */
+  /* no big letter-spacing – keep it readable for names */
   background: linear-gradient(90deg, #a855f7, #ec4899, #6366f1);
   background-size: 200% 200%;
-  -webkit-background-clip: text;  /* WebKit */
-  background-clip: text;          /* Standard */
+  -webkit-background-clip: text;
+  background-clip: text;
   color: transparent;
   animation: ownerGradient 3s ease-in-out infinite;
   text-shadow:
@@ -550,20 +550,30 @@ a:hover {
     0 0 18px rgba(236, 72, 153, 0.7);
 }
 
+@keyframes ownerGradient {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
 .user-title-admin {
   position: relative;
   font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
   background: linear-gradient(90deg, #f472b6, #fb7185, #ec4899);
   background-size: 200% 200%;
-  -webkit-background-clip: text;  /* WebKit */
-  background-clip: text;          /* Standard */
+  -webkit-background-clip: text;
+  background-clip: text;
   color: transparent;
   animation: adminGradient 3s ease-in-out infinite;
   text-shadow:
     0 0 6px rgba(244, 114, 182, 0.9),
     0 0 18px rgba(251, 113, 133, 0.7);
+}
+
+@keyframes adminGradient {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
 }
 
 /* Container behaves like the old Login button */
