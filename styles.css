@@ -534,9 +534,12 @@ a:hover {
   width: auto;
 }
 
+/* === Staff / Shoutbox username role effects === */
+
+/* Owner – baby blue animated text */
 .user-title-owner {
   font-weight: 700;
-  background: linear-gradient(90deg, #38bdf8, #93c5fd, #0ea5e9); /* baby blue */
+  background: linear-gradient(90deg, #38bdf8, #93c5fd, #0ea5e9); /* baby blue range */
   background-size: 200% 200%;
   -webkit-background-clip: text;
   background-clip: text;
@@ -548,14 +551,15 @@ a:hover {
 }
 
 @keyframes ownerGradient {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
   100% { background-position: 0% 50%; }
 }
 
+/* Admin – pink animated text */
 .user-title-admin {
   font-weight: 700;
-  background: linear-gradient(90deg, #f472b6, #fb7185, #ec4899); /* pink */
+  background: linear-gradient(90deg, #f472b6, #fb7185, #ec4899); /* pink range */
   background-size: 200% 200%;
   -webkit-background-clip: text;
   background-clip: text;
@@ -567,9 +571,25 @@ a:hover {
 }
 
 @keyframes adminGradient {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
   100% { background-position: 0% 50%; }
+}
+
+/* Base style for clickable usernames (shoutbox + staff) */
+.profile-username-link {
+  color: inherit;          /* let role classes control color */
+  cursor: pointer;
+}
+
+.profile-username-link:hover {
+  text-decoration: underline;
+  color: inherit;          /* keep gradient on hover */
+}
+
+/* Staff list name container – allow gradient to show */
+.staff-name {
+  color: inherit;          /* no hard override; gradient shows if present */
 }
 
 /* Container behaves like the old Login button */
