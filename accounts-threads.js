@@ -2,10 +2,9 @@
 const threadListEl = document.getElementById('thread-list');
 const sortSelectEl = document.getElementById('sort-select');
 
-async function loadAccountThreads() {
-  if (!threadListEl) return;
-
-  const sort = sortSelectEl?.value || 'newest';
+// core fetcher
+async function fetchThreads(sectionFilter = null) {
+  if (!threadListEl) return null;
 
   const resp = await fetch(
     `/api/list-threads?section=accounts&limit=50&_=${Date.now()}`,
@@ -18,13 +17,17 @@ async function loadAccountThreads() {
       <tr class="thread-row">
         <td colspan="4">Failed to load account threads.</td>
       </tr>`;
-    return;
+    return null;
+  }
+
+  if (!sectionFilter) {
+    return data;
   }
 
   // HARD filter:
   // 1) section === 'accounts'
   // 2) title does NOT contain 'config' (backup check)
-  const accountsOnly = data.filter((row) => {
+  return data.filter((row) => {
     const sectionOk =
       typeof row.section === 'string' &&
       row.section.toLowerCase() === 'accounts';
@@ -34,8 +37,12 @@ async function loadAccountThreads() {
 
     return sectionOk && titleOk;
   });
+}
 
-  if (accountsOnly.length === 0) {
+function renderThreads(list, sortMode) {
+  if (!threadListEl) return;
+
+  if (!list || list.length === 0) {
     threadListEl.innerHTML = `
       <tr class="thread-row">
         <td colspan="4">No account threads yet. Be the first to post!</td>
@@ -43,17 +50,19 @@ async function loadAccountThreads() {
     return;
   }
 
-  if (sort === 'oldest') {
-    accountsOnly.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
-  } else if (sort === 'replies') {
-    accountsOnly.sort((a, b) => (b.replies ?? 0) - (a.replies ?? 0));
+  const sorted = [...list];
+
+  if (sortMode === 'oldest') {
+    sorted.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+  } else if (sortMode === 'replies') {
+    sorted.sort((a, b) => (b.replies ?? 0) - (a.replies ?? 0));
   } else {
-    accountsOnly.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+    sorted.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
   }
 
   threadListEl.innerHTML = '';
 
-  accountsOnly.forEach((row, idx) => {
+  sorted.forEach((row, idx) => {
     const tr = document.createElement('tr');
     tr.className = 'thread-row' + (idx % 2 === 1 ? ' alt' : '');
 
@@ -95,8 +104,33 @@ async function loadAccountThreads() {
   });
 }
 
-if (sortSelectEl) {
-  sortSelectEl.addEventListener('change', loadAccountThreads);
+// normal load (no filter)
+async function initialLoad() {
+  const sort = sortSelectEl?.value || 'newest';
+  const data = await fetchThreads(null); // no hard filter
+  if (!data) return;
+  renderThreads(data, sort);
+
+  // after 2 seconds, apply the HARD filter and re-render
+  setTimeout(async () => {
+    const sort2 = sortSelectEl?.value || 'newest';
+    const filtered = await fetchThreads('accounts-only');
+    if (!filtered) return;
+    renderThreads(filtered, sort2);
+  }, 2000);
 }
 
-loadAccountThreads();
+// manual reload (on sort change) uses filtered list
+async function loadAccountThreadsFiltered() {
+  const sort = sortSelectEl?.value || 'newest';
+  const filtered = await fetchThreads('accounts-only');
+  if (!filtered) return;
+  renderThreads(filtered, sort);
+}
+
+if (sortSelectEl) {
+  sortSelectEl.addEventListener('change', loadAccountThreadsFiltered);
+}
+
+// first load: normal, then auto-filter after 2s
+initialLoad();
