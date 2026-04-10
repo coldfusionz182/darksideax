@@ -311,10 +311,6 @@
             <span class="dot"></span>
             <span id="thread-created-at"></span>
           </div>
-          <div class="thread-stats">
-            <span><i class="fa fa-eye"></i><span id="thread-views">0</span> views</span>
-            <span><i class="fa fa-comments"></i><span id="thread-replies-count">0</span> replies</span>
-          </div>
         </header>
 
         <div class="cat-body card-panel">
@@ -386,13 +382,11 @@
   </main>
 </div>
 
-<!-- load main logic + avatars module -->
 <script type="module">
   import './scripts.js';
   import { initThreadAvatar } from './avatars.js';
 
-  // scripts.js should dispatch this after loading the thread:
-  // window.dispatchEvent(new CustomEvent('ds-thread-loaded', { detail: { thread: t } }));
+  // avatars.js listens for the loaded thread and pulls [avatar=...] from content
   window.addEventListener('ds-thread-loaded', (e) => {
     const thread = e.detail.thread; // has .content
     initThreadAvatar(thread.content);
