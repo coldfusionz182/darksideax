@@ -309,6 +309,28 @@ async function handleDeleteThread(threadId, title, currentUser) {
       return;
     }
 
+    // NEW: block admins from deleting threads authored by "ColdFusionz"
+    // Owner (you) can still delete them.
+    const isOwner = currentUser.role === 'owner';
+
+    if (!isOwner) {
+      // Look up the thread to check the author
+      const { data: thread, error: threadErr } = await supabaseClient
+        .from('threads')
+        .select('author')
+        .eq('id', threadId)
+        .maybeSingle();
+
+      if (threadErr) {
+        throw threadErr;
+      }
+
+      if (thread?.author === 'ColdFusionz') {
+        alert('You cannot delete threads created by ColdFusionz.');
+        return;
+      }
+    }
+
     // get Supabase access token for this session
     const { data: sessionData } = await supabaseClient.auth.getSession();
     const token = sessionData?.session?.access_token;
