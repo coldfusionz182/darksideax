@@ -7,7 +7,9 @@ async function loadConfigsThreads() {
 
   const sort = sortSelectEl?.value || 'newest';
 
-  const resp = await fetch('/api/list-threads?section=configs&limit=50');
+  const resp = await fetch('/api/list-threads?section=configs&limit=50&_=' + Date.now(), {
+    cache: 'no-store',
+  });
   const data = await resp.json();
 
   if (!Array.isArray(data)) {
@@ -18,12 +20,19 @@ async function loadConfigsThreads() {
     return;
   }
 
-  // HARD filter: only section === 'configs'
-  const configsOnly = data.filter(
-    (row) =>
+  // HARD filter:
+  // 1) section === 'configs'
+  // 2) title DOES contain "config" (backup check)
+  const configsOnly = data.filter((row) => {
+    const sectionOk =
       typeof row.section === 'string' &&
-      row.section.toLowerCase() === 'configs'
-  );
+      row.section.toLowerCase() === 'configs';
+
+    const title = (row.title || '').toString().toLowerCase();
+    const titleOk = title.includes('config');
+
+    return sectionOk && titleOk;
+  });
 
   if (configsOnly.length === 0) {
     threadListEl.innerHTML = `

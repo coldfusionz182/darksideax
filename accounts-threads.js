@@ -7,7 +7,6 @@ async function loadAccountThreads() {
 
   const sort = sortSelectEl?.value || 'newest';
 
-  // Supabase is queried by the API route /api/list-threads
   const resp = await fetch(
     `/api/list-threads?section=accounts&limit=50&_=${Date.now()}`,
     { cache: 'no-store' }
@@ -22,12 +21,19 @@ async function loadAccountThreads() {
     return;
   }
 
-  // HARD filter: only section === 'accounts'
-  const accountsOnly = data.filter(
-    (row) =>
+  // HARD filter:
+  // 1) section === 'accounts'
+  // 2) title does NOT contain 'config' (backup check)
+  const accountsOnly = data.filter((row) => {
+    const sectionOk =
       typeof row.section === 'string' &&
-      row.section.toLowerCase() === 'accounts'
-  );
+      row.section.toLowerCase() === 'accounts';
+
+    const title = (row.title || '').toString().toLowerCase();
+    const titleOk = !title.includes('config');
+
+    return sectionOk && titleOk;
+  });
 
   if (accountsOnly.length === 0) {
     threadListEl.innerHTML = `
