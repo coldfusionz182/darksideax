@@ -5,7 +5,7 @@ import { SUPABASE_ANON_KEY } from './keys.js';
 const SUPABASE_URL = 'https://ffmkkwskvjvytdddevmm.supabase.co';
 const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-// ---- shared helpers ----
+// ---------- shared helpers ----------
 
 async function getCurrentUserWithRole() {
   const { data: userData, error } = await supabaseClient.auth.getUser();
@@ -33,7 +33,7 @@ async function getCurrentUserWithRole() {
   };
 }
 
-// ---- profile page: show current user's rep ----
+// ---------- profile page rep display ----------
 
 async function loadRepForCurrentUser() {
   const repEl = document.getElementById('profile-rep');
@@ -65,9 +65,27 @@ async function loadRepForCurrentUser() {
   }
 }
 
-// ---- index page: give reputation box ----
+// ---------- give rep (index page) ----------
 
-// upsert / increment rep for target username
+// find users whose username starts with input
+async function searchUsersByUsernamePrefix(prefix) {
+  if (!prefix) return [];
+
+  // simple prefix match: username ilike 'prefix%'
+  const { data, error } = await supabaseClient
+    .from('users')
+    .select('username')
+    .ilike('username', `${prefix}%`)
+    .limit(5);
+
+  if (error) {
+    console.error('rep(give): user search error', error);
+    return [];
+  }
+  return (data || []).filter(u => u.username);
+}
+
+// insert / increment rep for target username
 async function addRepForUser(targetUsername, delta) {
   // try to fetch existing rep row
   const { data, error } = await supabaseClient
@@ -82,8 +100,8 @@ async function addRepForUser(targetUsername, delta) {
   }
 
   let newAmount;
+
   if (!data) {
-    // no row yet, create
     newAmount = delta;
     const { error: insErr } = await supabaseClient
       .from('rep')
@@ -125,18 +143,83 @@ async function initRepGiveBox() {
 
   const current = await getCurrentUserWithRole();
   if (!current) {
-    // not logged in -> keep hidden
     box.style.display = 'none';
     return;
   }
 
-  // only allow admin / owner to see + use the box
+  // only admins / owner can give rep (client side)
   if (current.role !== 'admin' && current.role !== 'owner') {
     box.style.display = 'none';
     return;
   }
 
   box.style.display = 'block';
+
+  // suggestion list
+  const suggestions = document.createElement('div');
+  suggestions.id = 'rep-username-suggestions';
+  suggestions.style.position = 'absolute';
+  suggestions.style.zIndex = '999';
+  suggestions.style.background = '#020617';
+  suggestions.style.border = '1px solid #111827';
+  suggestions.style.borderRadius = '4px';
+  suggestions.style.fontSize = '0.8rem';
+  suggestions.style.display = 'none';
+  document.body.appendChild(suggestions);
+
+  function hideSuggestions() {
+    suggestions.style.display = 'none';
+    suggestions.innerHTML = '';
+  }
+
+  function positionSuggestions() {
+    const rect = userInput.getBoundingClientRect();
+    suggestions.style.left = `${rect.left + window.scrollX}px`;
+    suggestions.style.top = `${rect.bottom + window.scrollY + 2}px`;
+    suggestions.style.minWidth = `${rect.width}px`;
+  }
+
+  userInput.addEventListener('input', async () => {
+    const value = userInput.value.trim();
+    if (!value) {
+      hideSuggestions();
+      return;
+    }
+
+    positionSuggestions();
+
+    const users = await searchUsersByUsernamePrefix(value);
+    if (!users.length) {
+      hideSuggestions();
+      return;
+    }
+
+    suggestions.innerHTML = '';
+    users.forEach(u => {
+      const item = document.createElement('div');
+      item.textContent = u.username;
+      item.style.padding = '4px 8px';
+      item.style.cursor = 'pointer';
+      item.addEventListener('mouseenter', () => {
+        item.style.background = '#111827';
+      });
+      item.addEventListener('mouseleave', () => {
+        item.style.background = 'transparent';
+      });
+      item.addEventListener('click', () => {
+        userInput.value = u.username;
+        hideSuggestions();
+      });
+      suggestions.appendChild(item);
+    });
+
+    suggestions.style.display = 'block';
+  });
+
+  document.addEventListener('click', (e) => {
+    if (e.target === userInput || suggestions.contains(e.target)) return;
+    hideSuggestions();
+  });
 
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -154,6 +237,23 @@ async function initRepGiveBox() {
       return;
     }
 
+    // verify target exists in public.users
+    const { data: userCheck, error: checkErr } = await supabaseClient
+      .from('users')
+      .select('username')
+      .eq('username', target)
+      .maybeSingle();
+
+    if (checkErr) {
+      console.error('rep(give): user check error', checkErr);
+      statusEl.textContent = 'Error checking user.';
+      return;
+    }
+    if (!userCheck) {
+      statusEl.textContent = 'User not found.';
+      return;
+    }
+
     const delta = parseInt(amountStr, 10);
     if (!delta || delta < 1 || delta > 6) {
       statusEl.textContent = 'Invalid rep amount.';
@@ -166,6 +266,7 @@ async function initRepGiveBox() {
       const newAmount = await addRepForUser(target, delta);
       statusEl.textContent = `Reputation updated. ${target} now has ${newAmount} rep.`;
       form.reset();
+      hideSuggestions();
     } catch (err) {
       console.error('rep(give): failed', err);
       statusEl.textContent = 'Failed to update reputation.';
@@ -173,7 +274,7 @@ async function initRepGiveBox() {
   });
 }
 
-// ---- entry ----
+// ---------- entry ----------
 
 function initRepModule() {
   loadRepForCurrentUser().catch((e) => console.error(e));
