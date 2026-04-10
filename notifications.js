@@ -85,7 +85,7 @@ function initNotificationsDom(onBellOpen) {
       return;
     }
 
-    notifs.forEach(n => {
+    notifs.forEach((n) => {
       const item = document.createElement('div');
       item.className = 'notif-item';
       item.dataset.id = n.id;
@@ -150,16 +150,19 @@ function initNotificationsDom(onBellOpen) {
     closeDropdown();
   });
 
-  return { renderNotifications, setCountVisible: (count) => {
-    if (count > 0) {
-      countEl.style.display = 'block';
-      countEl.textContent = String(count);
-      badgeEl.textContent = String(count);
-    } else {
-      countEl.style.display = 'none';
-      badgeEl.textContent = '0';
-    }
-  }};
+  return {
+    renderNotifications,
+    setCountVisible: (count) => {
+      if (count > 0) {
+        countEl.style.display = 'block';
+        countEl.textContent = String(count);
+        badgeEl.textContent = String(count);
+      } else {
+        countEl.style.display = 'none';
+        badgeEl.textContent = '0';
+      }
+    },
+  };
 }
 
 // -------------- DATA FETCHERS --------------
@@ -201,8 +204,8 @@ async function fetchLikeNotifications(currentUser, myThreadIds, lastSeen) {
   }
 
   return (data || [])
-    .filter(row => row.username && row.username !== currentUser.username)
-    .map(row => ({
+    .filter((row) => row.username && row.username !== currentUser.username)
+    .map((row) => ({
       id: `like-${row.id}`,
       type: 'like',
       actor: row.username,
@@ -234,8 +237,8 @@ async function fetchReplyNotifications(currentUser, myThreadIds, lastSeen) {
   }
 
   return (data || [])
-    .filter(r => r.author_username && r.author_username !== currentUser.username)
-    .map(r => ({
+    .filter((r) => r.author_username && r.author_username !== currentUser.username)
+    .map((r) => ({
       id: `reply-${r.id}`,
       type: 'reply',
       actor: r.author_username,
@@ -244,29 +247,66 @@ async function fetchReplyNotifications(currentUser, myThreadIds, lastSeen) {
     }));
 }
 
-// Merge likes + replies and attach thread titles
+// NEW: Rep notifications (rep given to me)
+async function fetchRepNotifications(currentUser, lastSeen) {
+  let query = supabaseClient
+    .from('rep')
+    .select('id, username, given_by, amount, created_at')
+    .eq('username', currentUser.username);
+
+  if (lastSeen) {
+    query = query.gt('created_at', lastSeen);
+  }
+
+  const { data, error } = await query
+    .order('created_at', { ascending: false })
+    .limit(MAX_NOTIFS);
+
+  if (error) {
+    console.error('notifications: rep error', error);
+    return [];
+  }
+
+  return (data || []).map((row) => ({
+    id: `rep-${row.id}`,
+    type: 'rep',
+    actor: row.given_by || 'Unknown',
+    amount: row.amount,
+    created_at: row.created_at,
+  }));
+}
+
+// Merge likes + replies + rep and attach thread titles
 async function refreshNotifications(currentUser, renderNotifications) {
   try {
     const myThreads = await fetchMyThreads(currentUser.username);
     const threadMap = new Map();
     const myThreadIds = [];
 
-    (myThreads || []).forEach(t => {
+    (myThreads || []).forEach((t) => {
       myThreadIds.push(t.id);
       threadMap.set(t.id, t.title);
     });
 
-    if (!myThreadIds.length) {
-      renderNotifications([]);
-      return;
-    }
-
-    const [replyNotifs, likeNotifs] = await Promise.all([
+    const [replyNotifs, likeNotifs, repNotifs] = await Promise.all([
       fetchReplyNotifications(currentUser, myThreadIds, currentUser.lastSeen),
       fetchLikeNotifications(currentUser, myThreadIds, currentUser.lastSeen),
+      fetchRepNotifications(currentUser, currentUser.lastSeen),
     ]);
 
-    const all = [...replyNotifs, ...likeNotifs].map(n => {
+    const all = [...replyNotifs, ...likeNotifs, ...repNotifs].map((n) => {
+      if (n.type === 'rep') {
+        const amtNum = parseInt(n.amount ?? '0', 10);
+        const amt = Number.isNaN(amtNum) ? n.amount : amtNum;
+        const sign = amt >= 0 ? '+' : '';
+        const prettyAmount = `${sign}${amt}`;
+        return {
+          ...n,
+          title: `${n.actor} gave you ${prettyAmount} rep`,
+          meta: new Date(n.created_at).toLocaleString(),
+        };
+      }
+
       const threadTitle = threadMap.get(n.threadId) || `Thread #${n.threadId}`;
       let title;
       if (n.type === 'reply') {
@@ -303,8 +343,6 @@ async function startNotifications() {
   const dom = initNotificationsDom(async () => {
     // when bell is opened, mark as seen now
     await updateLastNotificationsSeen(currentUser.id);
-    // also update local lastSeen so subsequent manual refreshes in this session
-    // only show newer items
     currentUser = {
       ...currentUser,
       lastSeen: new Date().toISOString(),
