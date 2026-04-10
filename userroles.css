@@ -1,0 +1,55 @@
+/* === Shared role styles (Owner baby blue, Admin pink) === */
+
+/* Owner – baby blue */
+.user-title-owner {
+  font-weight: 700;
+  background: linear-gradient(90deg, #38bdf8, #93c5fd, #0ea5e9);
+  background-size: 200% 200%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: ownerGradient 3s ease-in-out infinite;
+  text-shadow:
+    0 0 6px rgba(56, 189, 248, 0.9),
+    0 0 18px rgba(14, 165, 233, 0.7);
+}
+
+@keyframes ownerGradient {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* Admin – pink */
+.user-title-admin {
+  font-weight: 700;
+  background: linear-gradient(90deg, #f472b6, #fb7185, #ec4899);
+  background-size: 200% 200%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: adminGradient 3s ease-in-out infinite;
+  text-shadow:
+    0 0 6px rgba(244, 114, 182, 0.9),
+    0 0 18px rgba(251, 113, 133, 0.7);
+}
+
+@keyframes adminGradient {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* Shoutbox clickable usernames – keep behaviour, gradient is from user-title-* */
+.shoutbox .profile-username-link {
+  cursor: pointer;
+}
+
+.shoutbox .profile-username-link:hover {
+  text-decoration: underline;
+}
+
+/* Staff list usernames – rely on user-title-* for colour; keep existing layout */
+.current-staff-box .staff-name {
+  cursor: default;
+}

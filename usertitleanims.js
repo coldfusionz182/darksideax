@@ -26,12 +26,11 @@ function buildStaffRoleMap() {
     if (!nameSpan || !roleSpan) return;
 
     const name = nameSpan.textContent.trim();
-    const roleLabel = roleSpan.textContent.trim(); // e.g. "Owner", "Admin", custom rank
+    const roleLabel = roleSpan.textContent.trim(); // "Owner", "Admin", etc.
 
     const clsRole = getUserTitleClass(roleLabel);
     if (clsRole) {
-      // store under lowercase username for matching in shoutbox
-      map.set(name.toLowerCase(), roleLabel);
+      map.set(name.toLowerCase(), roleLabel); // store under lowercase username
     }
   });
 
@@ -72,7 +71,7 @@ function applyShoutboxUserAnimations(staffMap) {
     const uname = link.textContent.trim();
     const key = uname.toLowerCase();
 
-    const roleLabel = staffMap.get(key) || ''; // "Owner" / "Admin" if staff
+    const roleLabel = staffMap.get(key) || '';
     const cls = getUserTitleClass(roleLabel);
 
     link.classList.remove('user-title-owner', 'user-title-admin');
@@ -93,7 +92,6 @@ function hookIntoStaffAndShoutbox() {
   enhanceStaffListUsernames(staffMap);
   applyShoutboxUserAnimations(staffMap);
 
-  // Rebuild staff map when staff list changes
   if (staffContainer) {
     const staffObserver = new MutationObserver(() => {
       staffMap = buildStaffRoleMap();
@@ -103,7 +101,6 @@ function hookIntoStaffAndShoutbox() {
     staffObserver.observe(staffContainer, { childList: true, subtree: true });
   }
 
-  // Re-apply to shoutbox usernames when shoutbox DOM changes
   if (shoutBox) {
     const shoutObserver = new MutationObserver(() => {
       applyShoutboxUserAnimations(staffMap);
