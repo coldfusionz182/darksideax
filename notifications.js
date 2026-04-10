@@ -9,17 +9,31 @@ const MAX_NOTIFS = 5;
 
 // -------------- USER HELPERS --------------
 
-async function getCurrentUserProfile() {
+async function getCurrentUserProfileWithLastSeen() {
   const { data: userData, error } = await supabaseClient.auth.getUser();
   if (error || !userData?.user) return null;
 
   const user = userData.user;
 
-  const { data: profile } = await supabaseClient
+  const { data: profile, error: pErr } = await supabaseClient
     .from('profiles')
     .select('username')
     .eq('id', user.id)
     .maybeSingle();
+
+  if (pErr) {
+    console.error('notifications: profile error', pErr);
+  }
+
+  const { data: userRow, error: uErr } = await supabaseClient
+    .from('users')
+    .select('last_notifications_seen_at')
+    .eq('id', user.id)
+    .maybeSingle();
+
+  if (uErr) {
+    console.error('notifications: users.last_notifications_seen_at error', uErr);
+  }
 
   const username = profile?.username || user.email;
 
@@ -27,12 +41,28 @@ async function getCurrentUserProfile() {
     id: user.id,
     email: user.email,
     username,
+    lastSeen: userRow?.last_notifications_seen_at || null,
   };
+}
+
+async function updateLastNotificationsSeen(userId) {
+  try {
+    const { error } = await supabaseClient
+      .from('users')
+      .update({ last_notifications_seen_at: new Date().toISOString() })
+      .eq('id', userId);
+
+    if (error) {
+      console.error('notifications: failed to update last_notifications_seen_at', error);
+    }
+  } catch (e) {
+    console.error('notifications: updateLastNotificationsSeen exception', e);
+  }
 }
 
 // -------------- DOM SETUP --------------
 
-function initNotificationsDom() {
+function initNotificationsDom(onBellOpen) {
   const bellBtn  = document.getElementById('notif-bell-btn');
   const dropdown = document.getElementById('notif-dropdown');
   const countEl  = document.getElementById('notif-count');
@@ -90,12 +120,23 @@ function initNotificationsDom() {
     }
   }
 
-  function toggleDropdown() {
-    dropdown.classList.toggle('open');
+  function openDropdown() {
+    dropdown.classList.add('open');
+    if (typeof onBellOpen === 'function') {
+      onBellOpen();
+    }
   }
 
   function closeDropdown() {
     dropdown.classList.remove('open');
+  }
+
+  function toggleDropdown() {
+    if (dropdown.classList.contains('open')) {
+      closeDropdown();
+    } else {
+      openDropdown();
+    }
   }
 
   bellBtn.addEventListener('click', (e) => {
@@ -109,7 +150,16 @@ function initNotificationsDom() {
     closeDropdown();
   });
 
-  return { renderNotifications };
+  return { renderNotifications, setCountVisible: (count) => {
+    if (count > 0) {
+      countEl.style.display = 'block';
+      countEl.textContent = String(count);
+      badgeEl.textContent = String(count);
+    } else {
+      countEl.style.display = 'none';
+      badgeEl.textContent = '0';
+    }
+  }};
 }
 
 // -------------- DATA FETCHERS --------------
@@ -129,13 +179,19 @@ async function fetchMyThreads(username) {
 }
 
 // Likes on my threads (uses thread_likes.username)
-async function fetchLikeNotifications(currentUser, myThreadIds) {
+async function fetchLikeNotifications(currentUser, myThreadIds, lastSeen) {
   if (!myThreadIds.length) return [];
 
-  const { data, error } = await supabaseClient
+  let query = supabaseClient
     .from('thread_likes')
     .select('id, thread_id, username, created_at')
-    .in('thread_id', myThreadIds)
+    .in('thread_id', myThreadIds);
+
+  if (lastSeen) {
+    query = query.gt('created_at', lastSeen);
+  }
+
+  const { data, error } = await query
     .order('created_at', { ascending: false })
     .limit(MAX_NOTIFS);
 
@@ -156,13 +212,19 @@ async function fetchLikeNotifications(currentUser, myThreadIds) {
 }
 
 // Replies on my threads (uses author_username)
-async function fetchReplyNotifications(currentUser, myThreadIds) {
+async function fetchReplyNotifications(currentUser, myThreadIds, lastSeen) {
   if (!myThreadIds.length) return [];
 
-  const { data, error } = await supabaseClient
+  let query = supabaseClient
     .from('thread_replies')
     .select('id, thread_id, author_username, created_at')
-    .in('thread_id', myThreadIds)
+    .in('thread_id', myThreadIds);
+
+  if (lastSeen) {
+    query = query.gt('created_at', lastSeen);
+  }
+
+  const { data, error } = await query
     .order('created_at', { ascending: false })
     .limit(MAX_NOTIFS);
 
@@ -200,8 +262,8 @@ async function refreshNotifications(currentUser, renderNotifications) {
     }
 
     const [replyNotifs, likeNotifs] = await Promise.all([
-      fetchReplyNotifications(currentUser, myThreadIds),
-      fetchLikeNotifications(currentUser, myThreadIds),
+      fetchReplyNotifications(currentUser, myThreadIds, currentUser.lastSeen),
+      fetchLikeNotifications(currentUser, myThreadIds, currentUser.lastSeen),
     ]);
 
     const all = [...replyNotifs, ...likeNotifs].map(n => {
@@ -230,18 +292,28 @@ async function refreshNotifications(currentUser, renderNotifications) {
 // -------------- ENTRY POINT --------------
 
 async function startNotifications() {
-  const dom = initNotificationsDom();
-  if (!dom) return;
-  const { renderNotifications } = dom;
-
-  const currentUser = await getCurrentUserProfile();
+  let currentUser = await getCurrentUserProfileWithLastSeen();
   if (!currentUser) {
-    // guest
-    renderNotifications([]);
+    // guest: nothing to show
+    const domGuest = initNotificationsDom(() => {});
+    if (domGuest) domGuest.renderNotifications([]);
     return;
   }
 
-  // Single load only; new likes/replies appear after page refresh
+  const dom = initNotificationsDom(async () => {
+    // when bell is opened, mark as seen now
+    await updateLastNotificationsSeen(currentUser.id);
+    // also update local lastSeen so subsequent manual refreshes in this session
+    // only show newer items
+    currentUser = {
+      ...currentUser,
+      lastSeen: new Date().toISOString(),
+    };
+  });
+
+  if (!dom) return;
+  const { renderNotifications } = dom;
+
   await refreshNotifications(currentUser, renderNotifications);
 }
 
