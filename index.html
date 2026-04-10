@@ -5,10 +5,10 @@
   <title>Darkside - Beyond the Limits</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
-  
+  <!-- CSS LINKS – keep exactly like this -->
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
-<link href="styles.css" rel="stylesheet">
-<link href="userroles.css" rel="stylesheet">
+  <link href="styles.css" rel="stylesheet">
+  <link href="userroles.css" rel="stylesheet">
 
   <style>
     /* Glowing purple logo/title */
@@ -56,6 +56,29 @@
     .content-column {
       max-width: 1120px;
       margin: 0 auto;
+    }
+
+    /* index top: welcome + current staff */
+    .index-top {
+      display: grid;
+      grid-template-columns: minmax(0, 2.2fr) minmax(260px, 1fr);
+      gap: 18px;
+      align-items: stretch;
+      margin-bottom: 20px;
+    }
+
+    .welcome.card-panel {
+      padding: 18px 20px;
+    }
+    .welcome h1 {
+      margin-bottom: 6px;
+    }
+    .welcome-highlights {
+      margin-top: 10px;
+    }
+
+    .current-staff-box {
+      padding: 16px 18px;
     }
 
     /* polished forums block – table layout only, rest is in styles.css */
@@ -195,15 +218,10 @@
         </div>
       </div>
       <div class="header-right">
-        <ul class="top-links">
-          <li><a href="#">Rules</a></li>
-        </ul>
+        <!-- top-links removed; only Login button shown -->
         <div class="auth-links">
           <a href="login.html" class="btn btn-small btn-outline">
             <i class="fa fa-sign-in-alt"></i> Login
-          </a>
-          <a href="#" class="btn btn-small btn-primary">
-            <i class="fa fa-user-plus"></i> Register
           </a>
         </div>
       </div>
@@ -232,7 +250,7 @@
   <main id="container">
     <div class="wrapper">
 
-      <!-- Top section: welcome + stats + current staff -->
+      <!-- Top section: welcome + current staff (stats removed) -->
       <section class="index-top">
         <div class="welcome card-panel">
           <h1>Welcome to the Darkside</h1>
@@ -242,30 +260,8 @@
             <li><i class="fa fa-comment-dots"></i> Live shoutbox for quick chat</li>
           </ul>
         </div>
-        <aside class="stats-box card-panel">
-          <h2 class="card-title"><i class="fa fa-chart-bar"></i> Forum Stats</h2>
-          <div class="stat-line">
-            <span class="stat-label">Members</span>
-            <span class="stat-value">12,345</span>
-          </div>
-          <div class="stat-line">
-            <span class="stat-label">Threads</span>
-            <span class="stat-value">54,321</span>
-          </div>
-          <div class="stat-line">
-            <span class="stat-label">Posts</span>
-            <span class="stat-value">987,654</span>
-          </div>
-          <div class="stat-line">
-            <span class="stat-label">Online</span>
-            <span class="stat-value">213</span>
-          </div>
-          <div class="stat-footnote">
-            42 members · 171 guests
-          </div>
-        </aside>
 
-        <!-- Current Staff block on the right (dynamic) -->
+        <!-- Current Staff block -->
         <aside class="stats-box card-panel current-staff-box">
           <h2 class="card-title"><i class="fa fa-user-tie"></i> Current Staff</h2>
           <div id="current-staff-list"></div>
