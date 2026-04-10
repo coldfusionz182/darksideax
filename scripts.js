@@ -54,14 +54,10 @@ async function updateHeaderAuthState() {
 
   window.dsUserRole = current.role;
 
-  const avatarSrc =
-    current.avatar_url ||
-    'images/default-avatar.png';
-
+  // text-only user pill, no avatar image
   authLinks.innerHTML = `
     <button class="user-pill" id="header-profile-link">
-      <img src="${avatarSrc}" class="user-avatar-header" alt="Avatar">
-      <span>${current.username}</span>
+      <span class="user-pill-name">${current.username}</span>
     </button>
     <button class="btn btn-small btn-outline" id="logout-btn">
       <i class="fa fa-sign-out-alt"></i> Logout
@@ -109,6 +105,9 @@ const shoutBox = document.getElementById('shoutbox-messages');
 const shoutForm = document.getElementById('shoutbox-form');
 const shoutMeta = document.getElementById('shoutbox-meta');
 const shoutFooter = document.getElementById('shoutbox-footer');
+
+// track latest shout timestamp we know about
+let lastShoutTimestamp = null;
 
 async function fetchCurrentUserProfile() {
   const { data, error } = await supabaseClient.auth.getUser();
@@ -177,7 +176,6 @@ function canCurrentUserDeleteShout(currentUser, row) {
   return row.user_id === currentUser.id;
 }
 
-
 async function renderShout(row, currentUser) {
   const line = document.createElement('div');
   line.className = 'shout-line';
@@ -245,6 +243,118 @@ async function renderShout(row, currentUser) {
     };
 
     menuItem.addEventListener('click', handler);
+  });
+}
+
+// load last 50 and update lastShoutTimestamp
+async function loadShouts(currentUser) {
+  if (!shoutBox) return;
+
+  const { data, error } = await supabaseClient
+    .from('shouts')
+    .select('id, user_id, username, message, created_at')
+    .order('created_at', { ascending: false })
+    .limit(50);
+
+  if (error) {
+    console.error('loadShouts error', error);
+    return;
+  }
+
+  shoutBox.innerHTML = '';
+  data.slice().reverse().forEach((row) => renderShout(row, currentUser));
+  shoutBox.scrollTop = shoutBox.scrollHeight;
+
+  if (data && data.length > 0) {
+    // newest row first because of descending order
+    lastShoutTimestamp = data[0].created_at;
+  }
+}
+
+// cheap check: has anything newer than lastShoutTimestamp?
+async function hasNewShouts() {
+  if (!lastShoutTimestamp) return true; // force first load
+
+  const { data, error } = await supabaseClient
+    .from('shouts')
+    .select('created_at')
+    .order('created_at', { ascending: false })
+    .limit(1);
+
+  if (error) {
+    console.error('hasNewShouts error', error);
+    return false;
+  }
+
+  if (!data || data.length === 0) return false;
+
+  const latest = data[0].created_at;
+  return new Date(latest) > new Date(lastShoutTimestamp);
+}
+
+async function setupShoutbox() {
+  if (!shoutInput || !shoutSendBtn || !shoutBox || !shoutForm) return;
+
+  const me = await fetchCurrentUserProfileWithRole();
+  if (!me) {
+    shoutInput.disabled = true;
+    shoutSendBtn.disabled = true;
+    if (shoutFooter) shoutFooter.textContent = 'Login to chat in the shoutbox.';
+  } else if (shoutMeta) {
+    shoutMeta.textContent = `Logged in as ${me.username} · live chat`;
+  }
+
+  // initial load
+  await loadShouts(me);
+
+  // poll every 10 seconds, only reload if new shouts exist
+  setInterval(async () => {
+    try {
+      const changed = await hasNewShouts();
+      if (changed) {
+        await loadShouts(me);
+      }
+    } catch (e) {
+      console.error('shoutbox poll error', e);
+    }
+  }, 10000); // 10 seconds
+
+  // if you want JUST polling, you can remove this realtime block entirely
+  // supabaseClient
+  //   .channel('public:shouts')
+  //   .on(
+  //     'postgres_changes',
+  //     { event: 'INSERT', schema: 'public', table: 'shouts' },
+  //     (payload) => {
+  //       renderShout(payload.new, me);
+  //       shoutBox.scrollTop = shoutBox.scrollHeight;
+  //     },
+  //   )
+  //   .subscribe();
+
+  shoutForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const meNow = await fetchCurrentUserProfileWithRole();
+    if (!meNow) return;
+
+    const text = shoutInput.value.trim();
+    if (!text) return;
+    if (text.length > 180) return;
+
+    const msg = text;
+    shoutInput.value = '';
+
+    try {
+      const { error } = await supabaseClient.from('shouts').insert({
+        user_id: meNow.id,
+        username: meNow.username,
+        message: msg,
+      });
+      if (error) throw error;
+    } catch (err) {
+      console.error('send shout error', err);
+    }
   });
 }
 
