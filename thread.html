@@ -4,15 +4,26 @@
   <meta charset="UTF-8">
   <title>Thread • Darkside.ax</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
+
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
   <link href="styles.css" rel="stylesheet">
+
   <style>
-    /* Header bar for thread title + tag */
+    body {
+      background: radial-gradient(circle at top, #151826 0, #05060a 55%);
+    }
+
+    /* ====== Thread header ====== */
     .thread-header-bar {
       display: flex;
       justify-content: space-between;
       align-items: center;
       gap: 12px;
+    }
+
+    .thread-title-main {
+      font-size: 1.15rem;
+      font-weight: 600;
     }
 
     .thread-tag-pill {
@@ -23,35 +34,80 @@
       border-radius: 999px;
       font-size: 0.75rem;
       text-transform: uppercase;
-      letter-spacing: 0.06em;
-      background: rgba(88, 101, 242, 0.1);
+      letter-spacing: 0.08em;
+      background: rgba(88, 101, 242, 0.16);
       color: #c3c7ff;
     }
     .thread-tag-pill i {
       font-size: 0.7rem;
     }
 
-    /* main thread layout */
-    .thread-layout {
-      display: grid;
-      grid-template-columns: 220px minmax(0, 1fr);
-      gap: 16px;
+    .thread-meta-row {
+      margin-top: 4px;
+      font-size: 0.8rem;
+      color: #9ca3c9;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
     }
 
+    .thread-meta-row .dot {
+      width: 4px;
+      height: 4px;
+      border-radius: 999px;
+      background: #4b5563;
+    }
+
+    .thread-stats {
+      margin-top: 6px;
+      font-size: 0.8rem;
+      color: #9ca3c9;
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .thread-stats span {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    /* ====== Main layout ====== */
+    .thread-layout {
+      display: grid;
+      grid-template-columns: 240px minmax(0, 1fr);
+      gap: 18px;
+    }
+
+    /* ====== Author sidebar ====== */
     .thread-sidebar {
       border-right: 1px solid #181c2d;
-      padding-right: 12px;
+      padding-right: 14px;
       font-size: 0.85rem;
       color: #9ca3c9;
     }
 
-    .thread-sidebar .author-name {
+    .author-avatar-wrapper {
+      margin-bottom: 10px;
+    }
+    .author-avatar {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid #181c2d;
+      box-shadow: 0 0 12px rgba(0,0,0,0.6);
+    }
+
+    .author-name {
       font-size: 1.05rem;
       font-weight: 600;
       margin-bottom: 4px;
+      color: #e5e7ff;
     }
 
-    .thread-sidebar .author-rank {
+    .author-rank {
       font-size: 0.75rem;
       text-transform: uppercase;
       letter-spacing: 0.08em;
@@ -59,29 +115,21 @@
       margin-bottom: 8px;
     }
 
-    .thread-sidebar .author-meta {
+    .author-meta {
       margin-top: 8px;
       font-size: 0.8rem;
     }
-
-    /* avatar */
-    .author-avatar-wrapper {
-      margin-bottom: 8px;
-    }
-    .author-avatar {
-      width: 72px;
-      height: 72px;
-      border-radius: 50%;
-      object-fit: cover;
-      border: 2px solid #181c2d;
+    .author-meta div + div {
+      margin-top: 2px;
     }
 
-    /* main content box */
+    /* ====== Main content box ====== */
     .thread-content-box {
       background: #05070d;
-      border-radius: 6px;
+      border-radius: 8px;
       border: 1px solid #181c2d;
-      padding: 12px 14px;
+      padding: 14px 16px;
+      box-shadow: 0 0 18px rgba(0,0,0,0.7);
     }
 
     .thread-post-body-main {
@@ -90,11 +138,21 @@
       white-space: pre-wrap;
     }
 
-    /* replies area container */
+    /* Links inside post body – inherit color so [color]+[url] works */
+    .post-body a,
+    .post-body a:link,
+    .post-body a:visited,
+    .post-body a:hover,
+    .post-body a:active {
+      color: inherit;
+      text-decoration: underline;
+    }
+
+    /* ====== Replies box ====== */
     .thread-replies-box {
-      margin-top: 16px;
+      margin-top: 18px;
       background: #05070d;
-      border-radius: 6px;
+      border-radius: 8px;
       border: 1px solid #181c2d;
       padding: 12px 14px;
     }
@@ -155,7 +213,7 @@
       white-space: pre-wrap;
     }
 
-    /* Like button moved under replies – regular button, not pill */
+    /* ====== Like area ====== */
     .thread-like-area {
       margin-top: 14px;
       display: flex;
@@ -243,12 +301,20 @@
       <section class="category">
         <header class="cat-header">
           <div class="thread-header-bar">
-            <span id="thread-title-display">Loading thread...</span>
+            <span id="thread-title-display" class="thread-title-main">Loading thread...</span>
             <span class="thread-tag-pill" id="thread-tag-pill" style="display:none;">
               <i class="fa fa-tag"></i><span id="thread-tag-text"></span>
             </span>
           </div>
-          <span class="cat-link" id="thread-meta-display"></span>
+          <div class="thread-meta-row">
+            <span id="thread-meta-display"></span>
+            <span class="dot"></span>
+            <span id="thread-created-at"></span>
+          </div>
+          <div class="thread-stats">
+            <span><i class="fa fa-eye"></i><span id="thread-views">0</span> views</span>
+            <span><i class="fa fa-comments"></i><span id="thread-replies-count">0</span> replies</span>
+          </div>
         </header>
 
         <div class="cat-body card-panel">
@@ -256,12 +322,13 @@
             <!-- left: author info -->
             <aside class="thread-sidebar">
               <div class="author-avatar-wrapper">
-                <img id="thread-avatar-img" class="author-avatar" src="images/default-avatar.png" alt="Avatar">
+                <img id="thread-avatar-img" class="author-avatar"
+                     src="images/default-avatar.png" alt="Avatar">
               </div>
               <div class="author-name" id="thread-author-name">Author</div>
               <div class="author-rank">Thread Owner</div>
               <div class="author-meta">
-                <div id="thread-created-at"></div>
+                <div id="thread-author-extra"></div>
               </div>
             </aside>
 
@@ -269,7 +336,8 @@
             <div>
               <!-- main content box -->
               <article class="thread-content-box">
-                <div id="thread-content-display" class="thread-post-body-main">
+                <div id="thread-content-display"
+                     class="thread-post-body-main post-body">
                   <!-- filled via scripts.js -->
                 </div>
               </article>
@@ -323,6 +391,8 @@
   import './scripts.js';
   import { initThreadAvatar } from './avatars.js';
 
+  // scripts.js should dispatch this after loading the thread:
+  // window.dispatchEvent(new CustomEvent('ds-thread-loaded', { detail: { thread: t } }));
   window.addEventListener('ds-thread-loaded', (e) => {
     const thread = e.detail.thread; // has .content
     initThreadAvatar(thread.content);
