@@ -382,14 +382,14 @@
   </main>
 </div>
 
-<!-- load main logic + avatar loader -->
-<!-- load main logic + avatar loader -->
+<!-- load main logic + avatar loader + replies -->
 <script type="module" src="scripts.js"></script>
+<script type="module" src="threadreplies.js"></script>
 <script type="module">
   import { initAvatarForThread } from './AvatarThreadLoader.js';
 
   window.addEventListener('ds-thread-loaded', (e) => {
-    const thread = e.detail.thread; // has .author and .content
+    const thread = e.detail.thread;
     initAvatarForThread(thread);
   });
 </script>
