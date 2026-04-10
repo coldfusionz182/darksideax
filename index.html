@@ -486,5 +486,20 @@
 
 <script type="module" src="scripts.js"></script>
 <script type="module" src="session-ip.js"></script>
+<script type="module">
+  import { getSessionIp } from './session-ip.js';
+  import { updateCurrentUserIpInSession } from './adminpanel.js';
+
+  // Wait until your auth has set window.currentUser
+  document.addEventListener('DOMContentLoaded', async () => {
+    const username = window.currentUser?.username || window.currentUser?.email;
+    if (!username) return; // not logged in
+
+    const ip = await getSessionIp();
+    if (!ip) return;
+
+    updateCurrentUserIpInSession(username, ip);
+  });
+</script>
 </body>
 </html>
