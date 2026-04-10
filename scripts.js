@@ -734,75 +734,93 @@ async function setupShoutbox() {
         const htmlContent = bbcodeToHtml(renderedContent);
         threadContentDisplay.innerHTML = htmlContent;
 
-        // likes / replies logic
-        const { data: userData } = await supabaseClient.auth.getUser();
-        const rawUser = userData?.user || null;
-        if (!rawUser) {
-          replyInfoText.textContent = 'Login to like or reply.';
-          replyText.disabled = true;
-          replySubmit.disabled = true;
-          likeBtn.disabled = true;
-          likeBtn.classList.add('disabled');
-        } else {
-          replyInfoText.textContent = 'Reply as ' + (rawUser.email || 'member');
-        }
+        // likes + replies logic
+const { data: userData } = await supabaseClient.auth.getUser();
+const rawUser = userData?.user || null;
 
-        let liked = false;
-        let likeCount = 0;
+if (!rawUser) {
+  replyInfoText.textContent = 'Login to like or reply.';
+  replyText.disabled = true;
+  replySubmit.disabled = true;
+  likeBtn.disabled = true;
+  likeBtn.classList.add('disabled');
+} else {
+  replyInfoText.textContent = `Reply as ${rawUser.email} · member`;
 
-        {
-          const { data: likes } = await supabaseClient
-            .from('thread_likes')
-            .select('user_id')
-            .eq('thread_id', threadId);
+  let liked = false;
+  let likeCount = 0;
 
-          likeCount = likes ? likes.length : 0;
-          likeCountEl.textContent = `${likeCount} likes`;
+  const { data: likes } = await supabaseClient
+    .from('thread_likes')
+    .select('user_id')
+    .eq('thread_id', threadId);
 
-          if (rawUser) {
-            liked = !!likes?.find((row) => row.user_id === rawUser.id);
-            if (liked) {
-              likeBtn.classList.add('liked');
-              likeText.textContent = 'Liked';
+  likeCount = likes ? likes.length : 0;
+  likeCountEl.textContent = likeCount;
+
+  if (rawUser) {
+    liked = !!likes?.find(row => row.user_id === rawUser.id);
+    if (liked) {
+      likeBtn.classList.add('liked');
+      likeText.textContent = 'Liked';
+    }
+  }
+
+  if (rawUser) {
+    likeBtn.addEventListener('click', async () => {
+      likeBtn.disabled = true;
+      try {
+        if (!liked) {
+          // get username for this liker
+          let likerUsername = rawUser.email;
+          try {
+            if (window.getCurrentUserWithRole) {
+              const current = await window.getCurrentUserWithRole();
+              if (current?.username) likerUsername = current.username;
             }
+          } catch (e) {
+            console.warn('could not get username for like, falling back to email', e);
           }
-        }
 
-        if (rawUser) {
-          likeBtn.addEventListener('click', async () => {
-            likeBtn.disabled = true;
-            try {
-              if (!liked) {
-                const { error } = await supabaseClient.from('thread_likes').insert({
-                  thread_id: threadId,
-                  user_id: rawUser.id,
-                });
-                if (error) throw error;
-                liked = true;
-                likeBtn.classList.add('liked');
-                likeText.textContent = 'Liked';
-                likeCount += 1;
-              } else {
-                const { error } = await supabaseClient
-                  .from('thread_likes')
-                  .delete()
-                  .eq('thread_id', threadId)
-                  .eq('user_id', rawUser.id);
-                if (error) throw error;
-                liked = false;
-                likeBtn.classList.remove('liked');
-                likeText.textContent = 'Like';
-                likeCount = Math.max(0, likeCount - 1);
-              }
-              likeCountEl.textContent = `${likeCount} likes`;
-            } catch (err) {
-              console.error('like error', err);
-              alert('Failed to update like.');
-            } finally {
-              likeBtn.disabled = false;
-            }
-          });
+          const { error } = await supabaseClient
+            .from('thread_likes')
+            .insert({
+              thread_id: threadId,
+              user_id: rawUser.id,
+              username: likerUsername, // <-- writes to the new column
+            });
+
+          if (error) throw error;
+
+          liked = true;
+          likeBtn.classList.add('liked');
+          likeText.textContent = 'Liked';
+          likeCount += 1;
+          likeCountEl.textContent = likeCount;
+        } else {
+          const { error } = await supabaseClient
+            .from('thread_likes')
+            .delete()
+            .eq('thread_id', threadId)
+            .eq('user_id', rawUser.id);
+
+          if (error) throw error;
+
+          liked = false;
+          likeBtn.classList.remove('liked');
+          likeText.textContent = 'Like';
+          likeCount = Math.max(0, likeCount - 1);
+          likeCountEl.textContent = likeCount;
         }
+      } catch (err) {
+        console.error('like error', err);
+        alert('Failed to update like.');
+      } finally {
+        likeBtn.disabled = false;
+      }
+    });
+  }
+}
 
         async function loadReplies() {
           const { data: replies, error } = await supabaseClient
