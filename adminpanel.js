@@ -1,7 +1,6 @@
 // adminpanel.js
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { SUPABASE_ANON_KEY } from './keys.js';
-import { getUsersIpMapFromSession } from './session-ip.js';
 
 const SUPABASE_URL = 'https://ffmkkwskvjvytdddevmm.supabase.co';
 const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -294,7 +293,10 @@ async function loadNewestThreads(currentUser) {
   try {
     const res = await fetch('/api/list-threads?limit=25');
     const data = await res.json();
-    allThreads = Array.isArray(data) ? data : [];
+
+    // only keep the first 4
+    allThreads = (Array.isArray(data) ? data : []).slice(0, 4);
+
     renderThreadsTable(currentUser);
   } catch (err) {
     console.error('loadNewestThreads error', err);
@@ -365,63 +367,6 @@ async function handleDeleteThread(threadId, title, currentUser) {
   }
 }
 
-/* ===================== USERS & IPs (SESSION ONLY) ===================== */
-
-function formatShortDateTime(iso) {
-  if (!iso) return '-';
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return '-';
-  const dd = d.getDate().toString().padStart(2, '0');
-  const mm = (d.getMonth() + 1).toString().padStart(2, '0');
-  const hh = d.getHours().toString().padStart(2, '0');
-  const mi = d.getMinutes().toString().padStart(2, '0');
-  return `${dd}/${mm} ${hh}:${mi}`;
-}
-
-function renderUsersIpTable() {
-  const tbody = document.getElementById('users-ip-tbody');
-  if (!tbody) return;
-
-  const map = getUsersIpMapFromSession();
-  const entries = Object.entries(map);
-
-  tbody.innerHTML = '';
-
-  if (!entries.length) {
-    const tr = document.createElement('tr');
-    const td = document.createElement('td');
-    td.colSpan = 4;
-    td.className = 'admin-empty';
-    td.textContent = 'No session IP data yet.';
-    tr.appendChild(td);
-    tbody.appendChild(tr);
-    return;
-  }
-
-  entries.forEach(([username, info]) => {
-    const tr = document.createElement('tr');
-
-    const tdUser = document.createElement('td');
-    tdUser.textContent = username || 'unknown';
-
-    const tdIp = document.createElement('td');
-    tdIp.textContent = info.ip || '-';
-
-    const tdFirst = document.createElement('td');
-    tdFirst.textContent = formatShortDateTime(info.firstSeen);
-
-    const tdLast = document.createElement('td');
-    tdLast.textContent = formatShortDateTime(info.lastSeen);
-
-    tr.appendChild(tdUser);
-    tr.appendChild(tdIp);
-    tr.appendChild(tdFirst);
-    tr.appendChild(tdLast);
-
-    tbody.appendChild(tr);
-  });
-}
-
 /* ===================== INIT ===================== */
 
 async function initAdminPanel() {
@@ -433,7 +378,6 @@ async function initAdminPanel() {
   const btnCreateUser = document.getElementById('btn-create-user'); // unused
   const threadsSearchInput = document.getElementById('threads-search-input');
   const btnThreadsRefresh = document.getElementById('btn-threads-refresh');
-  const btnIpRefresh = document.getElementById('btn-ip-refresh');
 
   const current = await getCurrentUserWithRole();
   console.log('current user for adminpanel', current);
@@ -474,12 +418,8 @@ async function initAdminPanel() {
       loadNewestThreads(current)
     );
 
-  if (btnIpRefresh)
-    btnIpRefresh.addEventListener('click', () => renderUsersIpTable());
-
   await refreshAdmins(current);
   await loadNewestThreads(current);
-  renderUsersIpTable();
 }
 
 document.addEventListener('DOMContentLoaded', () => {

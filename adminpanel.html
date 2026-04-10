@@ -780,47 +780,6 @@
       </div>
     </section>
 
-    <!-- Users & IPs (session only) -->
-    <section class="admin-card" id="admin-users-ip-card">
-      <div class="admin-card-header">
-        <div class="admin-card-title-wrap">
-          <div class="admin-card-title">
-            <i class="fa fa-network-wired"></i>
-            Users & IPs (session only)
-          </div>
-          <div class="admin-card-sub">
-            Shows the latest IPs seen this session. Stored locally, not uploaded to Supabase.
-          </div>
-        </div>
-        <div class="admin-toolbar">
-          <button id="btn-ip-refresh" class="btn-owner-ghost">
-            <i class="fa fa-rotate-right"></i>
-            Refresh
-          </button>
-        </div>
-      </div>
-
-      <div class="admin-table-wrap">
-        <table class="admin-table">
-          <thead>
-          <tr>
-            <th>Username</th>
-            <th>IP (session)</th>
-            <th>First seen</th>
-            <th>Last seen</th>
-          </tr>
-          </thead>
-          <tbody id="users-ip-tbody">
-          <tr>
-            <td colspan="4" class="admin-empty">
-              No session IP data yet.
-            </td>
-          </tr>
-          </tbody>
-        </table>
-      </div>
-    </section>
-
     <!-- Access denied -->
     <section id="admin-access-denied" style="display:none;">
       <div class="admin-denied">
@@ -840,6 +799,5 @@
 </div>
 
 <script type="module" src="adminpanel.js"></script>
-<script type="module" src="session-ip.js"></script>
 </body>
 </html>

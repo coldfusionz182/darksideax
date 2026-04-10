@@ -174,6 +174,16 @@
       position: relative;
       left: 0;
     }
+
+    /* clickable username styling (shoutbox + staff) */
+    .profile-username-link {
+      color: #60a5fa;
+      cursor: pointer;
+    }
+    .profile-username-link:hover {
+      text-decoration: underline;
+      color: #93c5fd;
+    }
   </style>
 </head>
 <body>
@@ -481,61 +491,39 @@
 
 <!-- Main forum logic -->
 <script type="module" src="scripts.js"></script>
-<!-- IP capture -->
-<script type="module" src="session-ip.js"></script>
 
-<!-- Capture username via XPath + store username/IP map -->
-<script type="module">
-  // same key used by adminpanel.js
-  const USERS_IP_KEY = 'darkside_users_ip_map';
-
-  function updateUsersIpMap(username, ip) {
-    if (!username || !ip) return;
-
-    const now = new Date().toISOString();
-    let map = {};
-    try {
-      const raw = sessionStorage.getItem(USERS_IP_KEY);
-      if (raw) map = JSON.parse(raw);
-    } catch (e) {
-      console.warn('Failed to parse users/ip map, resetting', e);
+<!-- Make shoutbox usernames and staff usernames clickable to profiles -->
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    // 1) Shoutbox usernames
+    // Expect scripts.js to render each message with a span like:
+    //   <span class="shout-username">ColdFusionz</span>
+    // If your class is different, change '.shout-username' here.
+    const shoutContainer = document.getElementById('shoutbox-messages');
+    if (shoutContainer) {
+      shoutContainer.addEventListener('click', (e) => {
+        const target = e.target.closest('.shout-username');
+        if (!target) return;
+        const username = target.textContent.trim();
+        if (!username) return;
+        window.location.href = 'profile.html?u=' + encodeURIComponent(username);
+      });
     }
 
-    const existing = map[username] || {};
-    const firstSeen = existing.firstSeen || now;
-
-    map[username] = {
-      ip,
-      firstSeen,
-      lastSeen: now,
-    };
-
-    sessionStorage.setItem(USERS_IP_KEY, JSON.stringify(map));
-  }
-
-  function getTextByXPath(xpath) {
-    const result = document.evaluate(
-      xpath,
-      document,
-      null,
-      XPathResult.FIRST_ORDERED_NODE_TYPE,
-      null
-    );
-    const node = result.singleNodeValue;
-    return node ? node.textContent.trim() : '';
-  }
-
-  document.addEventListener('DOMContentLoaded', () => {
-    // small delay to let scripts.js replace auth-links with header-profile-link
-    setTimeout(() => {
-      const username = getTextByXPath('//*[@id="header-profile-link"]/span');
-      if (!username) return;
-
-      const ip = sessionStorage.getItem('darkside_session_ip');
-      if (!ip) return;
-
-      updateUsersIpMap(username, ip);
-    }, 500);
+    // 2) Current staff usernames
+    // Expect scripts.js to populate #current-staff-list with items like:
+    //   <span class="staff-username">ColdFusionz</span>
+    // Adjust selector if you used a different class.
+    const staffContainer = document.getElementById('current-staff-list');
+    if (staffContainer) {
+      staffContainer.addEventListener('click', (e) => {
+        const target = e.target.closest('.staff-username');
+        if (!target) return;
+        const username = target.textContent.trim();
+        if (!username) return;
+        window.location.href = 'profile.html?u=' + encodeURIComponent(username);
+      });
+    }
   });
 </script>
 </body>
