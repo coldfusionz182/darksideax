@@ -7,7 +7,8 @@ const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 const MAX_NOTIFS = 5;
 
-// get current logged-in user + username from profiles
+// -------------- USER HELPERS --------------
+
 async function getCurrentUserProfile() {
   const { data: userData, error } = await supabaseClient.auth.getUser();
   if (error || !userData?.user) return null;
@@ -28,6 +29,8 @@ async function getCurrentUserProfile() {
     username,
   };
 }
+
+// -------------- DOM SETUP --------------
 
 function initNotificationsDom() {
   const bellBtn  = document.getElementById('notif-bell-btn');
@@ -109,7 +112,50 @@ function initNotificationsDom() {
   return { renderNotifications };
 }
 
-// replies on my threads
+// -------------- DATA FETCHERS --------------
+
+// Threads authored by current user
+async function fetchMyThreads(username) {
+  const { data, error } = await supabaseClient
+    .from('threads')
+    .select('id, title, author')
+    .eq('author', username);
+
+  if (error) {
+    console.error('notifications: threads error', error);
+    return [];
+  }
+  return data || [];
+}
+
+// Likes on my threads (uses thread_likes.username)
+async function fetchLikeNotifications(currentUser, myThreadIds) {
+  if (!myThreadIds.length) return [];
+
+  const { data, error } = await supabaseClient
+    .from('thread_likes')
+    .select('id, thread_id, username, created_at')
+    .in('thread_id', myThreadIds)
+    .order('created_at', { ascending: false })
+    .limit(MAX_NOTIFS);
+
+  if (error) {
+    console.error('notifications: likes error', error);
+    return [];
+  }
+
+  return (data || [])
+    .filter(row => row.username && row.username !== currentUser.username)
+    .map(row => ({
+      id: `like-${row.id}`,
+      type: 'like',
+      actor: row.username,
+      threadId: row.thread_id,
+      created_at: row.created_at,
+    }));
+}
+
+// Replies on my threads (uses author_username)
 async function fetchReplyNotifications(currentUser, myThreadIds) {
   if (!myThreadIds.length) return [];
 
@@ -130,69 +176,29 @@ async function fetchReplyNotifications(currentUser, myThreadIds) {
     .map(r => ({
       id: `reply-${r.id}`,
       type: 'reply',
-      threadId: r.thread_id,
       actor: r.author_username,
+      threadId: r.thread_id,
       created_at: r.created_at,
     }));
 }
 
-// likes on my threads
-async function fetchLikeNotifications(currentUser, myThreadIds) {
-  if (!myThreadIds.length) return [];
-
-  const { data, error } = await supabaseClient
-    .from('thread_likes')
-    .select(`
-      id,
-      thread_id,
-      created_at,
-      profiles:user_id ( username )
-    `)
-    .in('thread_id', myThreadIds)
-    .order('created_at', { ascending: false })
-    .limit(MAX_NOTIFS);
-
-  if (error) {
-    console.error('notifications: likes error', error);
-    return [];
-  }
-
-  return (data || [])
-    .map(like => {
-      const likerName = like.profiles?.username || 'Someone';
-      return {
-        id: `like-${like.id}`,
-        type: 'like',
-        threadId: like.thread_id,
-        actor: likerName,
-        created_at: like.created_at,
-      };
-    })
-    .filter(n => n.actor !== currentUser.username);
-}
-
+// Merge likes + replies and attach thread titles
 async function refreshNotifications(currentUser, renderNotifications) {
   try {
-    // 1) threads owned by this user
-    const { data: myThreads, error: tErr } = await supabaseClient
-      .from('threads')
-      .select('id, title, author')
-      .eq('author', currentUser.username);
-
-    if (tErr) {
-      console.error('notifications: threads error', tErr);
-      renderNotifications([]);
-      return;
-    }
-
+    const myThreads = await fetchMyThreads(currentUser.username);
     const threadMap = new Map();
     const myThreadIds = [];
+
     (myThreads || []).forEach(t => {
       myThreadIds.push(t.id);
       threadMap.set(t.id, t.title);
     });
 
-    // 2) replies + likes on those threads
+    if (!myThreadIds.length) {
+      renderNotifications([]);
+      return;
+    }
+
     const [replyNotifs, likeNotifs] = await Promise.all([
       fetchReplyNotifications(currentUser, myThreadIds),
       fetchLikeNotifications(currentUser, myThreadIds),
@@ -221,6 +227,8 @@ async function refreshNotifications(currentUser, renderNotifications) {
   }
 }
 
+// -------------- ENTRY POINT --------------
+
 async function startNotifications() {
   const dom = initNotificationsDom();
   if (!dom) return;
@@ -228,18 +236,13 @@ async function startNotifications() {
 
   const currentUser = await getCurrentUserProfile();
   if (!currentUser) {
-    // guest: clear + stop
+    // guest
     renderNotifications([]);
     return;
   }
 
-  // initial load
+  // Single load only; new likes/replies appear after page refresh
   await refreshNotifications(currentUser, renderNotifications);
-
-  // poll every 60s – only notifications, no page reload
-  setInterval(() => {
-    refreshNotifications(currentUser, renderNotifications);
-  }, 60_000);
 }
 
 if (document.readyState === 'loading') {
