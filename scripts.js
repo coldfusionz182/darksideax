@@ -413,7 +413,82 @@ async function setupShoutbox() {
 
   initAdminPanel();
 
-  
+  async function loadShouts(currentUser) {
+    if (!shoutBox) return;
+
+    const { data, error } = await supabaseClient
+      .from('shouts')
+      .select('id, user_id, username, message, created_at')
+      .order('created_at', { ascending: false })
+      .limit(50);
+
+    if (error) {
+      console.error('loadShouts error', error);
+      return;
+    }
+
+    shoutBox.innerHTML = '';
+    data.slice().reverse().forEach((row) => renderShout(row, currentUser));
+    shoutBox.scrollTop = shoutBox.scrollHeight;
+  }
+
+  async function setupShoutbox() {
+    if (!shoutInput || !shoutSendBtn || !shoutBox || !shoutForm) return;
+
+    const me = await fetchCurrentUserProfileWithRole();
+    if (!me) {
+      shoutInput.disabled = true;
+      shoutSendBtn.disabled = true;
+      if (shoutFooter) shoutFooter.textContent = 'Login to chat in the shoutbox.';
+    } else if (shoutMeta) {
+      shoutMeta.textContent = `Logged in as ${me.username} · live chat`;
+    }
+
+    await loadShouts(me);
+
+    setInterval(() => {
+      loadShouts(me);
+    }, 20000); // 1 second
+
+    supabaseClient
+      .channel('public:shouts')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'shouts' },
+        (payload) => {
+          renderShout(payload.new, me);
+          shoutBox.scrollTop = shoutBox.scrollHeight;
+        },
+      )
+      .subscribe();
+
+    shoutForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const meNow = await fetchCurrentUserProfileWithRole();
+      if (!meNow) return;
+
+      const text = shoutInput.value.trim();
+      if (!text) return;
+      if (text.length > 180) return;
+
+      const msg = text;
+      shoutInput.value = '';
+
+      try {
+        const { error } = await supabaseClient.from('shouts').insert({
+          user_id: meNow.id,
+          username: meNow.username,
+          message: msg,
+        });
+        if (error) throw error;
+      } catch (err) {
+        console.error('send shout error', err);
+      }
+    });
+  }
+
+  setupShoutbox();
 
   // ===================== Accounts thread list (accounts.html) =====================
   const threadListBody = document.getElementById('thread-list');
