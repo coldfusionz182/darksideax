@@ -101,6 +101,34 @@
   border: 1px solid #111827;
 }
 
+/* Mark all as read button inside notifications dropdown */
+.notif-clear-btn {
+  width: 100%;
+  border: none;
+  border-radius: 0;
+  background: #020617;
+  color: #9ca3c9;
+  font-size: 0.75rem;
+  padding: 6px 10px;
+  text-align: left;
+  cursor: pointer;
+  border-top: 1px solid #111827;
+  border-bottom: 1px solid #111827;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.notif-clear-btn i {
+  font-size: 0.8rem;
+  color: #22c55e;
+}
+
+.notif-clear-btn:hover {
+  background: #0b1120;
+  color: #e5e7eb;
+}
+
 .notif-list {
   display: flex;
   flex-direction: column;
@@ -144,7 +172,7 @@
   color: #9ca3c9;
 }
 
-/* User pill logout button (visual only, behavior is in notifications.js if needed) */
+/* User pill logout button (visual only) */
 .logout-btn {
   padding: 3px 8px;
   border-radius: 999px;
