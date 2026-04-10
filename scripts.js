@@ -177,66 +177,23 @@ function canCurrentUserDeleteShout(currentUser, row) {
   return row.user_id === currentUser.id;
 }
 
-// --- avatar cache for shouts ---
-const shoutAvatarCache = {};
-const DEFAULT_SHOUT_AVATAR = 'images/default-avatar.png';
-
-async function getAvatarForUser(userId) {
-  if (!userId) return DEFAULT_SHOUT_AVATAR;
-
-  if (shoutAvatarCache[userId] !== undefined) {
-    return shoutAvatarCache[userId] || DEFAULT_SHOUT_AVATAR;
-  }
-
-  try {
-    const { data, error } = await supabaseClient
-      .from('users')
-      .select('avatar_url')
-      .eq('id', userId)
-      .maybeSingle();
-
-    if (error) {
-      console.error('shout avatar lookup error', error);
-      shoutAvatarCache[userId] = null;
-      return DEFAULT_SHOUT_AVATAR;
-    }
-
-    const url = data?.avatar_url || null;
-    shoutAvatarCache[userId] = url;
-    return url || DEFAULT_SHOUT_AVATAR;
-  } catch (e) {
-    console.error('shout avatar fetch error', e);
-    shoutAvatarCache[userId] = null;
-    return DEFAULT_SHOUT_AVATAR;
-  }
-}
 
 async function renderShout(row, currentUser) {
   const line = document.createElement('div');
   line.className = 'shout-line';
 
-  // avatar on the left
-  const avatarWrapper = document.createElement('div');
-  avatarWrapper.className = 'shout-avatar';
-  const avatarImg = document.createElement('img');
-  avatarImg.src = DEFAULT_SHOUT_AVATAR;
-  avatarWrapper.appendChild(avatarImg);
-  line.appendChild(avatarWrapper);
-
-  // text container (username, time, message)
+  // text container (username, time, message) – NO avatar
   const textContainer = document.createElement('div');
 
   const userSpan = document.createElement('span');
   userSpan.className = 'shout-user rank-member';
 
-  // >>> clickable username
   const userLink = document.createElement('a');
   userLink.className = 'profile-username-link';
-  userLink.href = 'profile.html?u=' + encodeURIComponent(row.username);
+  // if profiles are gone, just don't set href
+  // userLink.href = 'profile.html?u=' + encodeURIComponent(row.username);
   userLink.textContent = row.username;
-
   userSpan.appendChild(userLink);
-  // <<<
 
   const timeSpan = document.createElement('span');
   timeSpan.className = 'shout-time';
@@ -256,12 +213,7 @@ async function renderShout(row, currentUser) {
   line.appendChild(textContainer);
   shoutBox.appendChild(line);
 
-  // avatar fetch as you already had
-  getAvatarForUser(row.user_id).then((url) => {
-    avatarImg.src = url || DEFAULT_SHOUT_AVATAR;
-  });
-
-
+  // delete‑permissions + context menu stay the same
   const canDelete = canCurrentUserDeleteShout(currentUser, row);
   if (!canDelete) return;
 
@@ -1084,7 +1036,7 @@ async function renderShout(row, currentUser) {
   try {
     const { data, error } = await supabaseClient
       .from('users')
-      .select('email, role, username, avatar_url, userrank')
+      .select('email, role, username, userrank')
       .in('role', ['admin', 'owner'])
       .order('role', { ascending: false });
 
@@ -1117,19 +1069,9 @@ async function renderShout(row, currentUser) {
           ? 'Admin'
           : u.role || 'Staff';
 
-      const avatarSrc = u.avatar_url || 'images/default-avatar.png';
-
-      // IMPORTANT: use u.username in the profile link
+      // TEXT ONLY: no avatar <img>, no images/default-avatar.png
       line.innerHTML = `
-        <span class="staff-avatar">
-          <img src="${avatarSrc}" alt="${displayName}" class="user-avatar-header">
-        </span>
-        <span class="staff-name">
-          <a
-            href="profile.html?u=${encodeURIComponent(u.username || displayName)}"
-            class="profile-username-link"
-          >${displayName}</a>
-        </span>
+        <span class="staff-name">${displayName}</span>
         <span class="staff-role">${roleLabel}</span>
       `;
 
