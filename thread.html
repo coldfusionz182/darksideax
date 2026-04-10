@@ -383,12 +383,11 @@
 </div>
 
 <!-- load main logic + avatar loader -->
+<!-- load main logic + avatar loader -->
+<script type="module" src="scripts.js"></script>
 <script type="module">
-  import './scripts.js';
   import { initAvatarForThread } from './AvatarThreadLoader.js';
 
-  // scripts.js must dispatch ds-thread-loaded after it fetches the thread:
-  // window.dispatchEvent(new CustomEvent('ds-thread-loaded', { detail: { thread: t } }));
   window.addEventListener('ds-thread-loaded', (e) => {
     const thread = e.detail.thread; // has .author and .content
     initAvatarForThread(thread);
