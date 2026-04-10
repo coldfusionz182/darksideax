@@ -205,6 +205,11 @@
       text-decoration: underline;
       color: #93c5fd;
     }
+
+    /* Rep box small tweaks */
+    #rep-give-box .shout-input {
+      min-height: 30px;
+    }
   </style>
 </head>
 <body>
@@ -240,12 +245,11 @@
           </div>
 
           <!-- This is managed by scripts.js (updateHeaderAuthState) -->
-          <!-- scripts.js will replace this when logged in -->
-<div class="auth-links">
-  <a href="login.html" class="btn btn-small btn-outline">
-    <i class="fa fa-sign-in-alt"></i> Login
-  </a>
-</div>
+          <div class="auth-links">
+            <a href="login.html" class="btn btn-small btn-outline">
+              <i class="fa fa-sign-in-alt"></i> Login
+            </a>
+          </div>
         </div>
       </div>
     </div>
@@ -273,7 +277,7 @@
   <main id="container">
     <div class="wrapper">
 
-      <!-- Top section: welcome + current staff (stats removed) -->
+      <!-- Top section: welcome + current staff -->
       <section class="index-top">
         <div class="welcome card-panel">
           <h1>Welcome to the Darkside</h1>
@@ -293,6 +297,43 @@
 
       <!-- Shoutbox + forums column -->
       <div class="content-column">
+
+        <!-- REP GIVE BOX -->
+        <section class="card-panel" id="rep-give-box" style="margin-bottom:16px; display:none;">
+          <div class="shoutbox-header">
+            <div class="shoutbox-title">
+              <i class="fa fa-star"></i> Give Reputation
+            </div>
+            <div class="shoutbox-meta">
+              Add reputation to a user.
+            </div>
+          </div>
+
+          <form id="rep-give-form" class="reply-form" style="margin-top:8px;">
+            <div style="display:flex; flex-wrap:wrap; gap:8px; align-items:center;">
+              <input
+                type="text"
+                id="rep-username"
+                class="shout-input"
+                placeholder="Exact username..."
+                style="flex:1 1 160px; max-width:220px;"
+              >
+              <select id="rep-amount" class="shout-input" style="flex:0 0 80px; max-width:90px;">
+                <option value="">Rep</option>
+                <option value="1">+1</option>
+                <option value="2">+2</option>
+                <option value="3">+3</option>
+                <option value="4">+4</option>
+                <option value="5">+5</option>
+                <option value="6">+6</option>
+              </select>
+              <button type="submit" class="btn btn-small btn-primary">
+                <i class="fa fa-plus"></i> Add Rep
+              </button>
+            </div>
+            <div id="rep-give-status" style="margin-top:6px; font-size:0.8rem;"></div>
+          </form>
+        </section>
 
         <!-- SHOUTBOX -->
         <section class="shoutbox card-panel">
@@ -530,6 +571,7 @@
 <!-- JS -->
 <script type="module" src="scripts.js"></script>
 <script type="module" src="notifications.js"></script>
+<script type="module" src="rep.js"></script>
 <script src="usertitleanims.js"></script>
 </body>
 </html>
