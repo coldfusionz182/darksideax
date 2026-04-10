@@ -8,7 +8,6 @@ async function loadSoftwareThreads() {
 
   const sort = sortSelectEl?.value || 'newest';
 
-  // Initial loading row
   threadListEl.innerHTML = `
     <tr class="thread-row">
       <td colspan="4">Loading software threads...</td>
@@ -30,20 +29,9 @@ async function loadSoftwareThreads() {
       return;
     }
 
-    const allowedTags = ['my project', 'cracked', 'other'];
+    // Sort first (no tag filtering yet)
+    const softwareOnly = [...data];
 
-    const softwareOnly = data.filter((row) => {
-      const sectionOk =
-        typeof row.section === 'string' &&
-        row.section.toLowerCase() === 'software';
-
-      const tag = (row.tag || '').toString().toLowerCase();
-      const tagOk = allowedTags.some((allowed) => tag.includes(allowed));
-
-      return sectionOk && tagOk;
-    });
-
-    // Sorting
     if (sort === 'oldest') {
       softwareOnly.sort(
         (a, b) => new Date(a.created_at) - new Date(b.created_at)
@@ -58,7 +46,7 @@ async function loadSoftwareThreads() {
       );
     }
 
-    // Instant render (no timeout)
+    // Render all rows first
     if (softwareOnly.length === 0) {
       threadListEl.innerHTML = `
         <tr class="thread-row">
@@ -92,7 +80,7 @@ async function loadSoftwareThreads() {
           · ${new Date(row.created_at).toLocaleDateString()}
           ${
             row.tag
-              ? ` · <span class="badge-pill">${row.tag}</span>`
+              ? ` · <span class="badge-pill thread-tag">${row.tag}</span>`
               : ''
           }
         </div>
@@ -113,6 +101,34 @@ async function loadSoftwareThreads() {
 
       threadListEl.appendChild(tr);
     });
+
+    // After 2 seconds, filter rows using XPath on the DOM
+    setTimeout(() => {
+      const allowedTags = ['My Project', 'Cracked', 'Other'];
+
+      const rows = Array.from(threadListEl.querySelectorAll('tr.thread-row'));
+
+      rows.forEach((tr, index) => {
+        // Build XPath relative to the whole document for this row:
+        // //*[@id="thread-list"]/tr[index+1]/td[2]/div[1]/span
+        const xpath = `//*[@id="thread-list"]/tr[${index + 1}]/td[2]/div[1]/span`;
+
+        const result = document.evaluate(
+          xpath,
+          document,
+          null,
+          XPathResult.FIRST_ORDERED_NODE_TYPE,
+          null
+        );
+
+        const span = result.singleNodeValue;
+        const text = span ? span.textContent.trim() : '';
+
+        if (!allowedTags.includes(text)) {
+          tr.style.display = 'none';
+        }
+      });
+    }, 2000);
   } catch (err) {
     console.error('loadSoftwareThreads error', err);
     threadListEl.innerHTML = `
