@@ -255,10 +255,10 @@ async function initRepGiveBox() {
   // suggestion list
   const suggestions = document.createElement('div');
   suggestions.id = 'rep-username-suggestions';
-  suggestions.style.position = 'absolute';
+   suggestions.style.position = 'absolute';
   suggestions.style.zIndex = '999';
   suggestions.style.background = '#020617';
-  suggestions.style.border = '1px solid '#111827';
+  suggestions.style.border = '1px solid #111827';
   suggestions.style.borderRadius = '4px';
   suggestions.style.fontSize = '0.8rem';
   suggestions.style.display = 'none';
