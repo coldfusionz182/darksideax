@@ -9,6 +9,7 @@
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
   <link href="styles.css" rel="stylesheet">
   <link href="userroles.css" rel="stylesheet">
+  <link href="notifications.css" rel="stylesheet">
 
   <style>
     /* Glowing purple logo/title */
@@ -218,11 +219,38 @@
         </div>
       </div>
       <div class="header-right">
-        <!-- top-links removed; only Login button shown -->
-        <div class="auth-links">
-          <a href="login.html" class="btn btn-small btn-outline">
-            <i class="fa fa-sign-in-alt"></i> Login
-          </a>
+        <div class="auth-area">
+          <!-- Notifications -->
+          <div class="notif-wrapper">
+            <button class="notif-bell-btn" id="notif-bell-btn" type="button" aria-label="Notifications">
+              <i class="fa fa-bell"></i>
+              <span class="notif-count" id="notif-count">0</span>
+            </button>
+
+            <div class="notif-dropdown" id="notif-dropdown">
+              <div class="notif-dropdown-header">
+                <span>
+                  <i class="fa fa-bell"></i>
+                  Notifications
+                </span>
+                <span class="badge" id="notif-badge-count">0</span>
+              </div>
+              <div class="notif-list" id="notif-list"></div>
+            </div>
+          </div>
+
+          <!-- User pill + logout -->
+          <div class="user-pill" id="user-pill">
+            <span class="user-pill-name" id="user-pill-name">Guest</span>
+            <button class="logout-btn" id="logout-btn" type="button">Logout</button>
+          </div>
+
+          <!-- Login button -->
+          <div class="auth-links">
+            <a href="login.html" class="btn btn-small btn-outline">
+              <i class="fa fa-sign-in-alt"></i> Login
+            </a>
+          </div>
         </div>
       </div>
     </div>
@@ -504,8 +532,8 @@
   </main>
 </div>
 
-<!-- Main forum logic -->
-<script type="module" src="scripts.js"></script>
+<!-- JS -->
+<script type="module" src="notifications.js"></script>
 <script src="usertitleanims.js"></script>
 </body>
 </html>

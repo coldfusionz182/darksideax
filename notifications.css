@@ -1,0 +1,162 @@
+/* Header layout for notifications + user + login */
+.header-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+}
+
+.auth-area {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Notifications bell */
+.notif-wrapper {
+  position: relative;
+}
+
+.notif-bell-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  border: 1px solid #111827;
+  background: #020617;
+  color: #e5e7eb;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.notif-bell-btn:hover {
+  background: #0b1120;
+  border-color: #1d4ed8;
+}
+
+.notif-count {
+  position: absolute;
+  top: -6px;
+  right: -4px;
+  min-width: 14px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: #dc2626;
+  color: #f9fafb;
+  font-size: 0.65rem;
+  line-height: 14px;
+  text-align: center;
+  font-weight: 600;
+  display: none;
+}
+
+/* Notifications dropdown */
+.notif-dropdown {
+  position: absolute;
+  top: 38px;
+  right: 0;
+  width: 260px;
+  max-height: 320px;
+  border-radius: 10px;
+  background: #020617;
+  border: 1px solid #111827;
+  box-shadow:
+    0 20px 40px rgba(15,23,42,0.85),
+    0 0 0 1px rgba(15,23,42,0.8);
+  overflow: hidden;
+  display: none;
+  z-index: 1200;
+}
+
+.notif-dropdown.open {
+  display: flex;
+  flex-direction: column;
+}
+
+.notif-dropdown-header {
+  padding: 8px 10px;
+  border-bottom: 1px solid #111827;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: #9ca3c9;
+}
+
+.notif-dropdown-header .badge {
+  font-size: 0.7rem;
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: #0f172a;
+  color: #e5e7eb;
+  border: 1px solid #111827;
+}
+
+.notif-list {
+  display: flex;
+  flex-direction: column;
+  padding: 4px 0;
+  overflow-y: auto;
+}
+
+.notif-empty {
+  padding: 12px;
+  font-size: 0.78rem;
+  color: #9ca3c9;
+  text-align: center;
+}
+
+.notif-item {
+  display: flex;
+  flex-direction: column;
+  padding: 8px 10px;
+  gap: 2px;
+  font-size: 0.8rem;
+  border-bottom: 1px solid #020617;
+  background: linear-gradient(90deg, rgba(15,23,42,0.9), rgba(17,24,39,0.9));
+  cursor: pointer;
+}
+
+.notif-item:last-child {
+  border-bottom: none;
+}
+
+.notif-item:hover {
+  background: linear-gradient(90deg, #020617, #020617);
+}
+
+.notif-item-title {
+  color: #e5e7eb;
+  font-weight: 500;
+}
+
+.notif-item-meta {
+  font-size: 0.72rem;
+  color: #9ca3c9;
+}
+
+/* User pill logout button (visual only, behavior is in notifications.js if needed) */
+.logout-btn {
+  padding: 3px 8px;
+  border-radius: 999px;
+  border: 1px solid #1f2937;
+  background: #020617;
+  color: #9ca3c9;
+  font-size: 0.72rem;
+  cursor: pointer;
+}
+
+.logout-btn:hover {
+  background: #7f1d1d;
+  border-color: #b91c1c;
+  color: #fee2e2;
+}
