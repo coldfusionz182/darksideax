@@ -16,7 +16,7 @@ export default async function handler(req, res) {
   try {
     const limit = Math.min(parseInt(req.query.limit, 10) || 25, 100);
 
-    // optional ?section=configs or ?section=accounts (case-insensitive)
+    // optional ?section=configs / accounts / combo (case-insensitive)
     const rawSection = (req.query.section || '').toString().toLowerCase();
 
     let query = supabase
@@ -27,7 +27,12 @@ export default async function handler(req, res) {
       .order('created_at', { ascending: false })
       .limit(limit);
 
-    if (rawSection === 'configs' || rawSection === 'accounts') {
+    // include combo here
+    if (
+      rawSection === 'configs' ||
+      rawSection === 'accounts' ||
+      rawSection === 'combo'
+    ) {
       query = query.eq('section', rawSection);
     }
 
