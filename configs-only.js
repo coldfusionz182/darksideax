@@ -7,9 +7,13 @@ async function loadConfigsThreads() {
 
   const sort = sortSelectEl?.value || 'newest';
 
-  const resp = await fetch('/api/list-threads?section=configs&limit=50&_=' + Date.now(), {
-    cache: 'no-store',
-  });
+  // 2 second delay before we even start (simulate "hard checking")
+  await new Promise(resolve => setTimeout(resolve, 2000));
+
+  const resp = await fetch(
+    '/api/list-threads?section=configs&limit=50&_=' + Date.now(),
+    { cache: 'no-store' }
+  );
   const data = await resp.json();
 
   if (!Array.isArray(data)) {
