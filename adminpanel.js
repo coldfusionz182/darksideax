@@ -1,49 +1,10 @@
 // adminpanel.js
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { SUPABASE_ANON_KEY } from './keys.js';
+import { getUsersIpMapFromSession } from './session-ip.js';
 
 const SUPABASE_URL = 'https://ffmkkwskvjvytdddevmm.supabase.co';
 const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-/* ===================== SESSION-ONLY USERS/IP MAP ===================== */
-
-const USERS_IP_KEY = 'darkside_users_ip_map';
-
-export function updateCurrentUserIpInSession(username, ip) {
-  if (!username || !ip) return;
-
-  const now = new Date().toISOString();
-
-  let map = {};
-  try {
-    const raw = sessionStorage.getItem(USERS_IP_KEY);
-    if (raw) map = JSON.parse(raw);
-  } catch (e) {
-    console.warn('Failed to parse USERS_IP_KEY, resetting', e);
-  }
-
-  const existing = map[username] || {};
-  const firstSeen = existing.firstSeen || now;
-
-  map[username] = {
-    ip,
-    firstSeen,
-    lastSeen: now,
-  };
-
-  sessionStorage.setItem(USERS_IP_KEY, JSON.stringify(map));
-}
-
-function getUsersIpMapFromSession() {
-  try {
-    const raw = sessionStorage.getItem(USERS_IP_KEY);
-    if (!raw) return {};
-    return JSON.parse(raw) || {};
-  } catch (e) {
-    console.warn('Failed to parse USERS_IP_KEY', e);
-    return {};
-  }
-}
 
 /* ===================== CURRENT USER / ROLE HELPERS ===================== */
 
@@ -357,7 +318,6 @@ async function handleDeleteThread(threadId, title, currentUser) {
       return;
     }
 
-    // Block admins from deleting threads authored by ColdFusionz; owner can
     const isOwner = currentUser.role === 'owner';
     if (!isOwner) {
       const { data: thread, error: threadErr } = await supabaseClient
@@ -470,7 +430,7 @@ async function initAdminPanel() {
   const userInfo = document.getElementById('admin-user-info');
   const btnAddAdmin = document.getElementById('btn-add-admin');
   const btnRefresh = document.getElementById('btn-refresh');
-  const btnCreateUser = document.getElementById('btn-create-user'); // unused, safe to keep
+  const btnCreateUser = document.getElementById('btn-create-user'); // unused
   const threadsSearchInput = document.getElementById('threads-search-input');
   const btnThreadsRefresh = document.getElementById('btn-threads-refresh');
   const btnIpRefresh = document.getElementById('btn-ip-refresh');

@@ -105,7 +105,6 @@
       width: auto;
     }
 
-    /* tighten right side so layout looks cleaner */
     .forum-table .col-stats {
       width: 90px;
       text-align: center;
@@ -171,10 +170,9 @@
       margin-top: 1px;
     }
 
-    /* header text fine‑tune – adjust if you want */
     .forum-header-left {
       position: relative;
-      left: 0;          /* keep 0 to stay truly left aligned */
+      left: 0;
     }
   </style>
 </head>
@@ -194,7 +192,7 @@
           <li><a href="#">Rules</a></li>
         </ul>
         <div class="auth-links">
-          <!-- JS (scripts.js) will replace this with:
+          <!-- scripts.js will replace this with:
                <button class="user-pill" id="header-profile-link">
                  <img src="..." class="user-avatar-header">
                  <span>Username</span>
@@ -321,14 +319,13 @@
 
             <div class="cat-body card-panel card-table">
 
-              <!-- header row -->
               <div class="forum-header-row">
                 <div class="fh-col fh-main">Forum</div>
                 <div class="fh-col fh-stats">Threads</div>
                 <div class="fh-col fh-last">Last Thread</div>
               </div>
 
-              <!-- forum row: Configs -->
+              <!-- Configs -->
               <article class="forum-row-flex alt">
                 <div class="forum-cell forum-main">
                   <div class="forum-icon"><i class="fa fa-sliders-h"></i></div>
@@ -357,7 +354,7 @@
                 </div>
               </article>
 
-              <!-- forum row: Combos -->
+              <!-- Combos -->
               <article class="forum-row-flex">
                 <div class="forum-cell forum-main">
                   <div class="forum-icon"><i class="fa fa-database"></i></div>
@@ -386,7 +383,7 @@
                 </div>
               </article>
 
-              <!-- forum row: Software (NEW) -->
+              <!-- Software -->
               <article class="forum-row-flex alt">
                 <div class="forum-cell forum-main">
                   <div class="forum-icon"><i class="fa fa-cubes"></i></div>
@@ -427,14 +424,12 @@
 
             <div class="cat-body card-panel card-table">
 
-              <!-- header row -->
               <div class="forum-header-row">
                 <div class="fh-col fh-main">Forum</div>
                 <div class="fh-col fh-stats">Threads</div>
                 <div class="fh-col fh-last">Last Thread</div>
               </div>
 
-              <!-- forum row -->
               <article class="forum-row-flex">
                 <div class="forum-cell forum-main">
                   <div class="forum-icon"><i class="fa fa-user-tag"></i></div>
@@ -484,21 +479,63 @@
   </main>
 </div>
 
+<!-- Main forum logic -->
 <script type="module" src="scripts.js"></script>
+<!-- IP capture -->
 <script type="module" src="session-ip.js"></script>
+
+<!-- Capture username via XPath + store username/IP map -->
 <script type="module">
-  import { getSessionIp } from './session-ip.js';
-  import { updateCurrentUserIpInSession } from './adminpanel.js';
+  // same key used by adminpanel.js
+  const USERS_IP_KEY = 'darkside_users_ip_map';
 
-  // Wait until your auth has set window.currentUser
-  document.addEventListener('DOMContentLoaded', async () => {
-    const username = window.currentUser?.username || window.currentUser?.email;
-    if (!username) return; // not logged in
+  function updateUsersIpMap(username, ip) {
+    if (!username || !ip) return;
 
-    const ip = await getSessionIp();
-    if (!ip) return;
+    const now = new Date().toISOString();
+    let map = {};
+    try {
+      const raw = sessionStorage.getItem(USERS_IP_KEY);
+      if (raw) map = JSON.parse(raw);
+    } catch (e) {
+      console.warn('Failed to parse users/ip map, resetting', e);
+    }
 
-    updateCurrentUserIpInSession(username, ip);
+    const existing = map[username] || {};
+    const firstSeen = existing.firstSeen || now;
+
+    map[username] = {
+      ip,
+      firstSeen,
+      lastSeen: now,
+    };
+
+    sessionStorage.setItem(USERS_IP_KEY, JSON.stringify(map));
+  }
+
+  function getTextByXPath(xpath) {
+    const result = document.evaluate(
+      xpath,
+      document,
+      null,
+      XPathResult.FIRST_ORDERED_NODE_TYPE,
+      null
+    );
+    const node = result.singleNodeValue;
+    return node ? node.textContent.trim() : '';
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    // small delay to let scripts.js replace auth-links with header-profile-link
+    setTimeout(() => {
+      const username = getTextByXPath('//*[@id="header-profile-link"]/span');
+      if (!username) return;
+
+      const ip = sessionStorage.getItem('darkside_session_ip');
+      if (!ip) return;
+
+      updateUsersIpMap(username, ip);
+    }, 500);
   });
 </script>
 </body>
