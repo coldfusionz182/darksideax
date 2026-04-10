@@ -653,14 +653,7 @@ a:hover {
   border-color: #386b8d;
 }
 
-/* Ranks */
-.rank-admin {
-  color: #ff7675;
-}
-
-.rank-member {
-  color: #cbe2ff;
-}
+/* Optional: keep as hooks but don't affect color *
 
 /* Bottom links/footer */
 .index-bottom {
