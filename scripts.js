@@ -228,7 +228,15 @@ async function renderShout(row, currentUser) {
 
   const userSpan = document.createElement('span');
   userSpan.className = 'shout-user rank-member';
-  userSpan.textContent = row.username;
+
+  // >>> clickable username
+  const userLink = document.createElement('a');
+  userLink.className = 'profile-username-link';
+  userLink.href = 'profile.html?u=' + encodeURIComponent(row.username);
+  userLink.textContent = row.username;
+
+  userSpan.appendChild(userLink);
+  // <<<
 
   const timeSpan = document.createElement('span');
   timeSpan.className = 'shout-time';
@@ -248,10 +256,11 @@ async function renderShout(row, currentUser) {
   line.appendChild(textContainer);
   shoutBox.appendChild(line);
 
-  // async avatar load, non-blocking
+  // avatar fetch as you already had
   getAvatarForUser(row.user_id).then((url) => {
     avatarImg.src = url || DEFAULT_SHOUT_AVATAR;
   });
+
 
   const canDelete = canCurrentUserDeleteShout(currentUser, row);
   if (!canDelete) return;
@@ -1069,58 +1078,66 @@ async function renderShout(row, currentUser) {
 
   // ===================== INDEX: Current Staff (from public.users) =====================
   async function loadCurrentStaff() {
-    const container = document.getElementById('current-staff-list');
-    if (!container) return;
+  const container = document.getElementById('current-staff-list');
+  if (!container) return;
 
-    try {
-      const { data, error } = await supabaseClient
-        .from('users')
-        .select('email, role, username')
-        .in('role', ['admin', 'owner'])
-        .order('role', { ascending: false });
+  try {
+    const { data, error } = await supabaseClient
+      .from('users')
+      .select('email, role, username, avatar_url')
+      .in('role', ['admin', 'owner'])
+      .order('role', { ascending: false });
 
-      if (error) {
-        console.error('loadCurrentStaff error', error);
-        return;
-      }
+    if (error) {
+      console.error('loadCurrentStaff error', error);
+      return;
+    }
 
-      container.innerHTML = '';
+    container.innerHTML = '';
 
-      if (!data || data.length === 0) {
-        container.textContent = 'No staff members found.';
-        return;
-      }
+    if (!data || data.length === 0) {
+      container.textContent = 'No staff members found.';
+      return;
+    }
 
-      data.forEach((u) => {
-        const line = document.createElement('div');
-        line.className = 'staff-line';
+    data.forEach((u) => {
+      const line = document.createElement('div');
+      line.className = 'staff-line';
 
-        const displayName =
-          (u.username && u.username.trim()) ||
-          (u.email ? u.email.split('@')[0] : 'user');
+      const displayName =
+        (u.username && u.username.trim()) ||
+        (u.email ? u.email.split('@')[0] : 'user');
 
-        const roleLabel =
-          u.role === 'owner'
-            ? 'Owner'
-            : u.role === 'admin'
-            ? 'Admin'
-            : u.role || 'Staff';
+      const roleLabel =
+        u.role === 'owner'
+          ? 'Owner'
+          : u.role === 'admin'
+          ? 'Admin'
+          : u.role || 'Staff';
 
-        line.innerHTML = `
+      const avatarSrc = u.avatar_url || 'images/default-avatar.png';
+
+      line.innerHTML = `
+        <span class="staff-avatar">
+          <img src="${avatarSrc}" alt="${displayName}" class="user-avatar-header">
+        </span>
         <span class="staff-name">
-          <a href="mailto:${u.email}">${displayName}</a>
+          <a
+            href="profile.html?u=${encodeURIComponent(displayName)}"
+            class="profile-username-link"
+          >${displayName}</a>
         </span>
         <span class="staff-role">${roleLabel}</span>
       `;
 
-        container.appendChild(line);
-      });
-    } catch (err) {
-      console.error('loadCurrentStaff error', err);
-    }
+      container.appendChild(line);
+    });
+  } catch (err) {
+    console.error('loadCurrentStaff error', err);
   }
+}
 
-  loadCurrentStaff();
+loadCurrentStaff();
 
   // ===================== INDEX: Accounts threads counter =====================
   async function updateIndexAccountsThreads() {

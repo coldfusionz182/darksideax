@@ -5,9 +5,7 @@ import { SUPABASE_ANON_KEY } from './keys.js';
 const SUPABASE_URL = 'https://ffmkkwskvjvytdddevmm.supabase.co';
 export const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-// =========================================
-// Shared helper: build profile URL from username
-// =========================================
+// ========== Shared helper: profile URL from username ==========
 export function getProfileUrlForUsername(username) {
   if (!username) return 'profile.html';
   return 'profile.html?u=' + encodeURIComponent(username.trim());
@@ -31,12 +29,13 @@ function formatDateShort(iso) {
   return `${dd}/${mm} ${hh}:${min}`;
 }
 
-function mapRoleToLabel(role) {
+function mapRoleToLabel(role, userrank) {
+  if (userrank && userrank.trim()) return userrank; // e.g. "Admin"
   switch (role) {
     case 'owner':
       return 'Owner';
     case 'admin':
-      return 'Administrator';
+      return 'Admin';
     default:
       return 'Member';
   }
@@ -57,45 +56,34 @@ function setAvatar(avatarUrl) {
   }
 }
 
-// ---------- Supabase fetchers ----------
-async function getCurrentUser() {
+// ---------- Supabase lookups using `users` ----------
+async function getCurrentAuthUser() {
   const { data, error } = await supabaseClient.auth.getUser();
   if (error || !data?.user) return null;
-  return data.user;
+  return data.user; // auth.users row
 }
 
-async function getProfileByUsername(username) {
+async function getUserByUsername(username) {
   const { data, error } = await supabaseClient
-    .from('profiles')
-    .select('id, username, avatar_url, created_at')
+    .from('users')
+    .select('uuid, email, role, username, avatar_url, userrank, created_at')
     .eq('username', username)
     .maybeSingle();
   if (error) throw error;
   return data;
 }
 
-async function getProfileByUserId(userId) {
-  const { data, error } = await supabaseClient
-    .from('profiles')
-    .select('id, username, avatar_url, created_at')
-    .eq('id', userId)
-    .maybeSingle();
-  if (error) throw error;
-  return data;
-}
-
-async function getUserRow(userId) {
+async function getUserByUuid(uuid) {
   const { data, error } = await supabaseClient
     .from('users')
-    .select('role, avatar_url, created_at')
-    .eq('id', userId)
+    .select('uuid, email, role, username, avatar_url, userrank, created_at')
+    .eq('uuid', uuid)
     .maybeSingle();
   if (error) throw error;
   return data;
 }
 
-async function getUserContent(username, userId) {
-  // Adjust if your replies use email instead of username
+async function getUserContent(username, uuid) {
   const [{ data: threads }, { data: replies }, { data: likes }] = await Promise.all([
     supabaseClient
       .from('threads')
@@ -110,7 +98,7 @@ async function getUserContent(username, userId) {
     supabaseClient
       .from('thread_likes')
       .select('id, thread_id, created_at')
-      .eq('user_id', userId),
+      .eq('user_id', uuid),
   ]);
 
   return {
@@ -120,12 +108,11 @@ async function getUserContent(username, userId) {
   };
 }
 
-// =========================================
-// Main profile page logic
-// =========================================
+// ========== main profile logic ==========
 async function initProfilePage() {
-  // DOM refs
   const profileUsernameEl = document.getElementById('profile-username');
+  if (!profileUsernameEl) return; // not on profile.html
+
   const profileRoleTextEl = document.getElementById('profile-role-text');
   const profileEmailEl = document.getElementById('profile-email');
   const profileJoinedEl = document.getElementById('profile-joined');
@@ -153,60 +140,54 @@ async function initProfilePage() {
   const avatarStatus = document.getElementById('avatar-url-status');
 
   const paramUsername = getQueryParam('u');
-  const currentUser = await getCurrentUser();
+  const authUser = await getCurrentAuthUser();
 
-  let profile = null;
   let userRow = null;
   let viewingOwnProfile = false;
 
   try {
     if (paramUsername) {
-      // Visiting /profile.html?u=SomeUser
-      profile = await getProfileByUsername(paramUsername);
-      if (!profile) {
-        if (profileUsernameEl) profileUsernameEl.textContent = 'Profile not found';
+      // Viewing someone else (or yourself) by username
+      userRow = await getUserByUsername(paramUsername);
+      if (!userRow) {
+        profileUsernameEl.textContent = 'Profile not found';
         return;
       }
-      viewingOwnProfile = !!(currentUser && profile.id === currentUser.id);
-      userRow = await getUserRow(profile.id);
+      viewingOwnProfile = !!(authUser && authUser.id === userRow.uuid);
     } else {
-      // Visiting /profile.html (no ?u) => own profile only
-      if (!currentUser) {
+      // /profile.html → must be own profile
+      if (!authUser) {
         window.location.href = 'login.html';
         return;
       }
-      profile = await getProfileByUserId(currentUser.id);
-      if (!profile) {
-        if (profileUsernameEl) profileUsernameEl.textContent = 'Profile not found';
+      userRow = await getUserByUuid(authUser.id);
+      if (!userRow) {
+        profileUsernameEl.textContent = 'Profile not found';
         return;
       }
       viewingOwnProfile = true;
-      userRow = await getUserRow(profile.id);
     }
   } catch (err) {
     console.error('profile load error', err);
-    if (profileUsernameEl) profileUsernameEl.textContent = 'Error loading profile';
+    profileUsernameEl.textContent = 'Error loading profile';
     return;
   }
 
   const username =
-    profile.username ||
-    (currentUser?.email ? currentUser.email.split('@')[0] : 'User');
-  const role = userRow?.role || 'user';
-  const avatarUrl = userRow?.avatar_url || profile.avatar_url || null;
-  const joinedAt = userRow?.created_at || profile.created_at || null;
+    (userRow.username && userRow.username.trim()) ||
+    (userRow.email ? userRow.email.split('@')[0] : 'User');
+  const roleLabel = mapRoleToLabel(userRow.role, userRow.userrank);
+  const avatarUrl = userRow.avatar_url || null;
+  const joinedAt = userRow.created_at || null;
 
-  // Top banner / basic info
-  if (profileUsernameEl) profileUsernameEl.textContent = username;
-  if (profileRoleTextEl) profileRoleTextEl.textContent = mapRoleToLabel(role);
-  if (profileJoinedEl && joinedAt) {
-    profileJoinedEl.textContent = formatDateShort(joinedAt);
-  }
+  // header info
+  profileUsernameEl.textContent = username;
+  if (profileRoleTextEl) profileRoleTextEl.textContent = roleLabel;
+  if (profileJoinedEl && joinedAt) profileJoinedEl.textContent = formatDateShort(joinedAt);
 
-  // Email & UID visibility
   if (viewingOwnProfile) {
-    if (profileEmailEl) profileEmailEl.textContent = currentUser?.email || '–';
-    if (infoUidEl) infoUidEl.textContent = currentUser?.id || '–';
+    if (profileEmailEl) profileEmailEl.textContent = userRow.email || '–';
+    if (infoUidEl) infoUidEl.textContent = userRow.uuid || '–';
   } else {
     if (profileEmailEl) profileEmailEl.textContent = 'Private';
     if (infoUidEl) infoUidEl.textContent = 'Hidden';
@@ -214,14 +195,14 @@ async function initProfilePage() {
 
   setAvatar(avatarUrl);
 
-  // Content stats
-  const { threads, replies, likes } = await getUserContent(username, profile.id);
+  // threads / replies / likes
+  const { threads, replies, likes } = await getUserContent(username, userRow.uuid);
 
   const threadsCount = threads.length;
   const repliesCount = replies.length;
   const likesCount = likes.length;
-  const credits = 0; // extend when you add credits
-  const vouches = 0; // extend when you add vouches
+  const credits = 0;
+  const vouches = 0;
 
   if (bannerThreads) bannerThreads.textContent = threadsCount;
   if (bannerPosts) bannerPosts.textContent = repliesCount;
@@ -236,7 +217,7 @@ async function initProfilePage() {
   if (profileRepEl) profileRepEl.textContent = vouches;
   if (profileLikesTotalEl) profileLikesTotalEl.textContent = likesCount;
 
-  // Recent threads
+  // recent threads
   if (profileThreadsList) {
     profileThreadsList.innerHTML = '';
     if (!threadsCount) {
@@ -260,7 +241,7 @@ async function initProfilePage() {
     }
   }
 
-  // Recent replies
+  // recent replies
   if (profileRepliesList) {
     profileRepliesList.innerHTML = '';
     if (!repliesCount) {
@@ -284,7 +265,7 @@ async function initProfilePage() {
     }
   }
 
-  // Recent likes
+  // recent likes
   if (profileLikesList) {
     profileLikesList.innerHTML = '';
     if (!likesCount) {
@@ -308,7 +289,7 @@ async function initProfilePage() {
     }
   }
 
-  // Avatar URL editing – only own profile
+  // avatar editing – only own profile
   if (!viewingOwnProfile) {
     if (avatarInput) {
       avatarInput.disabled = true;
@@ -328,21 +309,18 @@ async function initProfilePage() {
         if (avatarStatus) avatarStatus.textContent = 'Enter an image URL first.';
         return;
       }
-
       if (avatarStatus) avatarStatus.textContent = 'Saving avatar...';
 
       try {
         const { error: upError } = await supabaseClient
           .from('users')
           .update({ avatar_url: url })
-          .eq('id', profile.id);
+          .eq('uuid', userRow.uuid);
         if (upError) throw upError;
 
         setAvatar(url);
-
         const headerAvatar = document.querySelector('.user-avatar-header');
         if (headerAvatar) headerAvatar.src = url;
-
         if (avatarStatus) avatarStatus.textContent = 'Avatar updated.';
       } catch (err) {
         console.error('avatar update error', err);
@@ -352,9 +330,9 @@ async function initProfilePage() {
   }
 }
 
-// Only run profile logic when on profile page
+// Run only when profile DOM exists
 document.addEventListener('DOMContentLoaded', () => {
   const profileUsernameEl = document.getElementById('profile-username');
-  if (!profileUsernameEl) return; // not on profile.html
+  if (!profileUsernameEl) return;
   initProfilePage();
 });
