@@ -26,7 +26,6 @@ async function loadComboThreads() {
     const data = await resp.json();
 
     if (!Array.isArray(data)) {
-      // after filtering step fails, show error directly (no delay necessary)
       threadListEl.innerHTML = `
         <tr class="thread-row">
           <td colspan="4">Failed to load combo threads.</td>
@@ -63,7 +62,7 @@ async function loadComboThreads() {
       );
     }
 
-    // Now wait 2 seconds, then render (or show "no threads")
+    // Now wait 3 seconds, then render (or show "no threads")
     setTimeout(() => {
       if (combosOnly.length === 0) {
         threadListEl.innerHTML = `
@@ -119,16 +118,15 @@ async function loadComboThreads() {
 
         threadListEl.appendChild(tr);
       });
-    }, 2000);
+    }, 3000); // 3 seconds
   } catch (err) {
     console.error('loadComboThreads error', err);
-    // optional delay for error as well
     setTimeout(() => {
       threadListEl.innerHTML = `
         <tr class="thread-row">
           <td colspan="4">Network error loading combo threads.</td>
         </tr>`;
-    }, 2000);
+    }, 3000);
   }
 }
 
