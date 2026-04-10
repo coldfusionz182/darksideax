@@ -535,19 +535,16 @@ a:hover {
 }
 
 .user-title-owner {
-  position: relative;
   font-weight: 700;
-  /* no text-transform here – keep original casing */
-  /* no big letter-spacing – keep it readable for names */
-  background: linear-gradient(90deg, #a855f7, #ec4899, #6366f1);
+  background: linear-gradient(90deg, #38bdf8, #93c5fd, #0ea5e9); /* baby blue */
   background-size: 200% 200%;
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
   animation: ownerGradient 3s ease-in-out infinite;
   text-shadow:
-    0 0 6px rgba(139, 92, 246, 0.9),
-    0 0 18px rgba(236, 72, 153, 0.7);
+    0 0 6px rgba(56, 189, 248, 0.9),
+    0 0 18px rgba(14, 165, 233, 0.7);
 }
 
 @keyframes ownerGradient {
@@ -557,9 +554,8 @@ a:hover {
 }
 
 .user-title-admin {
-  position: relative;
   font-weight: 700;
-  background: linear-gradient(90deg, #f472b6, #fb7185, #ec4899);
+  background: linear-gradient(90deg, #f472b6, #fb7185, #ec4899); /* pink */
   background-size: 200% 200%;
   -webkit-background-clip: text;
   background-clip: text;

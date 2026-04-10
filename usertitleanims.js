@@ -1,11 +1,9 @@
 // usertitleanims.js
 
-// We assume scripts.js already created supabaseClient and window.currentUser / window.dsUserRole.
-// This file only decorates usernames with CSS classes based on role.
-
-function getUserTitleClass(roleOrRank) {
-  if (!roleOrRank) return '';
-  const lower = String(roleOrRank).toLowerCase();
+// Map role string -> CSS class
+function getUserTitleClass(roleText) {
+  if (!roleText) return '';
+  const lower = String(roleText).toLowerCase();
 
   if (lower === 'owner') return 'user-title-owner';
   if (lower === 'admin') return 'user-title-admin';
@@ -13,22 +11,34 @@ function getUserTitleClass(roleOrRank) {
   return '';
 }
 
-// ---------- 1. Header username (top-right) ----------
+// ---------- Build staff role map from Current Staff box ----------
+// Reads #current-staff-list lines rendered by scripts.js
 
-function applyHeaderUserAnimation() {
-  const pill = document.querySelector('.user-pill-name');
-  if (!pill) return;
+function buildStaffRoleMap() {
+  const map = new Map();
+  const container = document.getElementById('current-staff-list');
+  if (!container) return map;
 
-  const role =
-    (window.currentUser && window.currentUser.role) || window.dsUserRole || 'user';
+  const lines = container.querySelectorAll('.staff-line');
 
-  pill.classList.remove('user-title-owner', 'user-title-admin');
-  const cls = getUserTitleClass(role);
-  if (cls) pill.classList.add(cls);
+  lines.forEach((line) => {
+    const nameSpan = line.querySelector('.staff-name');
+    const roleSpan = line.querySelector('.staff-role');
+    if (!nameSpan || !roleSpan) return;
+
+    const name = nameSpan.textContent.trim();
+    const roleLabel = roleSpan.textContent.trim(); // e.g. "Owner", "Admin" or custom rank
+
+    const clsRole = getUserTitleClass(roleLabel);
+    if (clsRole) {
+      map.set(name.toLowerCase(), roleLabel); // store label; class decided later
+    }
+  });
+
+  return map;
 }
 
-// ---------- 2. Staff list usernames ----------
-// We rely on the HTML already rendered by scripts.js and only decorate names.
+// ---------- 1. Apply effect to staff list usernames ----------
 
 function enhanceStaffListUsernames() {
   const container = document.getElementById('current-staff-list');
@@ -41,90 +51,67 @@ function enhanceStaffListUsernames() {
     const roleSpan = line.querySelector('.staff-role');
     if (!nameSpan || !roleSpan) return;
 
-    const roleText = roleSpan.textContent.trim().toLowerCase();
-    let inferredRole = '';
-
-    if (roleText === 'owner') inferredRole = 'owner';
-    else if (roleText === 'admin') inferredRole = 'admin';
+    const roleLabel = roleSpan.textContent.trim();
 
     nameSpan.classList.remove('user-title-owner', 'user-title-admin');
 
-    const cls = getUserTitleClass(inferredRole);
+    const cls = getUserTitleClass(roleLabel);
     if (cls) nameSpan.classList.add(cls);
   });
 }
 
-// ---------- 3. Shoutbox usernames ----------
-// After scripts.js renders the shoutbox, usernames are in .profile-username-link.
-// We infer role by matching those names against staff list or a known map.
+// ---------- 2. Apply effect to shoutbox usernames ----------
 
-function buildStaffRoleMap() {
-  const map = new Map();
-  const container = document.getElementById('current-staff-list');
-  if (!container) return map;
-
-  const lines = container.querySelectorAll('.staff-line');
-  lines.forEach((line) => {
-    const nameSpan = line.querySelector('.staff-name');
-    const roleSpan = line.querySelector('.staff-role');
-    if (!nameSpan || !roleSpan) return;
-
-    const name = nameSpan.textContent.trim();
-    const roleText = roleSpan.textContent.trim().toLowerCase();
-
-    let inferredRole = '';
-    if (roleText === 'owner') inferredRole = 'owner';
-    else if (roleText === 'admin') inferredRole = 'admin';
-
-    if (inferredRole) {
-      map.set(name.toLowerCase(), inferredRole);
-    }
-  });
-
-  return map;
-}
-
-function applyShoutboxUserAnimations() {
+function applyShoutboxUserAnimations(staffMap) {
   const shoutBox = document.getElementById('shoutbox-messages');
   if (!shoutBox) return;
 
-  const staffMap = buildStaffRoleMap();
   const links = shoutBox.querySelectorAll('.profile-username-link');
 
   links.forEach((link) => {
     const uname = link.textContent.trim();
     const key = uname.toLowerCase();
-    const role = staffMap.get(key) || ''; // owner/admin if staff
+
+    const roleLabel = staffMap.get(key) || ''; // "Owner" / "Admin" if staff
+    const cls = getUserTitleClass(roleLabel);
 
     link.classList.remove('user-title-owner', 'user-title-admin');
-    const cls = getUserTitleClass(role);
-    if (cls) link.classList.add(cls);
+    if (cls) {
+      link.classList.add(cls);
+    }
   });
 }
 
-// ---------- 4. Re-apply on shoutbox reload ----------
+// ---------- 3. Watch shoutbox for updates and re-apply ----------
 
 function hookIntoShoutboxRendering() {
   const shoutBox = document.getElementById('shoutbox-messages');
   if (!shoutBox) return;
 
-  const observer = new MutationObserver(() => {
-    applyShoutboxUserAnimations();
-  });
+  let staffMap = buildStaffRoleMap();
+  enhanceStaffListUsernames();
+  applyShoutboxUserAnimations(staffMap);
 
-  observer.observe(shoutBox, { childList: true, subtree: true });
+  // Rebuild staff map if staff list ever changes
+  const staffContainer = document.getElementById('current-staff-list');
+  if (staffContainer) {
+    const staffObserver = new MutationObserver(() => {
+      staffMap = buildStaffRoleMap();
+      enhanceStaffListUsernames();
+      applyShoutboxUserAnimations(staffMap);
+    });
+    staffObserver.observe(staffContainer, { childList: true, subtree: true });
+  }
+
+  // Observe shoutbox for DOM changes (new shouts, reloads)
+  const shoutObserver = new MutationObserver(() => {
+    applyShoutboxUserAnimations(staffMap);
+  });
+  shoutObserver.observe(shoutBox, { childList: true, subtree: true });
 }
 
 // ---------- Init ----------
 
 document.addEventListener('DOMContentLoaded', () => {
-  applyHeaderUserAnimation();
-  enhanceStaffListUsernames();
   hookIntoShoutboxRendering();
-
-  // If scripts.js ever updates currentUser and fires a custom event,
-  // we can re-apply header styles:
-  window.addEventListener('ds-user-updated', () => {
-    applyHeaderUserAnimation();
-  });
 });
