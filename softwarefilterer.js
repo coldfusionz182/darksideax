@@ -8,7 +8,7 @@ async function loadSoftwareThreads() {
 
   const sort = sortSelectEl?.value || 'newest';
 
-  // Show a loading message row only (no real data)
+  // Initial loading row
   threadListEl.innerHTML = `
     <tr class="thread-row">
       <td colspan="4">Loading software threads...</td>
@@ -30,10 +30,8 @@ async function loadSoftwareThreads() {
       return;
     }
 
-    // adjust allowed tags to whatever you want for software
     const allowedTags = ['my project', 'cracked', 'other'];
 
-    // FILTER FIRST – nothing rendered yet
     const softwareOnly = data.filter((row) => {
       const sectionOk =
         typeof row.section === 'string' &&
@@ -45,7 +43,7 @@ async function loadSoftwareThreads() {
       return sectionOk && tagOk;
     });
 
-    // apply sorting on filtered array
+    // Sorting
     if (sort === 'oldest') {
       softwareOnly.sort(
         (a, b) => new Date(a.created_at) - new Date(b.created_at)
@@ -60,71 +58,67 @@ async function loadSoftwareThreads() {
       );
     }
 
-    // Wait 3 seconds, then render (or show "no threads")
-    setTimeout(() => {
-      if (softwareOnly.length === 0) {
-        threadListEl.innerHTML = `
-          <tr class="thread-row">
-            <td colspan="4">No software threads yet. Be the first to post!</td>
-          </tr>`;
-        return;
-      }
-
-      threadListEl.innerHTML = '';
-
-      softwareOnly.forEach((row, idx) => {
-        const tr = document.createElement('tr');
-        tr.className = 'thread-row' + (idx % 2 === 1 ? ' alt' : '');
-
-        const iconTd = document.createElement('td');
-        iconTd.className = 'col-icon';
-        iconTd.innerHTML = `
-          <div class="thread-icon">
-            <i class="fa fa-cubes"></i>
-          </div>
-        `;
-
-        const mainTd = document.createElement('td');
-        mainTd.className = 'col-thread-main';
-        mainTd.innerHTML = `
-          <div class="thread-title">
-            <a href="thread.html?id=${row.id}">${row.title}</a>
-          </div>
-          <div class="thread-meta">
-            by <span class="rank-member">${row.author}</span>
-            · ${new Date(row.created_at).toLocaleDateString()}
-            ${
-              row.tag
-                ? ` · <span class="badge-pill">${row.tag}</span>`
-                : ''
-            }
-          </div>
-        `;
-
-        const repliesTd = document.createElement('td');
-        repliesTd.className = 'col-stats';
-        repliesTd.textContent = row.replies ?? 0;
-
-        const viewsTd = document.createElement('td');
-        viewsTd.className = 'col-stats';
-        viewsTd.textContent = row.views ?? 0;
-
-        tr.appendChild(iconTd);
-        tr.appendChild(mainTd);
-        tr.appendChild(repliesTd);
-        tr.appendChild(viewsTd);
-
-        threadListEl.appendChild(tr);
-      });
-    }, 3000);
-  } catch (err) {
-    console.error('loadSoftwareThreads error', err);
-    setTimeout(() => {
+    // Instant render (no timeout)
+    if (softwareOnly.length === 0) {
       threadListEl.innerHTML = `
         <tr class="thread-row">
-          <td colspan="4">Network error loading software threads.</td>
+          <td colspan="4">No software threads yet. Be the first to post!</td>
         </tr>`;
-    }, 3000);
+      return;
+    }
+
+    threadListEl.innerHTML = '';
+
+    softwareOnly.forEach((row, idx) => {
+      const tr = document.createElement('tr');
+      tr.className = 'thread-row' + (idx % 2 === 1 ? ' alt' : '');
+
+      const iconTd = document.createElement('td');
+      iconTd.className = 'col-icon';
+      iconTd.innerHTML = `
+        <div class="thread-icon">
+          <i class="fa fa-cubes"></i>
+        </div>
+      `;
+
+      const mainTd = document.createElement('td');
+      mainTd.className = 'col-thread-main';
+      mainTd.innerHTML = `
+        <div class="thread-title">
+          <a href="thread.html?id=${row.id}">${row.title}</a>
+        </div>
+        <div class="thread-meta">
+          by <span class="rank-member">${row.author}</span>
+          · ${new Date(row.created_at).toLocaleDateString()}
+          ${
+            row.tag
+              ? ` · <span class="badge-pill">${row.tag}</span>`
+              : ''
+          }
+        </div>
+      `;
+
+      const repliesTd = document.createElement('td');
+      repliesTd.className = 'col-stats';
+      repliesTd.textContent = row.replies ?? 0;
+
+      const viewsTd = document.createElement('td');
+      viewsTd.className = 'col-stats';
+      viewsTd.textContent = row.views ?? 0;
+
+      tr.appendChild(iconTd);
+      tr.appendChild(mainTd);
+      tr.appendChild(repliesTd);
+      tr.appendChild(viewsTd);
+
+      threadListEl.appendChild(tr);
+    });
+  } catch (err) {
+    console.error('loadSoftwareThreads error', err);
+    threadListEl.innerHTML = `
+      <tr class="thread-row">
+        <td colspan="4">Network error loading software threads.</td>
+      </tr>`;
   }
 }
 
