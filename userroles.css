@@ -1,15 +1,65 @@
 /* === Shared role styles (Owner baby blue, Admin pink) === */
 
-/* Owner – baby blue (match staff list) */
+/* Base role styles (used everywhere) */
 .user-title-owner {
   font-weight: 700;
-  color: #7cc8ff; /* use the same baby blue as staff list */
+  color: #7cc8ff;
 }
 
-/* Admin – pink (match staff list) */
 .user-title-admin {
   font-weight: 700;
-  color: #ff86b3; /* use the same pink as staff list */
+  color: #ff86b3;
+}
+
+/* Staff list only – add a soft animated glow */
+.current-staff-box .staff-name.user-title-owner {
+  text-shadow:
+    0 0 4px rgba(124, 200, 255, 0.7),
+    0 0 8px rgba(124, 200, 255, 0.4);
+  animation: staffOwnerGlow 3s ease-in-out infinite;
+}
+
+.current-staff-box .staff-name.user-title-admin {
+  text-shadow:
+    0 0 4px rgba(255, 134, 179, 0.7),
+    0 0 8px rgba(255, 134, 179, 0.4);
+  animation: staffAdminGlow 3s ease-in-out infinite;
+}
+
+@keyframes staffOwnerGlow {
+  0% {
+    text-shadow:
+      0 0 2px rgba(124, 200, 255, 0.4),
+      0 0 4px rgba(124, 200, 255, 0.2);
+  }
+  50% {
+    text-shadow:
+      0 0 6px rgba(124, 200, 255, 0.9),
+      0 0 12px rgba(124, 200, 255, 0.6);
+  }
+  100% {
+    text-shadow:
+      0 0 2px rgba(124, 200, 255, 0.4),
+      0 0 4px rgba(124, 200, 255, 0.2);
+  }
+}
+
+@keyframes staffAdminGlow {
+  0% {
+    text-shadow:
+      0 0 2px rgba(255, 134, 179, 0.4),
+      0 0 4px rgba(255, 134, 179, 0.2);
+  }
+  50% {
+    text-shadow:
+      0 0 6px rgba(255, 134, 179, 0.9),
+      0 0 12px rgba(255, 134, 179, 0.6);
+  }
+  100% {
+    text-shadow:
+      0 0 2px rgba(255, 134, 179, 0.4),
+      0 0 4px rgba(255, 134, 179, 0.2);
+  }
 }
 
 /* Shoutbox clickable usernames – behaviour only; colour comes from user-title-* */
@@ -21,7 +71,7 @@
   text-decoration: underline;
 }
 
-/* Staff list usernames – rely on user-title-* for colour; keep existing layout */
+/* Staff list usernames – layout only; colour/glow from user-title-* */
 .current-staff-box .staff-name {
   cursor: default;
 }
