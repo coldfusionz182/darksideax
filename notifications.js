@@ -20,20 +20,14 @@ async function getCurrentUserProfileWithLastSeen() {
     .select('username')
     .eq('id', user.id)
     .maybeSingle();
-
-  if (pErr) {
-    console.error('notifications: profile error', pErr);
-  }
+  if (pErr) console.error('notifications: profile error', pErr);
 
   const { data: userRow, error: uErr } = await supabaseClient
     .from('users')
     .select('last_notifications_seen_at')
     .eq('id', user.id)
     .maybeSingle();
-
-  if (uErr) {
-    console.error('notifications: users.last_notifications_seen_at error', uErr);
-  }
+  if (uErr) console.error('notifications: users.last_notifications_seen_at error', uErr);
 
   const username = profile?.username || user.email;
 
@@ -47,11 +41,11 @@ async function getCurrentUserProfileWithLastSeen() {
 
 async function updateLastNotificationsSeen(userId) {
   try {
+    const nowIso = new Date().toISOString();
     const { error } = await supabaseClient
       .from('users')
-      .update({ last_notifications_seen_at: new Date().toISOString() })
+      .update({ last_notifications_seen_at: nowIso })
       .eq('id', userId);
-
     if (error) {
       console.error('notifications: failed to update last_notifications_seen_at', error);
     }
@@ -62,7 +56,7 @@ async function updateLastNotificationsSeen(userId) {
 
 // -------------- DOM SETUP --------------
 
-function initNotificationsDom(onBellOpen) {
+function initNotificationsDom(onMarkAllRead) {
   const bellBtn  = document.getElementById('notif-bell-btn');
   const dropdown = document.getElementById('notif-dropdown');
   const countEl  = document.getElementById('notif-count');
@@ -104,7 +98,7 @@ function initNotificationsDom(onBellOpen) {
 
       item.addEventListener('click', () => {
         dropdown.classList.remove('open');
-        // optional: window.location.href = `thread.html?id=${n.threadId}`;
+        // optional navigation here
       });
 
       listEl.appendChild(item);
@@ -123,9 +117,6 @@ function initNotificationsDom(onBellOpen) {
 
   function openDropdown() {
     dropdown.classList.add('open');
-    if (typeof onBellOpen === 'function') {
-      onBellOpen();
-    }
   }
 
   function closeDropdown() {
@@ -177,10 +168,10 @@ function initNotificationsDom(onBellOpen) {
 
   // Clear button: mark all as read + clear UI
   if (clearBtn) {
-    clearBtn.addEventListener('click', (e) => {
+    clearBtn.addEventListener('click', async (e) => {
       e.stopPropagation();
-      if (typeof onBellOpen === 'function') {
-        onBellOpen(); // bumps last_notifications_seen_at
+      if (typeof onMarkAllRead === 'function') {
+        await onMarkAllRead();
       }
       api.clearAll();
     });
@@ -205,7 +196,7 @@ async function fetchMyThreads(username) {
   return data || [];
 }
 
-// Likes on my threads (uses thread_likes.username)
+// Likes on my threads
 async function fetchLikeNotifications(currentUser, myThreadIds, lastSeen) {
   if (!myThreadIds.length) return [];
 
@@ -238,7 +229,7 @@ async function fetchLikeNotifications(currentUser, myThreadIds, lastSeen) {
     }));
 }
 
-// Replies on my threads (uses author_username)
+// Replies on my threads
 async function fetchReplyNotifications(currentUser, myThreadIds, lastSeen) {
   if (!myThreadIds.length) return [];
 
@@ -271,13 +262,14 @@ async function fetchReplyNotifications(currentUser, myThreadIds, lastSeen) {
     }));
 }
 
-// Rep notifications (rep given to me, using timegiven)
+// Rep notifications (rep given to me, using timegiven only)
 async function fetchRepNotifications(currentUser, lastSeen) {
   let query = supabaseClient
     .from('rep')
     .select('id, username, given_by, amount, created_at, timegiven')
     .eq('username', currentUser.username);
 
+  // Only reps given after lastSeen
   if (lastSeen) {
     query = query.gt('timegiven', lastSeen);
   }
@@ -291,13 +283,16 @@ async function fetchRepNotifications(currentUser, lastSeen) {
     return [];
   }
 
-  return (data || []).map((row) => ({
-    id: `rep-${row.id}`,
-    type: 'rep',
-    actor: row.given_by || 'Unknown',
-    amount: row.amount,
-    created_at: row.timegiven || row.created_at,
-  }));
+  return (data || []).map((row) => {
+    const ts = row.timegiven || row.created_at;
+    return {
+      id: `rep-${row.id}`,
+      type: 'rep',
+      actor: row.given_by || 'Unknown',
+      amount: row.amount,
+      created_at: ts, // used for sort + display
+    };
+  });
 }
 
 // Merge likes + replies + rep and attach thread titles
@@ -332,12 +327,10 @@ async function refreshNotifications(currentUser, renderNotifications) {
       }
 
       const threadTitle = threadMap.get(n.threadId) || `Thread #${n.threadId}`;
-      let title;
-      if (n.type === 'reply') {
-        title = `${n.actor} replied to your thread "${threadTitle}"`;
-      } else {
-        title = `${n.actor} liked your thread "${threadTitle}"`;
-      }
+      const title =
+        n.type === 'reply'
+          ? `${n.actor} replied to your thread "${threadTitle}"`
+          : `${n.actor} liked your thread "${threadTitle}"`;
       return {
         ...n,
         title,
@@ -364,10 +357,12 @@ async function startNotifications() {
   }
 
   const dom = initNotificationsDom(async () => {
+    // mark all as read
     await updateLastNotificationsSeen(currentUser.id);
+    const nowIso = new Date().toISOString();
     currentUser = {
       ...currentUser,
-      lastSeen: new Date().toISOString(),
+      lastSeen: nowIso,
     };
   });
 
