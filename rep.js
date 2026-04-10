@@ -39,17 +39,33 @@ async function loadRepForCurrentUser() {
   const repEl = document.getElementById('profile-rep');
   if (!repEl) return; // not on profile page
 
-  const current = await getCurrentUserWithRole();
-  if (!current) {
-    repEl.textContent = '0';
-    return;
+  // we want the rep of the profile we are viewing, not always the logged-in user
+  // read username from the page if available
+  const profileUsernameEl = document.getElementById('profile-username');
+  let usernameToLoad = null;
+
+  if (profileUsernameEl) {
+    const text = profileUsernameEl.textContent.trim();
+    if (text && text !== 'Loading...' && text !== 'Not logged in') {
+      usernameToLoad = text;
+    }
+  }
+
+  // fallback to current user
+  if (!usernameToLoad) {
+    const current = await getCurrentUserWithRole();
+    if (!current) {
+      repEl.textContent = '0';
+      return;
+    }
+    usernameToLoad = current.username;
   }
 
   try {
     const { data, error } = await supabaseClient
       .from('rep')
       .select('amount')
-      .eq('username', current.username)
+      .eq('username', usernameToLoad)
       .maybeSingle();
 
     if (error) {
@@ -65,13 +81,90 @@ async function loadRepForCurrentUser() {
   }
 }
 
+// ---------- rep details modal (profile) ----------
+
+async function openRepDetailsModal() {
+  const backdrop = document.getElementById('rep-modal-backdrop');
+  const body = document.getElementById('rep-modal-body');
+  const title = document.getElementById('rep-modal-title');
+  const nameEl = document.getElementById('profile-username');
+
+  if (!backdrop || !body || !nameEl) return;
+
+  const profileUsername = nameEl.textContent.trim();
+  if (!profileUsername || profileUsername === 'Loading...' || profileUsername === 'Not logged in') return;
+
+  title.innerHTML = `<i class="fa fa-star"></i> Reputation for ${profileUsername}`;
+
+  const { data, error } = await supabaseClient
+    .from('rep')
+    .select('amount, given_by, created_at')
+    .eq('username', profileUsername)
+    .order('created_at', { ascending: false });
+
+  body.innerHTML = '';
+
+  if (error) {
+    console.error('rep(profile): detail load error', error);
+    const p = document.createElement('p');
+    p.className = 'rep-modal-empty';
+    p.textContent = 'Failed to load reputation details.';
+    body.appendChild(p);
+  } else if (!data || data.length === 0) {
+    const p = document.createElement('p');
+    p.className = 'rep-modal-empty';
+    p.textContent = 'No reputation received yet.';
+    body.appendChild(p);
+  } else {
+    data.forEach((row) => {
+      const wrap = document.createElement('div');
+      wrap.className = 'rep-entry';
+
+      const left = document.createElement('div');
+      left.className = 'rep-entry-left';
+
+      const from = document.createElement('span');
+      from.className = 'rep-entry-from';
+      const giver = row.given_by || 'Unknown';
+      from.textContent = `From ${giver}`;
+
+      const meta = document.createElement('span');
+      meta.className = 'rep-entry-meta';
+      if (row.created_at) {
+        const d = new Date(row.created_at);
+        const dd = d.getDate().toString().padStart(2, '0');
+        const mm = (d.getMonth() + 1).toString().padStart(2, '0');
+        const hh = d.getHours().toString().padStart(2, '0');
+        const min = d.getMinutes().toString().padStart(2, '0');
+        meta.textContent = `${dd}/${mm} ${hh}:${min}`;
+      } else {
+        meta.textContent = '';
+      }
+
+      left.appendChild(from);
+      left.appendChild(meta);
+
+      const right = document.createElement('span');
+      right.className = 'rep-entry-amount';
+      const amt = parseInt(row.amount ?? '0', 10);
+      right.textContent = `+${Number.isNaN(amt) ? row.amount : amt}`;
+
+      wrap.appendChild(left);
+      wrap.appendChild(right);
+
+      body.appendChild(wrap);
+    });
+  }
+
+  backdrop.style.display = 'flex';
+}
+
 // ---------- give rep (index page) ----------
 
 // find users whose username starts with input
 async function searchUsersByUsernamePrefix(prefix) {
   if (!prefix) return [];
 
-  // simple prefix match: username ilike 'prefix%'
   const { data, error } = await supabaseClient
     .from('users')
     .select('username')
@@ -82,11 +175,11 @@ async function searchUsersByUsernamePrefix(prefix) {
     console.error('rep(give): user search error', error);
     return [];
   }
-  return (data || []).filter(u => u.username);
+  return (data || []).filter((u) => u.username);
 }
 
 // insert / increment rep for target username
-async function addRepForUser(targetUsername, delta) {
+async function addRepForUser(targetUsername, delta, givenByUsername) {
   // try to fetch existing rep row
   const { data, error } = await supabaseClient
     .from('rep')
@@ -108,6 +201,7 @@ async function addRepForUser(targetUsername, delta) {
       .insert({
         username: targetUsername,
         amount: String(newAmount),
+        given_by: givenByUsername,
       });
 
     if (insErr) {
@@ -120,7 +214,10 @@ async function addRepForUser(targetUsername, delta) {
 
     const { error: updErr } = await supabaseClient
       .from('rep')
-      .update({ amount: String(newAmount) })
+      .update({
+        amount: String(newAmount),
+        given_by: givenByUsername,
+      })
       .eq('id', data.id);
 
     if (updErr) {
@@ -161,7 +258,7 @@ async function initRepGiveBox() {
   suggestions.style.position = 'absolute';
   suggestions.style.zIndex = '999';
   suggestions.style.background = '#020617';
-  suggestions.style.border = '1px solid #111827';
+  suggestions.style.border = '1px solid '#111827';
   suggestions.style.borderRadius = '4px';
   suggestions.style.fontSize = '0.8rem';
   suggestions.style.display = 'none';
@@ -195,7 +292,7 @@ async function initRepGiveBox() {
     }
 
     suggestions.innerHTML = '';
-    users.forEach(u => {
+    users.forEach((u) => {
       const item = document.createElement('div');
       item.textContent = u.username;
       item.style.padding = '4px 8px';
@@ -263,7 +360,7 @@ async function initRepGiveBox() {
     statusEl.textContent = 'Updating reputation...';
 
     try {
-      const newAmount = await addRepForUser(target, delta);
+      const newAmount = await addRepForUser(target, delta, current.username);
       statusEl.textContent = `Reputation updated. ${target} now has ${newAmount} rep.`;
       form.reset();
       hideSuggestions();
@@ -277,8 +374,34 @@ async function initRepGiveBox() {
 // ---------- entry ----------
 
 function initRepModule() {
+  // profile rep number
   loadRepForCurrentUser().catch((e) => console.error(e));
+  // admin give-rep box (index)
   initRepGiveBox().catch((e) => console.error(e));
+
+  // profile rep modal wiring
+  const repEl = document.getElementById('profile-rep');
+  const backdrop = document.getElementById('rep-modal-backdrop');
+  const closeBtn = document.getElementById('rep-modal-close');
+
+  if (repEl && backdrop) {
+    repEl.addEventListener('click', (e) => {
+      e.preventDefault();
+      openRepDetailsModal().catch((err) => console.error(err));
+    });
+
+    if (closeBtn) {
+      closeBtn.addEventListener('click', () => {
+        backdrop.style.display = 'none';
+      });
+    }
+
+    backdrop.addEventListener('click', (e) => {
+      if (e.target === backdrop) {
+        backdrop.style.display = 'none';
+      }
+    });
+  }
 }
 
 if (document.readyState === 'loading') {
