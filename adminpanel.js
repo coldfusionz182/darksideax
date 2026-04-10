@@ -5,7 +5,48 @@ import { SUPABASE_ANON_KEY } from './keys.js';
 const SUPABASE_URL = 'https://ffmkkwskvjvytdddevmm.supabase.co';
 const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-// helper: current user + role from public.users
+/* ===================== SESSION-ONLY USERS/IP MAP ===================== */
+
+const USERS_IP_KEY = 'darkside_users_ip_map';
+
+export function updateCurrentUserIpInSession(username, ip) {
+  if (!username || !ip) return;
+
+  const now = new Date().toISOString();
+
+  let map = {};
+  try {
+    const raw = sessionStorage.getItem(USERS_IP_KEY);
+    if (raw) map = JSON.parse(raw);
+  } catch (e) {
+    console.warn('Failed to parse USERS_IP_KEY, resetting', e);
+  }
+
+  const existing = map[username] || {};
+  const firstSeen = existing.firstSeen || now;
+
+  map[username] = {
+    ip,
+    firstSeen,
+    lastSeen: now,
+  };
+
+  sessionStorage.setItem(USERS_IP_KEY, JSON.stringify(map));
+}
+
+function getUsersIpMapFromSession() {
+  try {
+    const raw = sessionStorage.getItem(USERS_IP_KEY);
+    if (!raw) return {};
+    return JSON.parse(raw) || {};
+  } catch (e) {
+    console.warn('Failed to parse USERS_IP_KEY', e);
+    return {};
+  }
+}
+
+/* ===================== CURRENT USER / ROLE HELPERS ===================== */
+
 async function getCurrentUserWithRole() {
   const { data: userData, error } = await supabaseClient.auth.getUser();
   if (error || !userData?.user) return null;
@@ -84,17 +125,16 @@ function renderAdminsTable(admins, currentUser) {
       tdActions.className = 'admin-actions-cell';
 
       const isOwnerRow = a.role === 'owner';
-      const isCurrentOwner = currentUser.role === 'owner';
 
       if (!isOwnerRow) {
-        // Any non-owner (admin) row: both owner and admins can demote
         const btnRemove = document.createElement('button');
         btnRemove.className = 'btn-row btn-row-danger';
         btnRemove.innerHTML = `<i class="fa fa-user-minus"></i> Remove`;
-        btnRemove.addEventListener('click', () => handleDemoteAdmin(a.id, a.email));
+        btnRemove.addEventListener('click', () =>
+          handleDemoteAdmin(a.id, a.email)
+        );
         tdActions.appendChild(btnRemove);
       } else {
-        // Owner row: cannot be modified by admins, only owner sees it as non-clickable
         const span = document.createElement('span');
         span.className = 'btn-row btn-row-muted';
         span.innerHTML = `<i class="fa fa-crown"></i> Owner`;
@@ -114,7 +154,6 @@ function renderAdminsTable(admins, currentUser) {
 }
 
 async function handleDemoteAdmin(userId, email) {
-  // no confirm dialog
   try {
     const current = await getCurrentUserWithRole();
     if (!current || (current.role !== 'owner' && current.role !== 'admin')) {
@@ -122,7 +161,6 @@ async function handleDemoteAdmin(userId, email) {
       return;
     }
 
-    // Safety: never allow demoting the owner from the client
     const { data: targetUser, error: fetchErr } = await supabaseClient
       .from('users')
       .select('role')
@@ -156,7 +194,10 @@ async function handleAddAdmin(currentUser) {
   if (!email) return;
 
   try {
-    if (!currentUser || (currentUser.role !== 'owner' && currentUser.role !== 'admin')) {
+    if (
+      !currentUser ||
+      (currentUser.role !== 'owner' && currentUser.role !== 'admin')
+    ) {
       alert('You do not have permission to perform this action.');
       return;
     }
@@ -175,7 +216,6 @@ async function handleAddAdmin(currentUser) {
 
     const userId = data.id;
 
-    // Safety: never promote the owner (no-op)
     if (data.role === 'owner') {
       alert('This user is already the owner.');
       return;
@@ -256,12 +296,17 @@ function renderThreadsTable(currentUser) {
     tdActions.style.textAlign = 'right';
     tdActions.className = 'admin-actions-cell';
 
-    const canDelete = currentUser && (currentUser.role === 'owner' || currentUser.role === 'admin');
+    const canDelete =
+      currentUser &&
+      (currentUser.role === 'owner' || currentUser.role === 'admin');
+
     if (canDelete) {
       const btnDelete = document.createElement('button');
       btnDelete.className = 'btn-row btn-row-danger';
       btnDelete.innerHTML = `<i class="fa fa-trash"></i> Delete`;
-      btnDelete.addEventListener('click', () => handleDeleteThread(t.id, t.title, currentUser));
+      btnDelete.addEventListener('click', () =>
+        handleDeleteThread(t.id, t.title, currentUser)
+      );
       tdActions.appendChild(btnDelete);
     }
 
@@ -304,34 +349,30 @@ async function loadNewestThreads(currentUser) {
 
 async function handleDeleteThread(threadId, title, currentUser) {
   try {
-    if (!currentUser || (currentUser.role !== 'owner' && currentUser.role !== 'admin')) {
+    if (
+      !currentUser ||
+      (currentUser.role !== 'owner' && currentUser.role !== 'admin')
+    ) {
       alert('You do not have permission to delete threads.');
       return;
     }
 
-    // NEW: block admins from deleting threads authored by "ColdFusionz"
-    // Owner (you) can still delete them.
+    // Block admins from deleting threads authored by ColdFusionz; owner can
     const isOwner = currentUser.role === 'owner';
-
     if (!isOwner) {
-      // Look up the thread to check the author
       const { data: thread, error: threadErr } = await supabaseClient
         .from('threads')
         .select('author')
         .eq('id', threadId)
         .maybeSingle();
 
-      if (threadErr) {
-        throw threadErr;
-      }
-
+      if (threadErr) throw threadErr;
       if (thread?.author === 'ColdFusionz') {
         alert('You cannot delete threads created by ColdFusionz.');
         return;
       }
     }
 
-    // get Supabase access token for this session
     const { data: sessionData } = await supabaseClient.auth.getSession();
     const token = sessionData?.session?.access_token;
     if (!token) {
@@ -364,6 +405,63 @@ async function handleDeleteThread(threadId, title, currentUser) {
   }
 }
 
+/* ===================== USERS & IPs (SESSION ONLY) ===================== */
+
+function formatShortDateTime(iso) {
+  if (!iso) return '-';
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '-';
+  const dd = d.getDate().toString().padStart(2, '0');
+  const mm = (d.getMonth() + 1).toString().padStart(2, '0');
+  const hh = d.getHours().toString().padStart(2, '0');
+  const mi = d.getMinutes().toString().padStart(2, '0');
+  return `${dd}/${mm} ${hh}:${mi}`;
+}
+
+function renderUsersIpTable() {
+  const tbody = document.getElementById('users-ip-tbody');
+  if (!tbody) return;
+
+  const map = getUsersIpMapFromSession();
+  const entries = Object.entries(map);
+
+  tbody.innerHTML = '';
+
+  if (!entries.length) {
+    const tr = document.createElement('tr');
+    const td = document.createElement('td');
+    td.colSpan = 4;
+    td.className = 'admin-empty';
+    td.textContent = 'No session IP data yet.';
+    tr.appendChild(td);
+    tbody.appendChild(tr);
+    return;
+  }
+
+  entries.forEach(([username, info]) => {
+    const tr = document.createElement('tr');
+
+    const tdUser = document.createElement('td');
+    tdUser.textContent = username || 'unknown';
+
+    const tdIp = document.createElement('td');
+    tdIp.textContent = info.ip || '-';
+
+    const tdFirst = document.createElement('td');
+    tdFirst.textContent = formatShortDateTime(info.firstSeen);
+
+    const tdLast = document.createElement('td');
+    tdLast.textContent = formatShortDateTime(info.lastSeen);
+
+    tr.appendChild(tdUser);
+    tr.appendChild(tdIp);
+    tr.appendChild(tdFirst);
+    tr.appendChild(tdLast);
+
+    tbody.appendChild(tr);
+  });
+}
+
 /* ===================== INIT ===================== */
 
 async function initAdminPanel() {
@@ -375,11 +473,11 @@ async function initAdminPanel() {
   const btnCreateUser = document.getElementById('btn-create-user'); // unused, safe to keep
   const threadsSearchInput = document.getElementById('threads-search-input');
   const btnThreadsRefresh = document.getElementById('btn-threads-refresh');
+  const btnIpRefresh = document.getElementById('btn-ip-refresh');
 
   const current = await getCurrentUserWithRole();
   console.log('current user for adminpanel', current);
 
-  // Page visible only to owner + admins
   if (!current || (current.role !== 'owner' && current.role !== 'admin')) {
     if (main) main.style.display = 'none';
     if (deniedSection) deniedSection.style.display = 'block';
@@ -408,12 +506,20 @@ async function initAdminPanel() {
     btnRefresh.addEventListener('click', () => refreshAdmins(current));
 
   if (threadsSearchInput)
-    threadsSearchInput.addEventListener('input', () => renderThreadsTable(current));
+    threadsSearchInput.addEventListener('input', () =>
+      renderThreadsTable(current)
+    );
   if (btnThreadsRefresh)
-    btnThreadsRefresh.addEventListener('click', () => loadNewestThreads(current));
+    btnThreadsRefresh.addEventListener('click', () =>
+      loadNewestThreads(current)
+    );
+
+  if (btnIpRefresh)
+    btnIpRefresh.addEventListener('click', () => renderUsersIpTable());
 
   await refreshAdmins(current);
   await loadNewestThreads(current);
+  renderUsersIpTable();
 }
 
 document.addEventListener('DOMContentLoaded', () => {
