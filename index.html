@@ -489,42 +489,8 @@
   </main>
 </div>
 
-<!-- Main forum logic -->
+<!-- Main forum logic + shared helpers (including profile helpers) -->
 <script type="module" src="scripts.js"></script>
-
-<!-- Make shoutbox usernames and staff usernames clickable to profiles -->
-<script>
-  document.addEventListener('DOMContentLoaded', () => {
-    // 1) Shoutbox usernames
-    // Expect scripts.js to render each message with a span like:
-    //   <span class="shout-username">ColdFusionz</span>
-    // If your class is different, change '.shout-username' here.
-    const shoutContainer = document.getElementById('shoutbox-messages');
-    if (shoutContainer) {
-      shoutContainer.addEventListener('click', (e) => {
-        const target = e.target.closest('.shout-username');
-        if (!target) return;
-        const username = target.textContent.trim();
-        if (!username) return;
-        window.location.href = 'profile.html?u=' + encodeURIComponent(username);
-      });
-    }
-
-    // 2) Current staff usernames
-    // Expect scripts.js to populate #current-staff-list with items like:
-    //   <span class="staff-username">ColdFusionz</span>
-    // Adjust selector if you used a different class.
-    const staffContainer = document.getElementById('current-staff-list');
-    if (staffContainer) {
-      staffContainer.addEventListener('click', (e) => {
-        const target = e.target.closest('.staff-username');
-        if (!target) return;
-        const username = target.textContent.trim();
-        if (!username) return;
-        window.location.href = 'profile.html?u=' + encodeURIComponent(username);
-      });
-    }
-  });
-</script>
+<script type="module" src="profile.js"></script>
 </body>
 </html>
