@@ -239,18 +239,8 @@
             </div>
           </div>
 
-          <!-- User pill + logout -->
-          <div class="user-pill" id="user-pill">
-            <span class="user-pill-name" id="user-pill-name">Guest</span>
-            <button class="logout-btn" id="logout-btn" type="button">Logout</button>
-          </div>
-
-          <!-- Login button -->
-          <div class="auth-links">
-            <a href="login.html" class="btn btn-small btn-outline">
-              <i class="fa fa-sign-in-alt"></i> Login
-            </a>
-          </div>
+          <!-- This is managed by scripts.js (updateHeaderAuthState) -->
+          <div class="auth-links"></div>
         </div>
       </div>
     </div>
@@ -533,6 +523,7 @@
 </div>
 
 <!-- JS -->
+<script type="module" src="scripts.js"></script>
 <script type="module" src="notifications.js"></script>
 <script src="usertitleanims.js"></script>
 </body>
