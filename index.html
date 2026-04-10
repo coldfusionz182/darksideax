@@ -34,7 +34,7 @@
       color: #9ca3c9;
     }
 
-    /* user pill + avatar (top right) */
+    /* user pill (top right) – TEXT ONLY, NO AVATAR IMG */
     .user-pill {
       display: inline-flex;
       align-items: center;
@@ -47,12 +47,8 @@
       cursor: pointer;
       font-size: 0.8rem;
     }
-    .user-pill img.user-avatar-header {
-      width: 22px;
-      height: 22px;
-      border-radius: 999px;
-      object-fit: cover;
-      border: 1px solid #1f2937;
+    .user-pill-name {
+      font-weight: 500;
     }
 
     /* one main content column for shoutbox + forums */
@@ -204,8 +200,7 @@
         <div class="auth-links">
           <!-- scripts.js will replace this with:
                <button class="user-pill" id="header-profile-link">
-                 <img src="..." class="user-avatar-header">
-                 <span>Username</span>
+                 <span class="user-pill-name">Username</span>
                </button>
                <button id="logout-btn">Logout</button>
           -->
@@ -296,6 +291,7 @@
             </div>
           </div>
 
+          <!-- NO avatar column here; JS only injects text rows -->
           <div class="shoutbox-body" id="shoutbox-messages"></div>
 
           <form class="shoutbox-form" id="shoutbox-form">
@@ -489,8 +485,7 @@
   </main>
 </div>
 
-<!-- Main forum logic + shared helpers (including profile helpers) -->
+<!-- Main forum logic -->
 <script type="module" src="scripts.js"></script>
-<script type="module" src="profile.js"></script>
 </body>
 </html>
