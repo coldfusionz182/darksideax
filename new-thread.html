@@ -354,6 +354,9 @@
                   <button type="button" class="toolbar-btn" data-format="color" id="btn-color">
                     <i class="fa fa-palette"></i>
                   </button>
+                  <button type="button" class="toolbar-btn" id="btn-link">
+                    <i class="fa fa-link"></i>
+                  </button>
                 </div>
 
                 <div id="color-palette" class="color-palette" style="display:none;">
@@ -372,7 +375,11 @@
                   id="thread-content"
                   class="editor-textarea"
                   required
-                  placeholder="Describe the accounts, rules, warranty, how to redeem, etc.&#10;&#10;Highlight any sensitive part (combos, tokens, keys) and click 'Hide text' to wrap it in [HIDDEN] tags.&#10;&#10;Optional: add an avatar line like [avatar=https://link/to/your-image.jpg]"
+                  placeholder="Describe the accounts, rules, warranty, how to redeem, etc.
+
+Highlight any sensitive part (combos, tokens, keys) and click 'Hide text' to wrap it in [HIDDEN] tags.
+
+Optional: add an avatar line like [avatar=https://link/to/your-image.jpg]"
                 ></textarea>
               </div>
 
@@ -403,9 +410,11 @@
 <script type="module">
   import './scripts.js';
   import { initCreateThreadAvatar } from './avatars.js';
+  import { initPostToolbar } from './PostToolbar.js';
 
   document.addEventListener('DOMContentLoaded', () => {
     initCreateThreadAvatar();
+    initPostToolbar(); // same IDs, so defaults work
   });
 
   const form = document.getElementById('new-thread-form');
