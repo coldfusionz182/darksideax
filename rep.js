@@ -97,7 +97,7 @@ async function openRepDetailsModal() {
 
   const { data, error } = await supabaseClient
     .from('rep')
-    .select('amount, given_by, created_at')
+    .select('amount, given_by, created_at, timegiven')
     .eq('username', profileUsername)
     .order('created_at', { ascending: false });
 
@@ -129,8 +129,11 @@ async function openRepDetailsModal() {
 
       const meta = document.createElement('span');
       meta.className = 'rep-entry-meta';
-      if (row.created_at) {
-        const d = new Date(row.created_at);
+
+      // prefer timegiven if present, else fallback to created_at
+      const tsString = row.timegiven || row.created_at;
+      if (tsString) {
+        const d = new Date(tsString);
         const dd = d.getDate().toString().padStart(2, '0');
         const mm = (d.getMonth() + 1).toString().padStart(2, '0');
         const hh = d.getHours().toString().padStart(2, '0');
@@ -179,6 +182,8 @@ async function searchUsersByUsernamePrefix(prefix) {
 
 // insert / increment rep for target username
 async function addRepForUser(targetUsername, delta, givenByUsername) {
+  const nowIso = new Date().toISOString();
+
   const { data, error } = await supabaseClient
     .from('rep')
     .select('id, amount')
@@ -200,6 +205,7 @@ async function addRepForUser(targetUsername, delta, givenByUsername) {
         username: targetUsername,
         amount: String(newAmount),
         given_by: givenByUsername,
+        timegiven: nowIso,
       });
 
     if (insErr) {
@@ -215,6 +221,7 @@ async function addRepForUser(targetUsername, delta, givenByUsername) {
       .update({
         amount: String(newAmount),
         given_by: givenByUsername,
+        timegiven: nowIso,
       })
       .eq('id', data.id);
 
@@ -371,9 +378,7 @@ async function initRepGiveBox() {
 // ---------- entry ----------
 
 function initRepModule() {
-  // profile rep number
   loadRepForCurrentUser().catch((e) => console.error(e));
-  // admin give-rep box (index)
   initRepGiveBox().catch((e) => console.error(e));
 
   // profile rep modal wiring

@@ -247,19 +247,20 @@ async function fetchReplyNotifications(currentUser, myThreadIds, lastSeen) {
     }));
 }
 
-// NEW: Rep notifications (rep given to me)
+// Rep notifications (rep given to me, using timegiven)
 async function fetchRepNotifications(currentUser, lastSeen) {
   let query = supabaseClient
     .from('rep')
-    .select('id, username, given_by, amount, created_at')
+    .select('id, username, given_by, amount, created_at, timegiven')
     .eq('username', currentUser.username);
 
+  // timegiven is the explicit "when rep was given" timestamp
   if (lastSeen) {
-    query = query.gt('created_at', lastSeen);
+    query = query.gt('timegiven', lastSeen);
   }
 
   const { data, error } = await query
-    .order('created_at', { ascending: false })
+    .order('timegiven', { ascending: false })
     .limit(MAX_NOTIFS);
 
   if (error) {
@@ -272,7 +273,7 @@ async function fetchRepNotifications(currentUser, lastSeen) {
     type: 'rep',
     actor: row.given_by || 'Unknown',
     amount: row.amount,
-    created_at: row.created_at,
+    created_at: row.timegiven || row.created_at,
   }));
 }
 
@@ -334,14 +335,12 @@ async function refreshNotifications(currentUser, renderNotifications) {
 async function startNotifications() {
   let currentUser = await getCurrentUserProfileWithLastSeen();
   if (!currentUser) {
-    // guest: nothing to show
     const domGuest = initNotificationsDom(() => {});
     if (domGuest) domGuest.renderNotifications([]);
     return;
   }
 
   const dom = initNotificationsDom(async () => {
-    // when bell is opened, mark as seen now
     await updateLastNotificationsSeen(currentUser.id);
     currentUser = {
       ...currentUser,
