@@ -46,6 +46,7 @@ async function updateLastNotificationsSeen(userId) {
       .from('users')
       .update({ last_notifications_seen_at: nowIso })
       .eq('id', userId);
+
     if (error) {
       console.error('notifications: failed to update last_notifications_seen_at', error);
     }
@@ -98,7 +99,7 @@ function initNotificationsDom(onMarkAllRead) {
 
       item.addEventListener('click', () => {
         dropdown.classList.remove('open');
-        // optional navigation here
+        // optional: window.location.href = `thread.html?id=${n.threadId}`;
       });
 
       listEl.appendChild(item);
@@ -115,8 +116,16 @@ function initNotificationsDom(onMarkAllRead) {
     }
   }
 
+  async function handleMarkAllRead() {
+    if (typeof onMarkAllRead === 'function') {
+      await onMarkAllRead();
+    }
+  }
+
   function openDropdown() {
     dropdown.classList.add('open');
+    // opening the bell marks everything as seen
+    handleMarkAllRead();
   }
 
   function closeDropdown() {
@@ -166,13 +175,11 @@ function initNotificationsDom(onMarkAllRead) {
     },
   };
 
-  // Clear button: mark all as read + clear UI
+  // Clear button: also marks as read + clears UI
   if (clearBtn) {
     clearBtn.addEventListener('click', async (e) => {
       e.stopPropagation();
-      if (typeof onMarkAllRead === 'function') {
-        await onMarkAllRead();
-      }
+      await handleMarkAllRead();
       api.clearAll();
     });
   }
@@ -269,7 +276,6 @@ async function fetchRepNotifications(currentUser, lastSeen) {
     .select('id, username, given_by, amount, created_at, timegiven')
     .eq('username', currentUser.username);
 
-  // Only reps given after lastSeen
   if (lastSeen) {
     query = query.gt('timegiven', lastSeen);
   }
@@ -290,7 +296,7 @@ async function fetchRepNotifications(currentUser, lastSeen) {
       type: 'rep',
       actor: row.given_by || 'Unknown',
       amount: row.amount,
-      created_at: ts, // used for sort + display
+      created_at: ts,
     };
   });
 }
@@ -357,7 +363,7 @@ async function startNotifications() {
   }
 
   const dom = initNotificationsDom(async () => {
-    // mark all as read
+    // mark all as read (bell open or clear button)
     await updateLastNotificationsSeen(currentUser.id);
     const nowIso = new Date().toISOString();
     currentUser = {
