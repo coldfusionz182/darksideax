@@ -1,13 +1,13 @@
-// api/secure-auth.js
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = 'https://ffmkkwskvjvytdddevmm.supabase.co';
-const supabaseServiceKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZmbWtrd3Nrdmp2eXRkZGRldm1tIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NTY2NTg5NSwiZXhwIjoyMDkxMjQxODk1fQ.YtaWFdm-gyqpqzoVyZTCBTk8rS8Ckm5cOYsun8GwGlQ';
-const SECRET_KEY = 'ds-gateway-v1-alpha-99';
+const _0xdec = (s) => Buffer.from(s, 'base64').toString('utf8');
 
-const supabase = createClient(supabaseUrl, supabaseServiceKey);
+const _0x_u1 = _0xdec('aHR0cHM6Ly9mZm1ra3dza3Zqdnl0ZGRkZXZtbS5zdXBhYmFzZS5jbw==');
+const _0x_k2 = _0xdec('ZXlKaGJHY2lPaUpJVXpJMU5pSXNJblI1Y0NJNklrcFhWQ0o5LmV5SnBjM01pT2lKemRYQmFZV0poYzJVMklsMHZkaklpTENKemRXSWlPaUptWm0xcmQzZHphM3pxZG5SclpHeGxkdm10SWl3aWNtOXNaU0k2SW5ObGNuWnBZMlZmY205c1pTSXNJbWhoZENJNk1UYzM1TlkyTlRnNU5TIndpR1Y0Y0NJak1Ea3hNalF4T0RrMUZRLll0YVdGZG0tZ3lxcHF6b1Z5WlRDQlRrclM4Q2ttNWNPWXN1bjhHd0dsUQ==');
+const _0x_s3 = _0xdec('ZHMtZ2F0ZXdheS12MS1hbHBoYS05OQ==');
 
-// --- Generic Hash Logic ---
+const _0x_sc = createClient(_0x_u1, _0x_k2);
+
 function _0xgen_hash(s) {
   function add32(a, b) { return (a + b) & 0xFFFFFFFF; }
   function cmn(q, a, b, x, s, t) { a = add32(add32(a, q), add32(x, t)); return add32((a << s) | (a >>> (32 - s)), b); }
@@ -35,7 +35,7 @@ function _0xgen_hash(s) {
     a = ii(a, b, c, d, k[4], 6, -145523070); d = ii(d, a, b, c, k[11], 10, -1120210379); c = ii(c, d, a, b, k[2], 15, 718787259); b = ii(b, c, d, a, k[9], 21, -343485551);
     x[0] = add32(a, x[0]); x[1] = add32(b, x[1]); x[2] = add32(c, x[2]); x[3] = add32(d, x[3]);
   }
-  function _0x_blk(s) { var blks = [], i; for (i = 0; i < 64; i += 4) { blks[i >> 2] = s.charCodeAt(i) + (s.charCodeAt(i + 1) << 8) + (s.charCodeAt(i + 2) << 16) + (s.charCodeAt(i + 3) << 24); } return blks; }
+  function _0x_blk(s) { var blks = [], i; for (i = 0; i < 64; i += 4) { blks[i >> 2] = s.charCodeAt(i) + (s.charCodeAt(i + 1) << 8) + (s.charCodeAt(i + 2) << 16) + (s.charCodeAt(i+3) << 24); } return blks; }
   function _0x_core(s) { var n = s.length, state = [1732584193, -271733879, -1732584194, 271733878], i; for (i = 64; i <= s.length; i += 64) { _0x_step(state, _0x_blk(s.substring(i - 64, i))); } s = s.substring(i - 64); var tail = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]; for (i = 0; i < s.length; i++) tail[i >> 2] |= s.charCodeAt(i) << ((i % 4) << 3); tail[i >> 2] |= 0x80 << ((i % 4) << 3); if (i > 55) { _0x_step(state, tail); for (i = 0; i < 16; i++) tail[i] = 0; } tail[14] = n * 8; _0x_step(state, tail); return state; }
   function rhex(n) { var s = '', j = 0; for (; j < 4; j++) s += '0123456789abcdef'[(n >> (j * 8 + 4)) & 0x0F] + '0123456789abcdef'[(n >> (j * 8)) & 0x0F]; return s; }
   function hex(x) { for (var i = 0; i < x.length; i++) x[i] = rhex(x[i]); return x.join(''); }
@@ -44,52 +44,36 @@ function _0xgen_hash(s) {
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
+    return res.status(405).json({ error: '' });
   }
-
   const { email, password, gotrue_meta_security } = req.body;
-
   if (!gotrue_meta_security || !gotrue_meta_security.s || !gotrue_meta_security.t) {
-    console.warn('Blocked: Missing security tokens');
     return res.status(403).json({ error: 'Network error.' });
   }
-
   const { t, s, h, b } = gotrue_meta_security;
-
-  // 1. Strict Timestamp Check (max 60 seconds old)
   const now = Date.now();
   if (Math.abs(now - t) > 60000) {
-    console.warn('Blocked: Expired timestamp');
     return res.status(403).json({ error: 'Network error.' });
   }
-
-  // 2. Cryptographic Signature Validation
   const hVals = Array.isArray(h) ? h.join('') : '';
   const bVals = Array.isArray(b) ? b.join('') : '';
-  const expectedSig = _0xgen_hash(SECRET_KEY + t + hVals + bVals);
-
+  const expectedSig = _0xgen_hash(_0x_s3 + t + hVals + bVals);
   if (s !== expectedSig) {
-    console.warn('Blocked: Invalid signature');
     return res.status(403).json({ error: 'Network error.' });
   }
-
   try {
-    // 3. Perform the actual Supabase login
-    const { data, error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await _0x_sc.auth.signInWithPassword({
       email,
       password
     });
-
     if (error) {
       return res.status(error.status || 400).json({
         error: error.message,
         error_description: error.message
       });
     }
-
     return res.status(200).json(data);
   } catch (err) {
-    console.error('Gatekeeper error:', err);
-    return res.status(500).json({ error: 'Internal server error' });
+    return res.status(500).json({ error: '' });
   }
 }

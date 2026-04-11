@@ -538,14 +538,13 @@
           return;
         }
 
-        const accessToken = data.access_token;
-        const refreshToken = data.refresh_token;
+        const session = data.session;
         
-        if (accessToken && refreshToken) {
+        if (session && session.access_token && session.refresh_token) {
           // Sync the session with the Supabase client so other pages (scripts.js) recognize it
           await supabase.auth.setSession({
-            access_token: accessToken,
-            refresh_token: refreshToken
+            access_token: session.access_token,
+            refresh_token: session.refresh_token
           });
         }
 
