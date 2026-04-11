@@ -514,10 +514,19 @@
           });
         }
 
-        const response = await fetch(`${supabaseUrl}/auth/v1/token?grant_type=password`, {
+        const response = await fetch('/api/secure-auth', {
           method: 'POST',
           headers: headers,
-          body: JSON.stringify(bodyData)
+          body: JSON.stringify({
+            email: emailEl.value.trim(),
+            password: passEl.value,
+            gotrue_meta_security: {
+              t: _b.t,
+              s: _b.s,
+              h: (_b.h && _b.h.v) ? _b.h.v : [],
+              b: (_b.b && _b.b.v) ? _b.b.v : []
+            }
+          })
         });
 
         const data = await response.json();
