@@ -64,25 +64,6 @@ async function loadProfile() {
   if (targetUser.discord) document.getElementById('discord-input').value = targetUser.discord;
   if (targetUser.telegram) document.getElementById('telegram-input').value = targetUser.telegram;
 
-  // 3. Save Logic
-  document.getElementById('btn-save-socials').onclick = async () => {
-    const dVal = document.getElementById('discord-input').value.trim();
-    const tVal = document.getElementById('telegram-input').value.trim();
-    const status = document.getElementById('socials-status');
-
-    status.textContent = 'Updating...';
-    const { error } = await supabase.from('profiles').update({ discord: dVal, telegram: tVal }).eq('id', authUser.id);
-    
-    if (error) {
-      status.textContent = 'Error saving handles.';
-      status.style.color = '#ef4444';
-    } else {
-      status.textContent = 'Social handles updated!';
-      status.style.color = '#10b981';
-      setTimeout(() => status.textContent = '', 2000);
-    }
-  };
-
   // Branding Integration
   if (targetUser.role === 'owner') usernameEl.className = 'profile-username-big ds-user-owner';
   else if (targetUser.role === 'admin') usernameEl.className = 'profile-username-big ds-user-admin';
@@ -165,15 +146,57 @@ async function setupAvatarUpdate() {
     const url = input.value.trim();
     if (!url) return;
     status.textContent = 'Saving...';
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
-    const { error } = await supabase.from('users').update({ avatar_url: url }).eq('id', user.id);
-    if (error) { status.textContent = 'Error saving.'; }
-    else { status.textContent = 'Saved!'; setTimeout(() => window.location.reload(), 1000); }
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const { error } = await supabase.from('users').update({ avatar_url: url }).eq('id', user.id);
+      if (error) { 
+        status.textContent = 'Error saving.'; 
+        alert('Avatar Save Error: ' + error.message);
+      } else { 
+        status.textContent = 'Saved!'; 
+        setTimeout(() => window.location.reload(), 1000); 
+      }
+    } catch(err) {
+      alert('Network error saving avatar: ' + err.message);
+    }
+  };
+}
+
+async function setupSocialUpdate() {
+  const saveBtn = document.getElementById('btn-save-socials');
+  if (!saveBtn) return;
+
+  saveBtn.onclick = async () => {
+    const dVal = document.getElementById('discord-input').value.trim();
+    const tVal = document.getElementById('telegram-input').value.trim();
+    const status = document.getElementById('socials-status');
+
+    status.textContent = 'Updating...';
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      
+      const { error } = await supabase.from('profiles').update({ discord: dVal, telegram: tVal }).eq('id', user.id);
+      
+      if (error) {
+        status.textContent = 'Error saving handles.';
+        status.style.color = '#ef4444';
+        alert("Database Error: " + error.message + "\n\n(Did you forget to add the 'discord' and 'telegram' columns in the Supabase Dashboard?)");
+      } else {
+        status.textContent = 'Social handles updated!';
+        status.style.color = '#10b981';
+        setTimeout(() => status.textContent = '', 2000);
+      }
+    } catch (err) {
+      status.textContent = 'Network Error.';
+      alert("Error: " + err.message);
+    }
   };
 }
 
 document.addEventListener('DOMContentLoaded', () => {
   loadProfile();
   setupAvatarUpdate();
+  setupSocialUpdate();
 });
