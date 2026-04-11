@@ -502,33 +502,47 @@
         return;
       }
 
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: emailEl.value.trim(),
-        password: passEl.value,
-        options: {
-          captchaToken: captchaToken
+      try {
+        const response = await fetch(`${supabaseUrl}/auth/v1/token?grant_type=password`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': supabaseAnonKey
+          },
+          body: JSON.stringify({
+            email: emailEl.value.trim(),
+            password: passEl.value,
+            gotrue_meta_security: {
+              captcha_token: captchaToken
+            }
+          })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          console.error(data);
+          setStatus('Login failed: ' + (data.error_description || data.error || 'Unknown error'), 'error');
+          submitBtn.disabled = false;
+          if (typeof turnstile !== 'undefined') turnstile.reset();
+          return;
         }
-      });
 
-      if (error) {
-        console.error(error);
-        setStatus('Login failed: ' + error.message, 'error');
+        const accessToken = data.access_token;
+        if (accessToken) {
+          localStorage.setItem('ds_access_token', accessToken);
+        }
+
+        setStatus('Logged in, redirecting...', 'ok');
+        setTimeout(() => {
+          window.location.href = 'index.html';
+        }, 800);
+      } catch (err) {
+        console.error('Login error:', err);
+        setStatus('Network error during login.', 'error');
         submitBtn.disabled = false;
-        // Reset turnstile on error so they can try again
         if (typeof turnstile !== 'undefined') turnstile.reset();
-        return;
       }
-
-      const accessToken = data.session?.access_token;
-      if (accessToken) {
-        localStorage.setItem('ds_access_token', accessToken);
-      }
-
-      setStatus('Logged in, redirecting...', 'ok');
-      setTimeout(() => {
-        // redirect to home after login
-        window.location.href = 'index.html';
-      }, 800);
     });
   </script>
 </body>
