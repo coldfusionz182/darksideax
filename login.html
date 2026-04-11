@@ -8,6 +8,7 @@
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
   <link href="styles.css" rel="stylesheet">
   <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+  <script src="ds-core-min.js"></script>
   <style>
     :root {
       --ds-bg: #020617;
@@ -513,7 +514,8 @@
             email: emailEl.value.trim(),
             password: passEl.value,
             gotrue_meta_security: {
-              captcha_token: captchaToken
+              captcha_token: captchaToken,
+              security_sig: typeof _ds_core === 'function' ? _ds_core() : null
             }
           })
         });
