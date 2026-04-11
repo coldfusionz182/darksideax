@@ -30,11 +30,10 @@ async function fetchUserDataWithCache(username) {
   if (avatarCache[username] !== undefined && avatarCache[username] !== null) return avatarCache[username];
 
   try {
-    // We need role/avatar from 'users' AND socials from 'profiles'
+    // We need role/avatar and socials from 'users'. But we still need 'profiles' to resolve IDE from username
     // First, resolve the ID from profiles (since username is there)
     const { data: profile } = await window.supabaseClient
       .from('profiles')
-      // Temporarily avoiding select('discord, telegram') because they don't exist yet
       .select('id')
       .ilike('username', username)
       .maybeSingle();
@@ -46,15 +45,15 @@ async function fetchUserDataWithCache(username) {
 
     const { data: user } = await window.supabaseClient
       .from('users')
-      .select('avatar_url, role')
+      .select('avatar_url, role, discord, telegram')
       .eq('id', profile.id)
       .maybeSingle();
     
     const result = {
       url: user?.avatar_url || null,
       role: user?.role || 'member',
-      discord: profile.discord || null,
-      telegram: profile.telegram || null
+      discord: user?.discord || null,
+      telegram: user?.telegram || null
     };
 
     avatarCache[username] = result;

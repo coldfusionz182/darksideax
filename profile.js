@@ -31,15 +31,13 @@ async function loadProfile() {
   let targetUser = null;
   try {
     const [{ data: profileRow }, { data: userData }] = await Promise.all([
-      // Temporarily avoiding select('discord, telegram') because it crashes if columns don't exist yet
       supabase.from('profiles').select('username').eq('id', authUser.id).maybeSingle(),
-      supabase.from('users').select('id, email, role, avatar_url, userrank, created_at').eq('id', authUser.id).maybeSingle()
+      supabase.from('users').select('id, email, role, avatar_url, userrank, created_at, discord, telegram').eq('id', authUser.id).maybeSingle()
     ]);
 
     if (!userData) throw new Error('Data not found');
     
-    // We will inject empty social values securely so the page doesn't crash
-    targetUser = { ...userData, username: profileRow?.username || authUser.email, discord: null, telegram: null };
+    targetUser = { ...userData, username: profileRow?.username || authUser.email };
   } catch (err) {
     console.error('Profile Load Error:', err);
     usernameEl.textContent = 'Profile Error';
@@ -177,12 +175,12 @@ async function setupSocialUpdate() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
       
-      const { error } = await supabase.from('profiles').update({ discord: dVal, telegram: tVal }).eq('id', user.id);
+      const { error } = await supabase.from('users').update({ discord: dVal, telegram: tVal }).eq('id', user.id);
       
       if (error) {
         status.textContent = 'Error saving handles.';
         status.style.color = '#ef4444';
-        alert("Database Error: " + error.message + "\n\n(Did you forget to add the 'discord' and 'telegram' columns in the Supabase Dashboard?)");
+        alert("Database Error: " + error.message);
       } else {
         status.textContent = 'Social handles updated!';
         status.style.color = '#10b981';
