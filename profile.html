@@ -143,6 +143,22 @@
                 <span class="avatar-url-status" id="avatar-url-status"></span>
               </div>
             </div>
+
+            <!-- SOCIAL HANDLES (Owner Only) -->
+            <div id="social-edit-section" style="display:none; padding-top:15px; border-top:1px solid #30363d; margin-top:15px;">
+               <div class="profile-info-row" style="flex-direction:column; gap:8px;">
+                 <span class="info-label"><i class="fab fa-discord"></i> Discord Handle:</span>
+                 <input type="text" id="discord-input" class="avatar-url-input" placeholder="e.g. Username#1234">
+               </div>
+               <div class="profile-info-row" style="flex-direction:column; gap:8px;">
+                 <span class="info-label"><i class="fab fa-telegram"></i> Telegram Handle:</span>
+                 <input type="text" id="telegram-input" class="avatar-url-input" placeholder="e.g. ColdFusionz">
+               </div>
+               <button type="button" class="btn btn-small btn-outline" id="btn-save-socials" style="width:100%; margin-top:10px;">
+                 <i class="fa fa-save"></i> Save Social Handles
+               </button>
+               <span id="socials-status" style="display:block; font-size:11px; margin-top:5px; text-align:center;"></span>
+            </div>
           </section>
         </div>
 

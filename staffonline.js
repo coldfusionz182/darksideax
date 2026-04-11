@@ -141,9 +141,6 @@ const activeStaff = users.filter((u) => {
       const avatarSrc = u.avatar_url || 'https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y';
 
       line.innerHTML = `
-        <span class="staff-avatar">
-          <img src="${avatarSrc}" alt="${displayName}" class="user-avatar-header" style="width:28px; height:28px; border-radius:4px; margin-right:10px; object-fit:cover;">
-        </span>
         <span class="staff-name">
           <span class="staff-name-text ${roleClass}">${displayName}</span>
           <div class="staff-rank" style="font-size:10px; color:#888;">${u.userrank || u.role.toUpperCase()}</div>

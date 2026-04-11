@@ -27,23 +27,39 @@ const DS_PALETTE = {
  */
 async function fetchUserDataWithCache(username) {
   if (!username) return null;
-  if (avatarCache[username] !== undefined) return avatarCache[username];
+  if (avatarCache[username] !== undefined && avatarCache[username] !== null) return avatarCache[username];
 
   try {
-    const { data, error } = await window.supabaseClient
-      .from('users')
-      .select('avatar_url, role')
-      .eq('username', username)
-      .single();
+    // We need role/avatar from 'users' AND socials from 'profiles'
+    // First, resolve the ID from profiles (since username is there)
+    const { data: profile } = await window.supabaseClient
+      .from('profiles')
+      .select('id, discord, telegram')
+      .ilike('username', username)
+      .maybeSingle();
     
-    if (error || !data) {
+    if (!profile) {
       avatarCache[username] = null;
       return null;
     }
+
+    const { data: user } = await window.supabaseClient
+      .from('users')
+      .select('avatar_url, role')
+      .eq('id', profile.id)
+      .maybeSingle();
     
-    avatarCache[username] = { url: data.avatar_url, role: data.role };
-    return avatarCache[username];
+    const result = {
+      url: user?.avatar_url || null,
+      role: user?.role || 'member',
+      discord: profile.discord || null,
+      telegram: profile.telegram || null
+    };
+
+    avatarCache[username] = result;
+    return result;
   } catch (e) {
+    console.warn('Cache fetch error:', e);
     avatarCache[username] = null;
     return null;
   }
@@ -130,7 +146,7 @@ async function renderShout(row, currentUser, isOptimistic = false) {
   userLink.textContent = row.username;
   userLink.style.cursor = 'contextmenu';
 
-  // Load Real Avatar + Role for Branding
+  // Load Real Data for Branding + Socials
   fetchUserDataWithCache(row.username).then(res => {
     if (res) {
       if (res.url) {
@@ -170,19 +186,40 @@ async function renderShout(row, currentUser, isOptimistic = false) {
   shoutBox.appendChild(item);
 
   // --- Context Menu (Right Click Username) ---
-  userLink.addEventListener('contextmenu', (e) => {
+  userLink.addEventListener('contextmenu', async (e) => {
     e.preventDefault();
     const menu = createShoutContextMenu();
     menu.innerHTML = '';
 
+    const userData = avatarCache[row.username];
+
+    // Mention
     const mentionAction = document.createElement('div');
     mentionAction.className = 'ds-context-item';
     mentionAction.innerHTML = `<i class="fa fa-at"></i> Mention @${row.username}`;
-    mentionAction.onclick = () => {
-      shoutInput.value = `@${row.username} ` + shoutInput.value;
-      shoutInput.focus();
-    };
+    mentionAction.onclick = () => { shoutInput.value = `@${row.username} ` + shoutInput.value; shoutInput.focus(); };
     menu.appendChild(mentionAction);
+
+    // Discord & Telegram
+    if (userData) {
+      if (userData.discord) {
+        const disc = document.createElement('div');
+        disc.className = 'ds-context-item';
+        disc.innerHTML = `<i class="fab fa-discord" style="color: #5865F2;"></i> Discord: ${userData.discord}`;
+        disc.onclick = () => {
+          navigator.clipboard.writeText(userData.discord);
+          alert(`Discord tag copied: ${userData.discord}`);
+        };
+        menu.appendChild(disc);
+      }
+      if (userData.telegram) {
+        const tele = document.createElement('div');
+        tele.className = 'ds-context-item';
+        tele.innerHTML = `<i class="fab fa-telegram" style="color: #229ED9;"></i> Telegram`;
+        tele.onclick = () => window.open(`https://t.me/${userData.telegram.replace('@','')}`, '_blank');
+        menu.appendChild(tele);
+      }
+    }
 
     if (me) {
       const isOwnerViewer = me.role === 'owner';
@@ -193,10 +230,7 @@ async function renderShout(row, currentUser, isOptimistic = false) {
 
       // Special check for Admin Viewer
       if (isAdminViewer && !canDelete) {
-         // Get the target's role from cache
-         const targetData = avatarCache[row.username];
-         // Only let admins delete if target is NOT owner and NOT admin (i.e. is member)
-         if (targetData && targetData.role !== 'owner' && targetData.role !== 'admin') {
+         if (userData && userData.role !== 'owner' && userData.role !== 'admin') {
             canDelete = true;
          }
       }

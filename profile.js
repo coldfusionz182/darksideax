@@ -31,12 +31,12 @@ async function loadProfile() {
   let targetUser = null;
   try {
     const [{ data: profileRow }, { data: userData }] = await Promise.all([
-      supabase.from('profiles').select('username').eq('id', authUser.id).maybeSingle(),
+      supabase.from('profiles').select('username, discord, telegram').eq('id', authUser.id).maybeSingle(),
       supabase.from('users').select('id, email, role, avatar_url, userrank, created_at').eq('id', authUser.id).maybeSingle()
     ]);
 
     if (!userData) throw new Error('Data not found');
-    targetUser = { ...userData, username: profileRow?.username || authUser.email };
+    targetUser = { ...userData, username: profileRow?.username || authUser.email, discord: profileRow?.discord, telegram: profileRow?.telegram };
   } catch (err) {
     console.error('Profile Load Error:', err);
     usernameEl.textContent = 'Profile Error';
@@ -56,6 +56,30 @@ async function loadProfile() {
   if (targetUser.avatar_url) {
     avatarContainer.innerHTML = `<img src="${targetUser.avatar_url}" id="profile-avatar-img" style="width:100%; height:100%; object-fit:cover; border-radius:inherit;">`;
   }
+
+  // Social Inputs (Load existing)
+  document.getElementById('social-edit-section').style.display = 'block';
+  if (targetUser.discord) document.getElementById('discord-input').value = targetUser.discord;
+  if (targetUser.telegram) document.getElementById('telegram-input').value = targetUser.telegram;
+
+  // 3. Save Logic
+  document.getElementById('btn-save-socials').onclick = async () => {
+    const dVal = document.getElementById('discord-input').value.trim();
+    const tVal = document.getElementById('telegram-input').value.trim();
+    const status = document.getElementById('socials-status');
+
+    status.textContent = 'Updating...';
+    const { error } = await supabase.from('profiles').update({ discord: dVal, telegram: tVal }).eq('id', authUser.id);
+    
+    if (error) {
+      status.textContent = 'Error saving handles.';
+      status.style.color = '#ef4444';
+    } else {
+      status.textContent = 'Social handles updated!';
+      status.style.color = '#10b981';
+      setTimeout(() => status.textContent = '', 2000);
+    }
+  };
 
   // Branding Integration
   if (targetUser.role === 'owner') usernameEl.className = 'profile-username-big ds-user-owner';
