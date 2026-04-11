@@ -8,13 +8,10 @@ async function loadComboThreads() {
 
   const sort = sortSelectEl?.value || 'newest';
 
-  // OPTION A: show nothing at all while loading
-  // threadListEl.innerHTML = '';
-
-  // OPTION B: show a loading message row only (no real data)
+  // Show nothing initially per user request
   threadListEl.innerHTML = `
     <tr class="thread-row">
-      <td colspan="4">Loading combo threads...</td>
+      <td colspan="4" style="text-align:center; color:#888; padding: 20px;">Fetching combo threads...</td>
     </tr>
   `;
 
@@ -35,98 +32,83 @@ async function loadComboThreads() {
 
     const allowedTags = ['email:pass', 'user:pass', 'url:email:pass'];
 
-    // FILTER FIRST – nothing rendered yet
+    // FILTER FIRST
     const combosOnly = data.filter((row) => {
-      const sectionOk =
-        typeof row.section === 'string' &&
-        row.section.toLowerCase() === 'combo';
-
+      const sectionOk = typeof row.section === 'string' && row.section.toLowerCase() === 'combo';
       const tag = (row.tag || '').toString().toLowerCase();
       const tagOk = allowedTags.some((allowed) => tag.includes(allowed));
-
       return sectionOk && tagOk;
     });
 
-    // apply sorting on filtered array
+    // Sort
     if (sort === 'oldest') {
-      combosOnly.sort(
-        (a, b) => new Date(a.created_at) - new Date(b.created_at)
-      );
+      combosOnly.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
     } else if (sort === 'replies') {
-      combosOnly.sort(
-        (a, b) => (b.replies ?? 0) - (a.replies ?? 0)
-      );
+      combosOnly.sort((a, b) => (b.replies ?? 0) - (a.replies ?? 0));
     } else {
-      combosOnly.sort(
-        (a, b) => new Date(b.created_at) - new Date(a.created_at)
-      );
+      combosOnly.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
     }
 
-    // Now wait 3 seconds, then render (or show "no threads")
-    setTimeout(() => {
-      if (combosOnly.length === 0) {
-        threadListEl.innerHTML = `
-          <tr class="thread-row">
-            <td colspan="4">No combo threads yet. Be the first to post!</td>
-          </tr>`;
-        return;
-      }
-
-      threadListEl.innerHTML = '';
-
-      combosOnly.forEach((row, idx) => {
-        const tr = document.createElement('tr');
-        tr.className = 'thread-row' + (idx % 2 === 1 ? ' alt' : '');
-
-        const iconTd = document.createElement('td');
-        iconTd.className = 'col-icon';
-        iconTd.innerHTML = `
-          <div class="thread-icon">
-            <i class="fa fa-list"></i>
-          </div>
-        `;
-
-        const mainTd = document.createElement('td');
-        mainTd.className = 'col-thread-main';
-        mainTd.innerHTML = `
-          <div class="thread-title">
-            <a href="thread.html?id=${row.id}">${row.title}</a>
-          </div>
-          <div class="thread-meta">
-            by <span class="rank-member">${row.author}</span>
-            · ${new Date(row.created_at).toLocaleDateString()}
-            ${
-              row.tag
-                ? ` · <span class="badge-pill">${row.tag}</span>`
-                : ''
-            }
-          </div>
-        `;
-
-        const repliesTd = document.createElement('td');
-        repliesTd.className = 'col-stats';
-        repliesTd.textContent = row.replies ?? 0;
-
-        const viewsTd = document.createElement('td');
-        viewsTd.className = 'col-stats';
-        viewsTd.textContent = row.views ?? 0;
-
-        tr.appendChild(iconTd);
-        tr.appendChild(mainTd);
-        tr.appendChild(repliesTd);
-        tr.appendChild(viewsTd);
-
-        threadListEl.appendChild(tr);
-      });
-    }, 3000); // 3 seconds
-  } catch (err) {
-    console.error('loadComboThreads error', err);
-    setTimeout(() => {
+    // Render immediately without delay
+    if (combosOnly.length === 0) {
       threadListEl.innerHTML = `
         <tr class="thread-row">
-          <td colspan="4">Network error loading combo threads.</td>
+          <td colspan="4">No combo threads yet. Be the first to post!</td>
         </tr>`;
-    }, 3000);
+      return;
+    }
+
+    threadListEl.innerHTML = '';
+
+    combosOnly.forEach((row, idx) => {
+      const tr = document.createElement('tr');
+      // Added .thread-anim for "appearing nicely"
+      tr.className = 'thread-row thread-anim' + (idx % 2 === 1 ? ' alt' : '');
+      // Staggered delay
+      tr.style.animationDelay = `${idx * 0.05}s`;
+
+      const iconTd = document.createElement('td');
+      iconTd.className = 'col-icon';
+      iconTd.innerHTML = `
+        <div class="thread-icon">
+          <i class="fa fa-list"></i>
+        </div>
+      `;
+
+      const mainTd = document.createElement('td');
+      mainTd.className = 'col-thread-main';
+      mainTd.innerHTML = `
+        <div class="thread-title">
+          <a href="thread.html?id=${row.id}">${row.title}</a>
+        </div>
+        <div class="thread-meta">
+          by <span class="rank-member">${row.author}</span>
+          · ${new Date(row.created_at).toLocaleDateString()}
+          ${row.tag ? ` · <span class="badge-pill">${row.tag}</span>` : ''}
+        </div>
+      `;
+
+      const repliesTd = document.createElement('td');
+      repliesTd.className = 'col-stats';
+      repliesTd.textContent = row.replies ?? 0;
+
+      const viewsTd = document.createElement('td');
+      viewsTd.className = 'col-stats';
+      viewsTd.textContent = row.views ?? 0;
+
+      tr.appendChild(iconTd);
+      tr.appendChild(mainTd);
+      tr.appendChild(repliesTd);
+      tr.appendChild(viewsTd);
+
+      threadListEl.appendChild(tr);
+    });
+  } catch (err) {
+    console.error('loadComboThreads error', err);
+    threadListEl.innerHTML = `
+      <tr class="thread-row">
+        <td colspan="4">Network error loading combo threads.</td>
+      </tr>`;
   }
 }
 
@@ -134,4 +116,4 @@ if (sortSelectEl) {
   sortSelectEl.addEventListener('change', loadComboThreads);
 }
 
-loadComboThreads();
+loadComboThreads();

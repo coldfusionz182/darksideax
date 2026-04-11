@@ -287,7 +287,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  if (threadListBody) {
+  if (threadListBody && threadListBody.dataset.autoload !== 'false') {
     if (sortSelect) {
       sortSelect.addEventListener('change', () => sortThreads(sortSelect.value));
     }

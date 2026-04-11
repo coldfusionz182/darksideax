@@ -8,6 +8,12 @@ async function fetchAccountThreads() {
   if (!threadListEl) return null;
 
   try {
+    // Show nothing initially per user request
+    threadListEl.innerHTML = `
+      <tr class="thread-row">
+        <td colspan="4" style="text-align:center; color:#888; padding: 20px;">Fetching accounts...</td>
+      </tr>`;
+
     const resp = await fetch(
       `/api/list-threads?section=accounts&limit=50&_=${Date.now()}`,
       { cache: 'no-store' }
@@ -22,27 +28,12 @@ async function fetchAccountThreads() {
       return null;
     }
 
-    // HARD filter:
-    // 1) section === 'accounts'
-    // 2) title does NOT contain 'config' (backup check)
+    // Double check it's accounts just in case, and filter out 'config' mentions if needed
     const accountsOnly = data.filter((row) => {
-      const sectionOk =
-        typeof row.section === 'string' &&
-        row.section.toLowerCase() === 'accounts';
-
+      const sectionOk = typeof row.section === 'string' && row.section.toLowerCase() === 'accounts';
       const title = (row.title || '').toString().toLowerCase();
-      const titleOk = !title.includes('config');
-
-      return sectionOk && titleOk;
+      return sectionOk && !title.includes('config');
     });
-
-    if (!accountsOnly.length) {
-      threadListEl.innerHTML = `
-        <tr class="thread-row">
-          <td colspan="4">No account threads yet. Be the first to post!</td>
-        </tr>`;
-      return null;
-    }
 
     return accountsOnly;
   } catch (err) {
@@ -81,7 +72,10 @@ function renderThreads(list, sortMode) {
 
   sorted.forEach((row, idx) => {
     const tr = document.createElement('tr');
-    tr.className = 'thread-row' + (idx % 2 === 1 ? ' alt' : '');
+    // Applied .thread-anim for "appearing nicely"
+    tr.className = 'thread-row thread-anim' + (idx % 2 === 1 ? ' alt' : '');
+    // Staggered delay for each row
+    tr.style.animationDelay = `${idx * 0.05}s`;
 
     const iconTd = document.createElement('td');
     iconTd.className = 'col-icon';
@@ -134,4 +128,4 @@ if (sortSelectEl) {
 }
 
 // Initial load
-loadAccountThreads();
+loadAccountThreads();
