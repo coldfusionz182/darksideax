@@ -195,7 +195,7 @@ async function setupShoutbox() {
 
   await loadShouts(me);
 
-  // poll every 10s for new shouts
+    // poll every 15s for new shouts (for other users)
   setInterval(async () => {
     try {
       const changed = await hasNewShouts();
@@ -203,7 +203,7 @@ async function setupShoutbox() {
     } catch (e) {
       console.error('shoutbox poll error', e);
     }
-  }, 10000);
+  }, 15000);
 
   // realtime optional
   supabaseClient
@@ -219,6 +219,7 @@ async function setupShoutbox() {
     .subscribe();
 
   // submit handler – always use users.username
+    // submit handler – always use users.username
   shoutForm.addEventListener('submit', async (e) => {
     e.preventDefault();
 
@@ -233,16 +234,24 @@ async function setupShoutbox() {
     const msg = text;
     shoutInput.value = '';
 
+    const supabaseClient = window.supabaseClient;
+
     try {
-      const { error } = await supabaseClient
+      const { data, error } = await supabaseClient
         .from('shouts')
         .insert({
           user_id: meNow.id,
           username: meNow.username,
           message: msg,
-        });
+        })
+        .select()
+        .single();
 
       if (error) throw error;
+
+      // show immediately in UI using the returned row
+      await renderShout(data, meNow);
+      shoutBox.scrollTop = shoutBox.scrollHeight;
     } catch (err) {
       console.error('send shout error', err);
     }
