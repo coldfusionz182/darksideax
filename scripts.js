@@ -53,13 +53,14 @@ async function updateHeaderAuthState() {
 
   window.dsUserRole = current.role;
 
-  // text-only user pill, no avatar image
+  // Premium user pill & logout button
   authLinks.innerHTML = `
-    <button class="user-pill" id="header-profile-link">
+    <button class="ds-nav-user" id="header-profile-link">
+      <i class="fa fa-user-astronaut"></i>
       <span class="user-pill-name">${current.username}</span>
     </button>
-    <button class="btn btn-small btn-outline" id="logout-btn">
-      <i class="fa fa-sign-out-alt"></i> Logout
+    <button class="ds-nav-logout" id="logout-btn" title="Sign Out">
+      <i class="fa fa-power-off"></i>
     </button>
   `;
 
