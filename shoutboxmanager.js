@@ -9,6 +9,48 @@ const shoutMeta   = document.getElementById('shoutbox-meta');
 const shoutFooter = document.getElementById('shoutbox-footer');
 
 let lastShoutTimestamp = null;
+let currentUserCached = null;
+
+// ---------- delete permissions + context menu ----------
+
+// adjust this if you want admins blocked from specific owner ID
+const OWNER_ID = 'PUT_OWNER_USER_ID_HERE';
+
+function canCurrentUserDeleteShout(currentUser, row) {
+  if (!currentUser) return false;
+
+  // owner can delete any shout
+  if (currentUser.role === 'owner') return true;
+
+  // admin can delete all except optional owner id
+  if (currentUser.role === 'admin') {
+    if (row.user_id === OWNER_ID) return false;
+    return true;
+  }
+
+  // normal users: only their own shouts
+  return row.user_id === currentUser.id;
+}
+
+function createShoutContextMenu() {
+  let menu = document.getElementById('shout-context-menu');
+  if (menu) return menu;
+
+  menu = document.createElement('div');
+  menu.id = 'shout-context-menu';
+  menu.className = 'shout-context-menu';
+  menu.style.position = 'absolute';
+  menu.style.zIndex = '9999';
+  menu.style.display = 'none';
+  menu.innerHTML = `<div class="shout-context-item">Delete message</div>`;
+  document.body.appendChild(menu);
+
+  document.addEventListener('click', () => {
+    menu.style.display = 'none';
+  });
+
+  return menu;
+}
 
 // --- small helper: render one shout line ---
 async function renderShout(row, currentUser) {
@@ -45,6 +87,44 @@ async function renderShout(row, currentUser) {
 
   line.appendChild(textContainer);
   shoutBox.appendChild(line);
+
+  // ----- hook up delete (context menu) -----
+  const me = currentUserCached || currentUser;
+  if (!me || !window.supabaseClient) return;
+
+  const canDelete = canCurrentUserDeleteShout(me, row);
+  if (!canDelete) return;
+
+  const menu = createShoutContextMenu();
+  const menuItem = menu.querySelector('.shout-context-item');
+
+  userSpan.addEventListener('contextmenu', (e) => {
+    e.preventDefault();
+
+    const rect = userSpan.getBoundingClientRect();
+    menu.style.display = 'block';
+    menu.style.left = `${rect.right + 6}px`;
+    menu.style.top = `${rect.top}px`;
+
+    const handler = async () => {
+      menu.style.display = 'none';
+      menuItem.removeEventListener('click', handler);
+
+      try {
+        const { error } = await window.supabaseClient
+          .from('shouts')
+          .delete()
+          .eq('id', row.id);
+        if (error) throw error;
+        line.remove();
+      } catch (err) {
+        console.error('delete shout error', err);
+        alert('Failed to delete shout.');
+      }
+    };
+
+    menuItem.addEventListener('click', handler);
+  });
 }
 
 // --- load last 50 shouts ---
@@ -100,6 +180,7 @@ async function setupShoutbox() {
 
   const supabaseClient = window.supabaseClient;
   const me = await window.getCurrentUserWithRole();
+  currentUserCached = me;
 
   if (!me) {
     // guest
@@ -124,7 +205,7 @@ async function setupShoutbox() {
     }
   }, 10000);
 
-  // realtime optional (if you still want it)
+  // realtime optional
   supabaseClient
     .channel('public:shouts')
     .on(
@@ -142,6 +223,7 @@ async function setupShoutbox() {
     e.preventDefault();
 
     const meNow = await window.getCurrentUserWithRole();
+    currentUserCached = meNow;
     if (!meNow) return;
 
     const text = shoutInput.value.trim();
