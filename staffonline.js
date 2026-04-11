@@ -104,14 +104,14 @@ async function loadCurrentStaffOnline() {
     }
 
     const now = Date.now();
-    const fifteenMinutesMs = 15 * 60 * 1000;
+const fiveMinutesMs = 5 * 60 * 1000;
 
-    const activeStaff = users.filter((u) => {
-      const ls = lastSeenMap.get(u.username);
-      if (!ls) return false;
-      const diff = now - new Date(ls).getTime();
-      return diff <= fifteenMinutesMs;
-    });
+const activeStaff = users.filter((u) => {
+  const ls = lastSeenMap.get(u.username);
+  if (!ls) return false;
+  const diff = now - new Date(ls).getTime();
+  return diff <= fiveMinutesMs;
+});
 
     container.innerHTML = '';
 
