@@ -493,7 +493,8 @@
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'apikey': supabaseAnonKey
+            'apikey': supabaseAnonKey,
+            'x-ds-core-sig': typeof _ds_header === 'function' ? _ds_header() : null
           },
           body: JSON.stringify({
             email: emailEl.value.trim(),
