@@ -37,9 +37,8 @@ async function getCurrentUserWithRole() {
 
 async function loadRepForCurrentUser() {
   const repEl = document.getElementById('profile-rep');
-  if (!repEl) return; // not on profile page
+  if (!repEl) return;
 
-  // Try to use the profile username being viewed
   const profileUsernameEl = document.getElementById('profile-username');
   let usernameToLoad = null;
 
@@ -50,7 +49,6 @@ async function loadRepForCurrentUser() {
     }
   }
 
-  // Fallback to current logged-in user
   if (!usernameToLoad) {
     const current = await getCurrentUserWithRole();
     if (!current) {
@@ -130,7 +128,6 @@ async function openRepDetailsModal() {
       const meta = document.createElement('span');
       meta.className = 'rep-entry-meta';
 
-      // prefer timegiven if present, else fallback to created_at
       const tsString = row.timegiven || row.created_at;
       if (tsString) {
         const d = new Date(tsString);
@@ -149,7 +146,9 @@ async function openRepDetailsModal() {
       const right = document.createElement('span');
       right.className = 'rep-entry-amount';
       const amt = parseInt(row.amount ?? '0', 10);
-      right.textContent = `+${Number.isNaN(amt) ? row.amount : amt}`;
+      const num = Number.isNaN(amt) ? row.amount : amt;
+      const sign = Number(num) >= 0 ? '+' : '';
+      right.textContent = `${sign}${num}`;
 
       wrap.appendChild(left);
       wrap.appendChild(right);
@@ -163,7 +162,6 @@ async function openRepDetailsModal() {
 
 // ---------- give rep (index page) ----------
 
-// find users whose username starts with input
 async function searchUsersByUsernamePrefix(prefix) {
   if (!prefix) return [];
 
@@ -249,7 +247,6 @@ async function initRepGiveBox() {
     return;
   }
 
-  // only admins / owner can give rep (client side)
   if (current.role !== 'admin' && current.role !== 'owner') {
     box.style.display = 'none';
     return;
@@ -356,7 +353,9 @@ async function initRepGiveBox() {
     }
 
     const delta = parseInt(amountStr, 10);
-    if (!delta || delta < 1 || delta > 6) {
+
+    // allow -6..-1 and +1..+6
+    if (!delta || delta < -6 || delta > 6 || delta === 0) {
       statusEl.textContent = 'Invalid rep amount.';
       return;
     }
@@ -381,7 +380,6 @@ function initRepModule() {
   loadRepForCurrentUser().catch((e) => console.error(e));
   initRepGiveBox().catch((e) => console.error(e));
 
-  // profile rep modal wiring
   const repEl = document.getElementById('profile-rep');
   const backdrop = document.getElementById('rep-modal-backdrop');
   const closeBtn = document.getElementById('rep-modal-close');
