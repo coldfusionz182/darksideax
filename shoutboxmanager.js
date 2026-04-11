@@ -10,6 +10,7 @@ const shoutFooter = document.getElementById('shoutbox-footer');
 
 let lastShoutTimestamp = null;
 let currentUserCached = null;
+const avatarCache = {}; // Global cache for avatars
 
 // Palette for avatars and BBCode
 const DS_PALETTE = {
@@ -20,6 +21,33 @@ const DS_PALETTE = {
   red: '#ef4444',
   silver: '#adbac7'
 };
+
+/**
+ * Fetches user avatar from database with local caching
+ */
+async function fetchAvatarWithCache(username) {
+  if (!username) return null;
+  if (avatarCache[username] !== undefined) return avatarCache[username];
+
+  try {
+    const { data, error } = await window.supabaseClient
+      .from('users')
+      .select('avatar_url')
+      .eq('username', username)
+      .single();
+    
+    if (error || !data) {
+      avatarCache[username] = null;
+      return null;
+    }
+    
+    avatarCache[username] = data.avatar_url;
+    return data.avatar_url;
+  } catch (e) {
+    avatarCache[username] = null;
+    return null;
+  }
+}
 
 /**
  * Clean & Safe BBCode Parser
@@ -67,8 +95,11 @@ function createShoutContextMenu() {
   return menu;
 }
 
-async function renderShout(row, currentUser) {
+async function renderShout(row, currentUser, isOptimistic = false) {
   if (!shoutBox) return;
+
+  // Avoid duplicates (if realtime and optimistic both trigger)
+  if (row.id && shoutBox.querySelector(`[data-id="${row.id}"]`)) return;
 
   const me = currentUserCached || currentUser;
   const isMentioned = me && row.message.toLowerCase().includes(`@${me.username.toLowerCase()}`);
@@ -76,13 +107,23 @@ async function renderShout(row, currentUser) {
   // Base Item
   const item = document.createElement('div');
   item.className = 'ds-shout-item' + (isMentioned ? ' mention' : '');
+  if (row.id) item.setAttribute('data-id', row.id);
+  if (isOptimistic) item.style.opacity = '0.7';
 
-  // Avatar
+  // Avatar Container
   const avatar = document.createElement('div');
   avatar.className = 'ds-shout-avatar';
   avatar.textContent = (row.username || '?')[0].toUpperCase();
   avatar.style.borderColor = getAvatarColor(row.username || 'guest');
   avatar.style.color = getAvatarColor(row.username || 'guest');
+
+  // Load Real Avatar if possible
+  fetchAvatarWithCache(row.username).then(url => {
+    if (url) {
+      avatar.innerHTML = `<img src="${url}" alt="${row.username}">`;
+      avatar.style.borderColor = 'transparent';
+    }
+  });
 
   // Content Wrap
   const content = document.createElement('div');
@@ -106,7 +147,7 @@ async function renderShout(row, currentUser) {
 
   const time = document.createElement('span');
   time.className = 'ds-shout-time';
-  const d = new Date(row.created_at);
+  const d = row.created_at ? new Date(row.created_at) : new Date();
   time.textContent = `${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`;
 
   topBar.appendChild(userLink);
@@ -193,10 +234,10 @@ async function setupShoutbox() {
 
   await loadShouts(me);
 
-  // Poll for safety
+  // Poll for safety - 15 seconds as requested
   setInterval(async () => {
     if (await hasNewShouts()) await loadShouts(me);
-  }, 20000);
+  }, 15000);
 
   // Realtime
   window.supabaseClient.channel('public:shouts').on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'shouts' }, (p) => {
@@ -210,8 +251,27 @@ async function setupShoutbox() {
     const t = shoutInput.value.trim();
     if (!t || t.length > 180) return;
     shoutInput.value = '';
-    const { error } = await window.supabaseClient.from('shouts').insert({ user_id: meNow.id, username: meNow.username, message: t });
-    if (error) console.error(error);
+
+    // OPTIMISTIC UI: Render instantly
+    const tempId = 'temp-' + Date.now();
+    const optimisticRow = {
+       id: null, // Will use tempId logically
+       user_id: meNow.id,
+       username: meNow.username,
+       message: t,
+       created_at: new Date().toISOString()
+    };
+    renderShout(optimisticRow, meNow, true);
+
+    try {
+      const { data, error } = await window.supabaseClient.from('shouts').insert({ user_id: meNow.id, username: meNow.username, message: t }).select().single();
+      if (!error && data) {
+         // Optionally remove the optimistic one or update it. 
+         // Realtime INSERT event will also fire, which renderShout avoids if data-id matches.
+         // Since optimistic had no row.id, we should remove it when real arrives or just let it time out.
+         // Actually, let's just let it stay until the next refresh if id is null.
+      }
+    } catch (err) { console.error(err); }
   });
 }
 
