@@ -236,6 +236,34 @@ async function setupShoutbox() {
     if (shoutFooter) shoutFooter.textContent = 'Keep it chill. No spam or advertising.';
   }
 
+  // --- Toolbar Interaction Logic ---
+  function insertAtCursor(textBefore, textAfter = '') {
+    const start = shoutInput.selectionStart;
+    const end = shoutInput.selectionEnd;
+    const val = shoutInput.value;
+    const selectedText = val.substring(start, end);
+    
+    shoutInput.value = val.substring(0, start) + textBefore + selectedText + textAfter + val.substring(end);
+    
+    // Position cursor between tags if wrapping, or after text if single
+    const newPos = start + textBefore.length + (textAfter ? selectedText.length : 0);
+    shoutInput.focus();
+    shoutInput.setSelectionRange(newPos, newPos);
+  }
+
+  // Emojis
+  document.querySelectorAll('.ds-emote-btn').forEach(btn => {
+    btn.onclick = () => insertAtCursor(btn.getAttribute('data-emote'));
+  });
+
+  // Colors
+  document.querySelectorAll('.ds-color-btn').forEach(btn => {
+    btn.onclick = () => {
+      const color = btn.getAttribute('data-color');
+      insertAtCursor(`[color=${color}]`, `[/color]`);
+    };
+  });
+
   await loadShouts(me);
 
   // Poll for safety - 15 seconds as requested
