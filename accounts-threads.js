@@ -1,42 +1,58 @@
 // accounts-threads.js
+
 const threadListEl = document.getElementById('thread-list');
 const sortSelectEl = document.getElementById('sort-select');
 
-// core fetcher
-async function fetchThreads(sectionFilter = null) {
+// Core fetcher for accounts threads (always returns accounts-only list)
+async function fetchAccountThreads() {
   if (!threadListEl) return null;
 
-  const resp = await fetch(
-    `/api/list-threads?section=accounts&limit=50&_=${Date.now()}`,
-    { cache: 'no-store' }
-  );
-  const data = await resp.json();
+  try {
+    const resp = await fetch(
+      `/api/list-threads?section=accounts&limit=50&_=${Date.now()}`,
+      { cache: 'no-store' }
+    );
+    const data = await resp.json();
 
-  if (!Array.isArray(data)) {
+    if (!Array.isArray(data)) {
+      threadListEl.innerHTML = `
+        <tr class="thread-row">
+          <td colspan="4">Failed to load account threads.</td>
+        </tr>`;
+      return null;
+    }
+
+    // HARD filter:
+    // 1) section === 'accounts'
+    // 2) title does NOT contain 'config' (backup check)
+    const accountsOnly = data.filter((row) => {
+      const sectionOk =
+        typeof row.section === 'string' &&
+        row.section.toLowerCase() === 'accounts';
+
+      const title = (row.title || '').toString().toLowerCase();
+      const titleOk = !title.includes('config');
+
+      return sectionOk && titleOk;
+    });
+
+    if (!accountsOnly.length) {
+      threadListEl.innerHTML = `
+        <tr class="thread-row">
+          <td colspan="4">No account threads yet. Be the first to post!</td>
+        </tr>`;
+      return null;
+    }
+
+    return accountsOnly;
+  } catch (err) {
+    console.error('fetchAccountThreads error', err);
     threadListEl.innerHTML = `
       <tr class="thread-row">
         <td colspan="4">Failed to load account threads.</td>
       </tr>`;
     return null;
   }
-
-  if (!sectionFilter) {
-    return data;
-  }
-
-  // HARD filter:
-  // 1) section === 'accounts'
-  // 2) title does NOT contain 'config' (backup check)
-  return data.filter((row) => {
-    const sectionOk =
-      typeof row.section === 'string' &&
-      row.section.toLowerCase() === 'accounts';
-
-    const title = (row.title || '').toString().toLowerCase();
-    const titleOk = !title.includes('config');
-
-    return sectionOk && titleOk;
-  });
 }
 
 function renderThreads(list, sortMode) {
@@ -57,6 +73,7 @@ function renderThreads(list, sortMode) {
   } else if (sortMode === 'replies') {
     sorted.sort((a, b) => (b.replies ?? 0) - (a.replies ?? 0));
   } else {
+    // newest
     sorted.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
   }
 
@@ -104,33 +121,17 @@ function renderThreads(list, sortMode) {
   });
 }
 
-// normal load (no filter)
-async function initialLoad() {
+// Load + render accounts threads according to current sort
+async function loadAccountThreads() {
   const sort = sortSelectEl?.value || 'newest';
-  const data = await fetchThreads(null); // no hard filter
+  const data = await fetchAccountThreads();
   if (!data) return;
   renderThreads(data, sort);
-
-  // after 2 seconds, apply the HARD filter and re-render
-  setTimeout(async () => {
-    const sort2 = sortSelectEl?.value || 'newest';
-    const filtered = await fetchThreads('accounts-only');
-    if (!filtered) return;
-    renderThreads(filtered, sort2);
-  }, 2000);
-}
-
-// manual reload (on sort change) uses filtered list
-async function loadAccountThreadsFiltered() {
-  const sort = sortSelectEl?.value || 'newest';
-  const filtered = await fetchThreads('accounts-only');
-  if (!filtered) return;
-  renderThreads(filtered, sort);
 }
 
 if (sortSelectEl) {
-  sortSelectEl.addEventListener('change', loadAccountThreadsFiltered);
+  sortSelectEl.addEventListener('change', loadAccountThreads);
 }
 
-// first load: normal, then auto-filter after 2s
-initialLoad();
+// Initial load
+loadAccountThreads();
