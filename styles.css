@@ -271,14 +271,13 @@ a:hover {
 }
 
 .ds-shout-body {
-  max-height: 300px;
-  min-height: 180px;
+  height: 380px; /* Locked height */
   overflow-y: auto;
-  padding: 12px;
+  padding: 10px;
   background: #0d1117;
   display: flex;
   flex-direction: column;
-  gap: 12px; /*discord style spacing*/
+  gap: 8px; /* tighter spacing */
   scroll-behavior: smooth;
 }
 
@@ -287,9 +286,9 @@ a:hover {
 
 .ds-shout-item {
   display: flex;
-  gap: 12px;
+  gap: 10px;
   align-items: flex-start;
-  padding: 2px 4px;
+  padding: 4px 6px;
   border-radius: 6px;
   transition: background 0.2s;
 }
@@ -304,15 +303,15 @@ a:hover {
 }
 
 .ds-shout-avatar {
-  width: 36px;
-  height: 36px;
-  border-radius: 8px;
+  width: 30px; /* smaller avatar */
+  height: 30px;
+  border-radius: 6px;
   background: #21262d;
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 700;
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   color: #8b949e;
   border: 1px solid #30363d;
   flex-shrink: 0;
@@ -329,31 +328,31 @@ a:hover {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 1px;
 }
 
 .ds-line-top {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
 }
 
 .ds-shout-user {
   font-weight: 700;
-  font-size: 0.85rem;
+  font-size: 0.82rem; /* slightly smaller */
   color: #58a6ff;
 }
 
 .ds-shout-time {
-  font-size: 0.7rem;
-  color: #8b949e;
+  font-size: 0.68rem;
+  color: #57606a;
   font-weight: 500;
 }
 
 .ds-shout-text {
-  font-size: 0.875rem;
-  line-height: 1.5;
-  color: #d1d5db;
+  font-size: 0.8rem; /* smaller message text */
+  line-height: 1.4;
+  color: #c9d1d9;
   word-break: break-word;
 }
 
