@@ -49,7 +49,7 @@ function parseBBCode(text) {
   });
 
   // Mentions (@user)
-  escaped = escaped.replace(/@([a-zA-Z0-9_-]+)/g, '<span style="color:#6366f1; font-weight:700;">@$1</span>');
+  escaped = escaped.replace(/@([a-zA-Z0-9_-]+)/g, '<span style="color:#818cf8; font-weight:700; text-shadow: 0 0 8px rgba(129, 140, 248, 0.4);">@$1</span>');
 
   return escaped;
 }
@@ -104,8 +104,8 @@ async function renderShout(row, currentUser) {
   
   // Staff coloring
   if (row.username === 'ColdFusionz') {
-     userLink.style.color = DARKSIDE_PALETTE.purple;
-     userLink.style.textShadow = `0 0 10px ${DARKSIDE_PALETTE.purple}88`;
+     userLink.style.color = '#818cf8';
+     userLink.style.textShadow = `0 0 10px rgba(129, 140, 248, 0.6)`;
   }
 
   const timeSpan = document.createElement('span');

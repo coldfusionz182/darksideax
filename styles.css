@@ -235,12 +235,12 @@ a:hover {
 /* PREMIUM SHOUTBOX */
 .shoutbox {
   margin-bottom: 24px;
-  background: rgba(13, 17, 23, 0.7);
-  backdrop-filter: blur(8px);
+  background: rgba(13, 17, 23, 0.85);
+  backdrop-filter: blur(12px);
   border: 1px solid #30363d;
   border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(79, 70, 229, 0.1);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(79, 70, 229, 0.15);
   padding: 0;
 }
 
@@ -250,13 +250,13 @@ a:hover {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: linear-gradient(to right, rgba(22, 27, 34, 0.9), rgba(13, 17, 23, 0.9));
+  background: rgba(22, 27, 34, 0.95);
   font-size: 0.9rem;
 }
 
 .shoutbox-header i {
   color: #818cf8;
-  text-shadow: 0 0 8px rgba(99, 102, 241, 0.5);
+  text-shadow: 0 0 8px rgba(129, 140, 248, 0.5);
   margin-right: 8px;
 }
 
@@ -264,6 +264,8 @@ a:hover {
   font-weight: 700;
   letter-spacing: 0.02em;
   color: #f8fafc;
+  display: flex;
+  align-items: center;
 }
 
 .shout-context-menu {
@@ -274,7 +276,7 @@ a:hover {
   border-radius: 8px;
   padding: 6px 0;
   min-width: 160px;
-  box-shadow: 0 10px 25px rgba(0,0,0,0.7);
+  box-shadow: 0 10px 25px rgba(0,0,0,0.8);
   animation: fadeIn 0.15s ease-out;
 }
 
@@ -299,22 +301,18 @@ a:hover {
   color: #f8fafc;
 }
 
-.shout-context-item.delete:hover {
-  background: rgba(239, 68, 68, 0.15);
-  color: #fca5a5;
-}
-
 .shoutbox-body {
   max-height: 280px;
-  min-height: 140px;
+  min-height: 160px;
   overflow-y: auto;
-  padding: 12px;
+  padding: 8px 12px;
   font-size: 0.875rem;
-  background: transparent;
+  background: #0d1117;
   scroll-behavior: smooth;
+  text-align: left; /* Explicit left align */
 }
 
-/* Custom scrollbar for chat */
+/* Custom scrollbar */
 .shoutbox-body::-webkit-scrollbar {
   width: 5px;
 }
@@ -326,12 +324,13 @@ a:hover {
 .shout-line {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  padding: 8px 10px;
-  border-radius: 8px;
-  margin-bottom: 6px;
+  gap: 3px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  margin-bottom: 4px;
   transition: background 0.2s;
   border-left: 3px solid transparent;
+  align-items: flex-start; /* Ensure children don't center */
 }
 
 .shout-line:hover {
@@ -348,7 +347,6 @@ a:hover {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-bottom: 1px;
 }
 
 .shout-user {
@@ -358,50 +356,49 @@ a:hover {
 
 .shout-time {
   color: #57606a;
-  font-size: 0.75rem;
+  font-size: 0.72rem;
   font-weight: 500;
 }
 
 .shout-text {
   color: #c9d1d9;
-  line-height: 1.5;
+  line-height: 1.4;
   word-break: break-word;
+  font-size: 0.85rem;
 }
-
-.shout-text b { color: #f8fafc; font-weight: 700; }
-.shout-text i { font-style: italic; opacity: 0.9; }
 
 .shoutbox-form {
   display: flex;
-  padding: 12px;
+  padding: 10px 12px;
   border-top: 1px solid #30363d;
-  background: rgba(22, 27, 34, 0.5);
-  gap: 10px;
+  background: #161b22;
+  gap: 8px;
 }
 
 .shout-input {
   flex: 1;
-  padding: 10px 14px;
-  border-radius: 8px;
+  padding: 8px 12px;
+  border-radius: 6px;
   border: 1px solid #30363d;
   background-color: #0d1117;
   color: #f8fafc;
-  font-size: 0.9rem;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  font-size: 0.85rem;
+  transition: all 0.2s;
+  height: 34px; /* Fix height */
 }
 
 .shout-input:focus {
   outline: none;
   border-color: #6366f1;
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
 }
 
 .shoutbox-footer {
   border-top: 1px solid #30363d;
-  padding: 8px 16px;
+  padding: 10px 16px;
   font-size: 0.75rem;
   color: #7d8590;
-  background: #161b22;
+  background: #0d1117;
 }
 
 /* Category / forum – NEW FLEX LAYOUT */
