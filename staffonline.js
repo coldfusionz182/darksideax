@@ -61,6 +61,8 @@ async function loadCurrentStaffOnline() {
   const container = document.getElementById('current-staff-list');
   if (!container) return;
 
+  container.innerHTML = '<div style="font-size:11px; color:#555; padding:4px 0;">Checking for staff...</div>';
+
   try {
     // 1) get staff users (admin/owner) from public.users
     const { data: users, error } = await supabaseClient
@@ -120,9 +122,10 @@ const activeStaff = users.filter((u) => {
       return;
     }
 
-    activeStaff.forEach((u) => {
+    activeStaff.forEach((u, idx) => {
       const line = document.createElement('div');
-      line.className = 'staff-line';
+      line.className = 'staff-line thread-anim';
+      line.style.animationDelay = `${idx * 0.1}s`;
 
       const displayName = u.username && u.username.trim()
         ? u.username
