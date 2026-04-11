@@ -9,6 +9,7 @@ const MAX_NOTIFS = 5;
 
 // -------------- USER HELPERS --------------
 
+// Get current auth user, username, and last_seen_at from rep
 async function getCurrentUserProfileWithLastSeen() {
   const { data: userData, error } = await supabaseClient.auth.getUser();
   if (error || !userData?.user) return null;
@@ -24,29 +25,56 @@ async function getCurrentUserProfileWithLastSeen() {
 
   const username = profile?.username || user.email;
 
-  const { data: userRow, error: uErr } = await supabaseClient
-    .from('users')
-    .select('last_notifications_seen_at')
+  // read last_seen_at from rep for this username
+  const { data: repRow, error: rErr } = await supabaseClient
+    .from('rep')
+    .select('last_seen_at')
     .eq('username', username)
     .maybeSingle();
-  if (uErr) console.error('notifications: users.last_notifications_seen_at error', uErr);
+  if (rErr) console.error('notifications: rep.last_seen_at error', rErr);
 
   return {
     username,
-    lastSeen: userRow?.last_notifications_seen_at || null,
+    lastSeen: repRow?.last_seen_at || null,
   };
 }
 
+// Update rep.last_seen_at for this username
 async function updateLastNotificationsSeen(username) {
   try {
     const nowIso = new Date().toISOString();
-    const { error } = await supabaseClient
-      .from('users')
-      .update({ last_notifications_seen_at: nowIso })
-      .eq('username', username);
 
-    if (error) {
-      console.error('notifications: failed to update last_notifications_seen_at', error);
+    // Ensure there is a rep row; if not, create a stub
+    const { data: repRow, error: fetchErr } = await supabaseClient
+      .from('rep')
+      .select('id')
+      .eq('username', username)
+      .maybeSingle();
+
+    if (fetchErr) {
+      console.error('notifications: fetch rep for last_seen_at error', fetchErr);
+      return;
+    }
+
+    if (!repRow) {
+      const { error: insErr } = await supabaseClient.from('rep').insert({
+        username,
+        amount: '0',
+        given_by: 'system',
+        timegiven: nowIso,
+        last_seen_at: nowIso,
+      });
+      if (insErr) {
+        console.error('notifications: insert rep for last_seen_at error', insErr);
+      }
+    } else {
+      const { error: updErr } = await supabaseClient
+        .from('rep')
+        .update({ last_seen_at: nowIso })
+        .eq('id', repRow.id);
+      if (updErr) {
+        console.error('notifications: update rep.last_seen_at error', updErr);
+      }
     }
   } catch (e) {
     console.error('notifications: updateLastNotificationsSeen exception', e);
@@ -266,7 +294,7 @@ async function fetchReplyNotifications(currentUser, myThreadIds, lastSeen) {
     }));
 }
 
-// Rep notifications (using timegiven only)
+// Rep notifications (using timegiven + last_seen_at from rep)
 async function fetchRepNotifications(currentUser, lastSeen) {
   let query = supabaseClient
     .from('rep')
