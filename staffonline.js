@@ -131,20 +131,22 @@ const activeStaff = users.filter((u) => {
         ? u.username
         : (u.email ? u.email.split('@')[0] : 'Unknown');
 
-      const roleLabel = (u.userrank && u.userrank.trim())
-        ? u.userrank
-        : (u.role === 'owner'
-            ? 'Owner'
-            : u.role === 'admin'
       // Determine Branding Class
       let roleClass = 'ds-user-member';
       if (u.role === 'owner') roleClass = 'ds-user-owner';
       else if (u.role === 'admin') roleClass = 'ds-user-admin';
 
+      // Avatar Logic (Keeping avatars but removing links to profiles)
+      // We can fetch from cache if available or just use a default
+      const avatarSrc = u.avatar_url || 'https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y';
+
       line.innerHTML = `
+        <span class="staff-avatar">
+          <img src="${avatarSrc}" alt="${displayName}" class="user-avatar-header" style="width:28px; height:28px; border-radius:4px; margin-right:10px; object-fit:cover;">
+        </span>
         <span class="staff-name">
           <span class="staff-name-text ${roleClass}">${displayName}</span>
-          <div class="staff-rank">${u.userrank || u.role.toUpperCase()}</div>
+          <div class="staff-rank" style="font-size:10px; color:#888;">${u.userrank || u.role.toUpperCase()}</div>
         </span>
       `;
 
