@@ -31,12 +31,15 @@ async function loadProfile() {
   let targetUser = null;
   try {
     const [{ data: profileRow }, { data: userData }] = await Promise.all([
-      supabase.from('profiles').select('username, discord, telegram').eq('id', authUser.id).maybeSingle(),
+      // Temporarily avoiding select('discord, telegram') because it crashes if columns don't exist yet
+      supabase.from('profiles').select('username').eq('id', authUser.id).maybeSingle(),
       supabase.from('users').select('id, email, role, avatar_url, userrank, created_at').eq('id', authUser.id).maybeSingle()
     ]);
 
     if (!userData) throw new Error('Data not found');
-    targetUser = { ...userData, username: profileRow?.username || authUser.email, discord: profileRow?.discord, telegram: profileRow?.telegram };
+    
+    // We will inject empty social values securely so the page doesn't crash
+    targetUser = { ...userData, username: profileRow?.username || authUser.email, discord: null, telegram: null };
   } catch (err) {
     console.error('Profile Load Error:', err);
     usernameEl.textContent = 'Profile Error';

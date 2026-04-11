@@ -34,7 +34,8 @@ async function fetchUserDataWithCache(username) {
     // First, resolve the ID from profiles (since username is there)
     const { data: profile } = await window.supabaseClient
       .from('profiles')
-      .select('id, discord, telegram')
+      // Temporarily avoiding select('discord, telegram') because they don't exist yet
+      .select('id')
       .ilike('username', username)
       .maybeSingle();
     
