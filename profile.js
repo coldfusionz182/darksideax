@@ -18,59 +18,33 @@ function formatDate(iso) {
 }
 
 async function loadProfile() {
-  const targetParam = getParam('u');
   const usernameEl = document.getElementById('profile-username');
   if (!usernameEl) return;
 
-  // 1. Resolve Identity
-  let targetUser = null;
+  // 1. Resolve Identity (Strictly Own Profile)
   const { data: { user: authUser } } = await supabase.auth.getUser();
-
-  try {
-    let profileId = null;
-    let usernameString = null;
-
-    if (targetParam) {
-      // Lookup by username in profiles
-      const { data: profileRow, error: pErr } = await supabase
-        .from('profiles')
-        .select('id, username')
-        .ilike('username', targetParam)
-        .maybeSingle();
-
-      if (pErr || !profileRow) throw new Error('User not found');
-      profileId = profileRow.id;
-      usernameString = profileRow.username;
-    } else {
-      // Default to own profile
-      if (!authUser) {
-        usernameEl.textContent = 'Please Login';
-        return;
-      }
-      profileId = authUser.id;
-      const { data: profileRow } = await supabase.from('profiles').select('username').eq('id', authUser.id).maybeSingle();
-      usernameString = profileRow?.username || authUser.email;
-    }
-
-    // Now get the actual user data (email, role, avatar)
-    const { data: userData, error: uErr } = await supabase
-      .from('users')
-      .select('id, email, role, avatar_url, userrank, created_at')
-      .eq('id', profileId)
-      .maybeSingle();
-
-    if (uErr || !userData) throw new Error('Data not found');
-    targetUser = { ...userData, username: usernameString };
-
-  } catch (err) {
-    console.error('Profile Load Error:', err);
-    usernameEl.textContent = 'User Not Found';
+  if (!authUser) {
+    usernameEl.textContent = 'Please Login';
     return;
   }
 
-  const isOwner = authUser && authUser.id === targetUser.id;
-  const { data: viewerRow } = authUser ? await supabase.from('users').select('role').eq('id', authUser.id).maybeSingle() : { data: null };
-  const isStaff = viewerRow && (viewerRow.role === 'admin' || viewerRow.role === 'owner');
+  let targetUser = null;
+  try {
+    const [{ data: profileRow }, { data: userData }] = await Promise.all([
+      supabase.from('profiles').select('username').eq('id', authUser.id).maybeSingle(),
+      supabase.from('users').select('id, email, role, avatar_url, userrank, created_at').eq('id', authUser.id).maybeSingle()
+    ]);
+
+    if (!userData) throw new Error('Data not found');
+    targetUser = { ...userData, username: profileRow?.username || authUser.email };
+  } catch (err) {
+    console.error('Profile Load Error:', err);
+    usernameEl.textContent = 'Profile Error';
+    return;
+  }
+
+  const isOwner = true; // Always true in this mode
+  const isStaff = targetUser.role === 'admin' || targetUser.role === 'owner';
 
   // 2. Populate UI
   usernameEl.textContent = targetUser.username;

@@ -136,17 +136,16 @@ const activeStaff = users.filter((u) => {
         : (u.role === 'owner'
             ? 'Owner'
             : u.role === 'admin'
-              ? 'Administrator'
-              : 'Staff');
-
       // Determine Branding Class
-      let brandingClass = 'ds-user-member';
-      if (u.role === 'owner') brandingClass = 'ds-user-owner';
-      else if (u.role === 'admin') brandingClass = 'ds-user-admin';
+      let roleClass = 'ds-user-member';
+      if (u.role === 'owner') roleClass = 'ds-user-owner';
+      else if (u.role === 'admin') roleClass = 'ds-user-admin';
 
       line.innerHTML = `
-        <span class="staff-name ${brandingClass}">${displayName}</span>
-        <span class="staff-role">${roleLabel}</span>
+        <span class="staff-name">
+          <span class="staff-name-text ${roleClass}">${displayName}</span>
+          <div class="staff-rank">${u.userrank || u.role.toUpperCase()}</div>
+        </span>
       `;
 
       container.appendChild(line);

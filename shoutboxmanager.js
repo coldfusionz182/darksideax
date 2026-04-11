@@ -125,9 +125,8 @@ async function renderShout(row, currentUser, isOptimistic = false) {
   const topBar = document.createElement('div');
   topBar.className = 'ds-line-top';
 
-  const userLink = document.createElement('a');
+  const userLink = document.createElement('span');
   userLink.className = 'ds-shout-user ds-user-member'; // default
-  userLink.href = 'profile.html?u=' + encodeURIComponent(row.username);
   userLink.textContent = row.username;
   userLink.style.cursor = 'contextmenu';
 
@@ -185,16 +184,34 @@ async function renderShout(row, currentUser, isOptimistic = false) {
     };
     menu.appendChild(mentionAction);
 
-    if (me && (me.role === 'admin' || me.role === 'owner' || me.id === row.user_id)) {
-      const del = document.createElement('div');
-      del.className = 'ds-context-item delete';
-      del.innerHTML = `<i class="fa fa-trash"></i> Delete message`;
-      del.onclick = async () => {
-        if (!confirm('Delete this message?')) return;
-        const { error } = await window.supabaseClient.from('shouts').delete().eq('id', row.id);
-        if (!error) item.remove();
-      };
-      menu.appendChild(del);
+    if (me) {
+      const isOwnerViewer = me.role === 'owner';
+      const isAdminViewer = me.role === 'admin';
+      const isMessageOwner = me.id === row.user_id;
+
+      let canDelete = isOwnerViewer || isMessageOwner;
+
+      // Special check for Admin Viewer
+      if (isAdminViewer && !canDelete) {
+         // Get the target's role from cache
+         const targetData = avatarCache[row.username];
+         // Only let admins delete if target is NOT owner and NOT admin (i.e. is member)
+         if (targetData && targetData.role !== 'owner' && targetData.role !== 'admin') {
+            canDelete = true;
+         }
+      }
+
+      if (canDelete) {
+        const del = document.createElement('div');
+        del.className = 'ds-context-item delete';
+        del.innerHTML = `<i class="fa fa-trash"></i> Delete message`;
+        del.onclick = async () => {
+          if (!confirm('Delete this message?')) return;
+          const { error } = await window.supabaseClient.from('shouts').delete().eq('id', row.id);
+          if (!error) item.remove();
+        };
+        menu.appendChild(del);
+      }
     }
 
     menu.style.display = 'block';
