@@ -201,26 +201,29 @@ async function renderShout(row, currentUser, isOptimistic = false) {
     mentionAction.onclick = () => { shoutInput.value = `@${row.username} ` + shoutInput.value; shoutInput.focus(); };
     menu.appendChild(mentionAction);
 
-    // Discord & Telegram
-    if (userData) {
-      if (userData.discord) {
-        const disc = document.createElement('div');
-        disc.className = 'ds-context-item';
-        disc.innerHTML = `<i class="fab fa-discord" style="color: #5865F2;"></i> Discord: ${userData.discord}`;
-        disc.onclick = () => {
-          navigator.clipboard.writeText(userData.discord);
-          alert(`Discord tag copied: ${userData.discord}`);
-        };
-        menu.appendChild(disc);
+    // Discord (Always visible)
+    const disc = document.createElement('div');
+    disc.className = 'ds-context-item';
+    const discHandle = userData && userData.discord ? `: ${userData.discord}` : '';
+    disc.innerHTML = `<i class="fab fa-discord" style="color: #5865F2;"></i> Discord${discHandle}`;
+    disc.onclick = () => {
+      if (userData && userData.discord) {
+        navigator.clipboard.writeText(userData.discord);
+        alert(`Discord tag copied: ${userData.discord}`);
       }
-      if (userData.telegram) {
-        const tele = document.createElement('div');
-        tele.className = 'ds-context-item';
-        tele.innerHTML = `<i class="fab fa-telegram" style="color: #229ED9;"></i> Telegram`;
-        tele.onclick = () => window.open(`https://t.me/${userData.telegram.replace('@','')}`, '_blank');
-        menu.appendChild(tele);
+    };
+    menu.appendChild(disc);
+
+    // Telegram (Always visible)
+    const tele = document.createElement('div');
+    tele.className = 'ds-context-item';
+    tele.innerHTML = `<i class="fab fa-telegram" style="color: #229ED9;"></i> Telegram`;
+    tele.onclick = () => {
+      if (userData && userData.telegram) {
+        window.open(`https://t.me/${userData.telegram.replace('@','')}`, '_blank');
       }
-    }
+    };
+    menu.appendChild(tele);
 
     if (me) {
       const isOwnerViewer = me.role === 'owner';
