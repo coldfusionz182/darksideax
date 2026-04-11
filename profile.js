@@ -34,12 +34,15 @@ async function loadProfile() {
   let targetUser = null;
   try {
     if (targetUsername) {
+      // Use ilike for case-insensitive lookup
       const { data, error } = await supabase
         .from('users')
         .select('id, email, role, username, avatar_url, userrank, created_at')
-        .eq('username', targetUsername)
+        .ilike('username', targetUsername)
         .maybeSingle();
-      if (error || !data) throw new Error('User not found');
+
+      if (error) throw error;
+      if (!data) throw new Error('User not found');
       targetUser = data;
     } else {
       // No param? Show own profile
