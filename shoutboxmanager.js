@@ -30,7 +30,7 @@ async function renderShout(row, currentUser) {
 
   const timeSpan = document.createElement('span');
   timeSpan.className = 'shout-time';
-  const d = new Date(row.createdat);
+  const d = new Date(row.created_at);
   const hh = d.getHours().toString().padStart(2, '0');
   const mm = d.getMinutes().toString().padStart(2, '0');
   timeSpan.textContent = `${hh}:${mm}`;
@@ -54,8 +54,8 @@ async function loadShouts(currentUser) {
 
   const { data, error } = await supabaseClient
     .from('shouts')
-    .select('id, userid, username, message, createdat')
-    .order('createdat', { ascending: false })
+    .select('id, user_id, username, message, created_at')
+    .order('created_at', { ascending: false })
     .limit(50);
 
   if (error) {
@@ -68,7 +68,7 @@ async function loadShouts(currentUser) {
   shoutBox.scrollTop = shoutBox.scrollHeight;
 
   if (data && data.length > 0) {
-    lastShoutTimestamp = data[0].createdat;
+    lastShoutTimestamp = data[0].created_at;
   }
 }
 
@@ -79,8 +79,8 @@ async function hasNewShouts() {
 
   const { data, error } = await supabaseClient
     .from('shouts')
-    .select('createdat')
-    .order('createdat', { ascending: false })
+    .select('created_at')
+    .order('created_at', { ascending: false })
     .limit(1);
 
   if (error) {
@@ -89,7 +89,7 @@ async function hasNewShouts() {
   }
   if (!data || !data.length) return false;
 
-  const latest = data[0].createdat;
+  const latest = data[0].created_at;
   return new Date(latest) > new Date(lastShoutTimestamp);
 }
 
@@ -155,7 +155,7 @@ async function setupShoutbox() {
       const { error } = await supabaseClient
         .from('shouts')
         .insert({
-          userid: meNow.id,
+          user_id: meNow.id,
           username: meNow.username,
           message: msg,
         });
