@@ -8,244 +8,249 @@
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
   <link href="styles.css" rel="stylesheet">
 
-  <style>
+    <style>
+    /* Premium Glassmorphic New Thread Editor */
     body {
-      background: radial-gradient(circle at top, #151826 0, #05060a 55%);
+      background-color: #09090b;
     }
-
-    .user-pill {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 4px 8px;
-      border-radius: 999px;
-      background: #111827;
-      border: 1px solid #1f2937;
-      color: #e5e7eb;
-      cursor: pointer;
-      font-size: 0.8rem;
-    }
-    .user-pill img.user-avatar-header {
-      width: 22px;
-      height: 22px;
-      border-radius: 999px;
-      object-fit: cover;
-      border: 1px solid #1f2937;
-      display: block;
-    }
-
+    
     .new-thread-shell {
-      max-width: 1100px;
-      margin: 0 auto;
+      max-width: 900px;
+      margin: 30px auto;
+      font-family: "Inter", sans-serif;
     }
 
     .new-thread-card {
-      background: #10131c;
-      border-radius: 8px;
-      border: 1px solid #22263a;
-      box-shadow: 0 0 22px rgba(0,0,0,0.75);
-    }
-
-    .profile-avatar-large {
-      width: 86px;
-      height: 86px;
-      border-radius: 4px;
+      background: rgba(15, 23, 42, 0.4);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 12px;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
       overflow: hidden;
     }
 
-    #profile-avatar img {
-      width: 100%;
-      height: 100%;
-      max-width: 86px;
-      max-height: 86px;
-      object-fit: cover;
-      display: block;
-    }
-
-    .new-thread-card .card-body { padding: 0; }
-
     .editor-header-bar {
-      background: linear-gradient(90deg, #3b82f6, #1d4ed8);
-      color: #fff;
-      padding: 10px 14px;
-      border-radius: 8px 8px 0 0;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      font-size: 0.9rem;
+      padding: 18px 24px;
+      background: rgba(0, 0, 0, 0.2);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
     }
 
     .editor-header-left {
-      text-transform: uppercase;
-      letter-spacing: 0.12em;
-      font-size: 0.85rem;
-    }
-
-    .editor-header-user {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 0.8rem;
-    }
-
-    .header-username { font-weight: 600; }
-
-    .user-rank-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      padding: 3px 8px;
-      border-radius: 999px;
-      font-size: 0.7rem;
-      text-transform: uppercase;
-      letter-spacing: 0.12em;
-      border: 1px solid transparent;
-    }
-
-    .user-rank-badge i { font-size: 0.7rem; }
-
-    .rank-admin {
-      background: rgba(248,113,113,0.18);
-      color: #fee2e2;
-      border-color: rgba(248,113,113,0.7);
-    }
-
-    .rank-member {
-      background: rgba(96,165,250,0.18);
-      color: #bfdbfe;
-      border-color: rgba(96,165,250,0.7);
+      font-size: 1.15rem;
+      font-weight: 600;
+      color: #f8fafc;
+      letter-spacing: 0.02em;
     }
 
     .user-header-card {
-      display: inline-flex;
+      display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 12px;
     }
 
     .author-avatar {
       width: 40px;
       height: 40px;
       border-radius: 50%;
+      border: 2px solid rgba(99, 102, 241, 0.5); /* Indigo accent */
       object-fit: cover;
-      border: 2px solid #181c2d;
+      box-shadow: 0 0 10px rgba(99, 102, 241, 0.3);
     }
 
+    .header-username {
+      font-weight: 600;
+      color: #e2e8f0;
+      display: block;
+      font-size: 0.95rem;
+    }
+
+    .user-rank-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 0.7rem;
+      padding: 2px 6px;
+      border-radius: 4px;
+      margin-top: 4px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .rank-member { background: rgba(56, 189, 248, 0.15); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3); }
+
     .editor-container {
-      border-radius: 0 0 8px 8px;
-      border-top: 1px solid #262a3d;
-      background: #05070c;
+      display: flex;
+      flex-direction: column;
     }
 
     .editor-row-label {
-      padding: 7px 12px;
-      border-bottom: 1px solid #191b26;
-      font-size: 0.8rem;
-      background: #141722;
-      color: #d1d5ff;
+      padding: 16px 24px 8px;
+      background: rgba(0, 0, 0, 0.1);
       display: flex;
       justify-content: space-between;
-      align-items: center;
+      align-items: flex-end;
+    }
+    
+    .editor-row-label span:first-child {
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: #94a3b8;
+      font-weight: 600;
     }
 
     .editor-input {
       width: 100%;
-      padding: 8px 12px;
+      padding: 14px 24px;
       border: none;
-      border-bottom: 1px solid #191b26;
-      background: #10131c;
-      color: #e5e7ff;
-      font-size: 0.9rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      background: transparent;
+      color: #f8fafc;
+      font-size: 1.05rem;
+      font-family: inherit;
+      transition: background 0.2s ease;
     }
 
-    .editor-input::placeholder { color: #6b7280; }
-    .editor-input:focus { outline: none; }
+    .editor-input::placeholder { color: #475569; }
+    .editor-input:focus { outline: none; background: rgba(255, 255, 255, 0.02); }
 
     .meta-row {
-      padding: 8px 12px;
-      border-bottom: 1px solid #191b26;
-      background: #0c0f18;
+      padding: 14px 24px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      background: rgba(0, 0, 0, 0.15);
+      display: flex;
+      align-items: center;
+      gap: 16px;
     }
 
     .meta-row .form-label {
-      font-size: 0.75rem;
-      color: #9ca3c9;
+      font-size: 0.85rem;
+      color: #94a3b8;
+      font-weight: 500;
+    }
+
+    .form-control {
+      background: rgba(15, 23, 42, 0.8);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: #e2e8f0;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      cursor: pointer;
     }
 
     .editor-toolbar {
-      padding: 6px 8px;
-      border-top: 1px solid #191b26;
-      border-bottom: 1px solid #191b26;
-      background: #10131c;
+      padding: 10px 24px;
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      background: rgba(0, 0, 0, 0.2);
       display: flex;
       flex-wrap: wrap;
-      gap: 4px;
+      gap: 8px;
     }
 
     .toolbar-btn {
-      background: #171a26;
-      border: 1px solid #262a3d;
-      color: #cbd0ff;
-      padding: 3px 7px;
-      border-radius: 3px;
-      font-size: 0.78rem;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: #cbd5e1;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 0.85rem;
       cursor: pointer;
       display: inline-flex;
       align-items: center;
-      gap: 4px;
+      gap: 6px;
+      transition: all 0.2s ease;
     }
 
-    .toolbar-btn:hover { background: #22263a; }
-
-    .toolbar-btn i { font-size: 0.75rem; }
+    .toolbar-btn:hover {
+      background: rgba(99, 102, 241, 0.2);
+      border-color: rgba(99, 102, 241, 0.5);
+      color: #fff;
+    }
 
     .editor-textarea {
       width: 100%;
-      min-height: 260px;
+      min-height: 320px;
       border: none;
       resize: vertical;
-      background: #05070d;
-      color: #e5e7ff;
-      font-size: 0.9rem;
-      line-height: 1.55;
-      padding: 8px 12px 12px;
+      background: transparent;
+      color: #e2e8f0;
+      font-size: 0.95rem;
+      line-height: 1.6;
+      padding: 16px 24px;
       font-family: "Roboto Mono", Consolas, monospace;
+      transition: background 0.2s ease;
     }
 
-    .editor-textarea:focus { outline: none; }
-
-    .hint-line {
-      font-size: 0.78rem;
-      color: #9ca3c9;
-      padding: 6px 12px 0;
-    }
+    .editor-textarea:focus { outline: none; background: rgba(255, 255, 255, 0.01); }
 
     .bottom-actions {
-      padding: 10px 12px 14px;
+      padding: 16px 24px;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      font-size: 0.8rem;
+      background: rgba(0, 0, 0, 0.3);
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    
+    .action-info {
+        font-size: 0.8rem;
+        color: #64748b;
+    }
+
+    .btn-create-thread {
+        background: linear-gradient(135deg, #6366f1, #4f46e5);
+        color: #fff;
+        border: none;
+        padding: 10px 24px;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 0.95rem;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.2s ease;
+        box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+    }
+    
+    .btn-create-thread:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(99, 102, 241, 0.5);
     }
 
     .color-palette {
       position: absolute;
       z-index: 9999;
-      background: #05070d;
-      border: 1px solid #181c2d;
-      border-radius: 4px;
-      padding: 6px;
+      background: rgba(15, 23, 42, 0.95);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      padding: 8px;
       display: grid;
-      grid-template-columns: repeat(5, 18px);
-      gap: 4px;
+      grid-template-columns: repeat(5, 22px);
+      gap: 6px;
+      backdrop-filter: blur(8px);
+      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
     }
 
     .color-palette button {
-      width: 18px;
-      height: 18px;
-      border-radius: 2px;
-      border: 1px solid #111827;
+      width: 22px;
+      height: 22px;
+      border-radius: 4px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
       cursor: pointer;
       padding: 0;
+      transition: transform 0.1s ease;
+    }
+    
+    .color-palette button:hover {
+        transform: scale(1.15);
     }
   </style>
   <link href="notifications.css" rel="stylesheet">
@@ -399,7 +404,7 @@ Highlight any sensitive part and click 'Hide text' to wrap it in [HIDDEN] tags."
               <div class="bottom-actions">
                 <span id="thread-status" class="small-link"></span>
                 <div>
-                  <button type="submit" class="btn btn-primary" id="thread-submit">
+                  <button type="submit" class="btn-create-thread" id="thread-submit">
                     <i class="fa fa-paper-plane"></i> Create Thread
                   </button>
                   <a href="software.html" class="small-link" style="margin-left:10px;">
