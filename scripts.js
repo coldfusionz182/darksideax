@@ -830,26 +830,58 @@ if (!rawUser) {
   }
 
 
-  // ===================== INDEX: Accounts threads counter =====================
-  async function updateIndexAccountsThreads() {
-    const el = document.getElementById('index-accounts-threads');
-    if (!el) return; // not on index.html
+  // ===================== INDEX: Dynamic Category Thread Counters =====================
+  async function updateIndexThreadCounts() {
+    // Only run if we are on the index page (check if one of the counters exists)
+    if (!document.getElementById('index-configs-threads') && !document.getElementById('index-accounts-threads')) return; 
 
     try {
-      const { count, error } = await supabaseClient
+      // Get all sections in one query to minimize DB hits
+      const { data, error } = await supabaseClient
         .from('threads')
-        .select('*', { count: 'exact', head: true });
+        .select('section');
 
       if (error) {
-        console.error('updateIndexAccountsThreads error', error);
+        console.error('updateIndexThreadCounts error', error);
         return;
       }
 
-      el.textContent = count ?? 0;
+      // Tally them up
+      const counts = {
+        configs: 0,
+        combo: 0,
+        software: 0,
+        softwareauth: 0,
+        accounts: 0
+      };
+
+      if (data) {
+        data.forEach(thread => {
+          const sec = (thread.section || '').toLowerCase();
+          if (counts[sec] !== undefined) {
+            counts[sec]++;
+          }
+        });
+      }
+
+      // Update DOM
+      const maps = [
+        { id: 'index-configs-threads', val: counts.configs },
+        { id: 'index-combo-threads', val: counts.combo },
+        { id: 'index-software-threads', val: counts.software },
+        { id: 'index-softwareauth-threads', val: counts.softwareauth },
+        { id: 'index-accounts-threads', val: counts.accounts }
+      ];
+
+      maps.forEach(m => {
+        const el = document.getElementById(m.id);
+        if (el) el.textContent = m.val.toLocaleString();
+      });
+
     } catch (err) {
-      console.error('updateIndexAccountsThreads error', err);
+      console.error('updateIndexThreadCounts catch error', err);
     }
   }
 
-  updateIndexAccountsThreads();
+  updateIndexThreadCounts();
 });
