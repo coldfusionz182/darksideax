@@ -100,12 +100,12 @@
               <span class="info-value info-online">Online</span>
             </div>
 
-            <div class="profile-info-row">
+            <div class="profile-info-row" id="profile-email-row" style="display:none;">
               <span class="info-label">Email:</span>
               <span class="info-value" id="profile-email">–</span>
             </div>
 
-            <div class="profile-info-row">
+            <div class="profile-info-row" id="profile-uid-row" style="display:none;">
               <span class="info-label">UID:</span>
               <span class="info-value" id="info-uid">–</span>
             </div>
@@ -117,11 +117,18 @@
 
             <div class="profile-info-row">
               <span class="info-label">Last Visit:</span>
-              <span class="info-value" id="info-last-visit">–</span>
+              <span class="info-value" id="info-last-visit">Recently</span>
             </div>
 
-            <!-- AVATAR URL EDIT -->
-            <div class="profile-info-row profile-info-row-avatar">
+            <!-- STAFF ACTIONS -->
+            <div id="staff-profile-actions" style="display:none; padding-top:10px; border-top:1px solid #30363d; margin-top:10px;">
+               <button id="btn-give-rep" class="btn btn-small btn-primary" style="width:100%">
+                 <i class="fa fa-star"></i> Give Reputation
+               </button>
+            </div>
+
+            <!-- AVATAR URL EDIT (Owner Only) -->
+            <div class="profile-info-row profile-info-row-avatar" id="avatar-edit-row" style="display:none;">
               <span class="info-label">Avatar URL:</span>
               <input
                 type="text"

@@ -1,411 +1,149 @@
-// rep.js
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { SUPABASE_ANON_KEY } from './keys.js';
 
 const SUPABASE_URL = 'https://ffmkkwskvjvytdddevmm.supabase.co';
-const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-// ---------- shared helpers ----------
-
-async function getCurrentUserWithRole() {
-  const { data: userData, error } = await supabaseClient.auth.getUser();
-  if (error || !userData?.user) return null;
-
-  const user = userData.user;
-
-  const { data: profile } = await supabaseClient
-    .from('profiles')
-    .select('username')
-    .eq('id', user.id)
-    .maybeSingle();
-
-  const { data: userRow } = await supabaseClient
-    .from('users')
-    .select('role')
-    .eq('id', user.id)
-    .maybeSingle();
-
-  return {
-    id: user.id,
-    email: user.email,
-    username: profile?.username || user.email,
-    role: userRow?.role || 'user',
-  };
+function getParam(name) {
+  return new URLSearchParams(window.location.search).get(name);
 }
 
-// ---------- profile page rep display ----------
-
-async function loadRepForCurrentUser() {
+/**
+ * Loads the reputation score for the profile being viewed
+ */
+async function loadTargetReputation() {
   const repEl = document.getElementById('profile-rep');
   if (!repEl) return;
 
-  const profileUsernameEl = document.getElementById('profile-username');
-  let usernameToLoad = null;
-
-  if (profileUsernameEl) {
-    const text = profileUsernameEl.textContent.trim();
-    if (text && text !== 'Loading...' && text !== 'Not logged in') {
-      usernameToLoad = text;
-    }
+  // Resolve target username from URL or the Loaded Profile name
+  let target = getParam('u');
+  if (!target) {
+     const { data: { user } } = await supabase.auth.getUser();
+     if (user) {
+        const { data: profile } = await supabase.from('users').select('username').eq('id', user.id).maybeSingle();
+        target = profile?.username;
+     }
   }
 
-  if (!usernameToLoad) {
-    const current = await getCurrentUserWithRole();
-    if (!current) {
-      repEl.textContent = '0';
+  if (!target) return;
+
+  const { data, error } = await supabase
+    .from('rep')
+    .select('amount')
+    .eq('username', target);
+    
+  if (error) {
+    console.error('Error fetching rep', error);
+    return;
+  }
+
+  // Calculate sum of all rows for this user
+  const total = data.reduce((acc, row) => acc + (parseInt(row.amount) || 0), 0);
+  repEl.textContent = total;
+}
+
+/**
+ * Handles the "Give Reputation" modal for staff
+ */
+async function setupGiveRepModal() {
+  const giveBtn = document.getElementById('btn-give-rep');
+  if (!giveBtn) return;
+
+  const targetUsername = getParam('u');
+  if (!targetUsername) return;
+
+  giveBtn.onclick = async () => {
+    const { data: { user: authUser } } = await supabase.auth.getUser();
+    if (!authUser) return;
+
+    const { data: viewer } = await supabase.from('users').select('username').eq('id', authUser.id).maybeSingle();
+    const giverName = viewer?.username || 'System';
+
+    const amount = prompt(`Give reputation to ${targetUsername} (-5 to +5):`, "1");
+    if (amount === null) return;
+
+    const val = parseInt(amount);
+    if (isNaN(val) || val < -5 || val > 5 || val === 0) {
+      alert("Invalid amount. Use -5 to +5.");
       return;
     }
-    usernameToLoad = current.username;
-  }
 
-  try {
-    const { data, error } = await supabaseClient
-      .from('rep')
-      .select('amount')
-      .eq('username', usernameToLoad)
-      .maybeSingle();
+    const { error } = await supabase.from('rep').insert({
+      username: targetUsername,
+      amount: String(val),
+      given_by: giverName,
+      timegiven: new Date().toISOString()
+    });
 
     if (error) {
-      console.error('rep(profile): load error', error);
-      return;
+      alert("Failed to give reputation.");
+    } else {
+      alert(`Success! Gave ${val} reputation to ${targetUsername}.`);
+      window.location.reload();
     }
-
-    const raw = data?.amount ?? '0';
-    const parsed = parseInt(raw, 10);
-    repEl.textContent = Number.isNaN(parsed) ? raw : String(parsed);
-  } catch (e) {
-    console.error('rep(profile): exception', e);
-  }
+  };
 }
 
-// ---------- rep details modal (profile) ----------
-
-async function openRepDetailsModal() {
-  const backdrop = document.getElementById('rep-modal-backdrop');
-  const body = document.getElementById('rep-modal-body');
-  const title = document.getElementById('rep-modal-title');
-  const nameEl = document.getElementById('profile-username');
-
-  if (!backdrop || !body || !nameEl) return;
-
-  const profileUsername = nameEl.textContent.trim();
-  if (!profileUsername || profileUsername === 'Loading...' || profileUsername === 'Not logged in') return;
-
-  title.innerHTML = `<i class="fa fa-star"></i> Reputation for ${profileUsername}`;
-
-  const { data, error } = await supabaseClient
-    .from('rep')
-    .select('amount, given_by, created_at, timegiven')
-    .eq('username', profileUsername)
-    .order('created_at', { ascending: false });
-
-  body.innerHTML = '';
-
-  if (error) {
-    console.error('rep(profile): detail load error', error);
-    const p = document.createElement('p');
-    p.className = 'rep-modal-empty';
-    p.textContent = 'Failed to load reputation details.';
-    body.appendChild(p);
-  } else if (!data || data.length === 0) {
-    const p = document.createElement('p');
-    p.className = 'rep-modal-empty';
-    p.textContent = 'No reputation received yet.';
-    body.appendChild(p);
-  } else {
-    data.forEach((row) => {
-      const wrap = document.createElement('div');
-      wrap.className = 'rep-entry';
-
-      const left = document.createElement('div');
-      left.className = 'rep-entry-left';
-
-      const from = document.createElement('span');
-      from.className = 'rep-entry-from';
-      const giver = row.given_by || 'Unknown';
-      from.textContent = `From ${giver}`;
-
-      const meta = document.createElement('span');
-      meta.className = 'rep-entry-meta';
-
-      const tsString = row.timegiven || row.created_at;
-      if (tsString) {
-        const d = new Date(tsString);
-        const dd = d.getDate().toString().padStart(2, '0');
-        const mm = (d.getMonth() + 1).toString().padStart(2, '0');
-        const hh = d.getHours().toString().padStart(2, '0');
-        const min = d.getMinutes().toString().padStart(2, '0');
-        meta.textContent = `${dd}/${mm} ${hh}:${min}`;
-      } else {
-        meta.textContent = '';
-      }
-
-      left.appendChild(from);
-      left.appendChild(meta);
-
-      const right = document.createElement('span');
-      right.className = 'rep-entry-amount';
-      const amt = parseInt(row.amount ?? '0', 10);
-      const num = Number.isNaN(amt) ? row.amount : amt;
-      const sign = Number(num) >= 0 ? '+' : '';
-      right.textContent = `${sign}${num}`;
-
-      wrap.appendChild(left);
-      wrap.appendChild(right);
-
-      body.appendChild(wrap);
-    });
-  }
-
-  backdrop.style.display = 'flex';
-}
-
-// ---------- give rep (index page) ----------
-
-async function searchUsersByUsernamePrefix(prefix) {
-  if (!prefix) return [];
-
-  const { data, error } = await supabaseClient
-    .from('users')
-    .select('username')
-    .ilike('username', `${prefix}%`)
-    .limit(5);
-
-  if (error) {
-    console.error('rep(give): user search error', error);
-    return [];
-  }
-  return (data || []).filter((u) => u.username);
-}
-
-// insert / increment rep for target username
-async function addRepForUser(targetUsername, delta, givenByUsername) {
-  const nowIso = new Date().toISOString();
-
-  const { data, error } = await supabaseClient
-    .from('rep')
-    .select('id, amount')
-    .eq('username', targetUsername)
-    .maybeSingle();
-
-  if (error) {
-    console.error('rep(give): fetch existing error', error);
-    throw error;
-  }
-
-  let newAmount;
-
-  if (!data) {
-    newAmount = delta;
-    const { error: insErr } = await supabaseClient
-      .from('rep')
-      .insert({
-        username: targetUsername,
-        amount: String(newAmount),
-        given_by: givenByUsername,
-        timegiven: nowIso,
-      });
-
-    if (insErr) {
-      console.error('rep(give): insert error', insErr);
-      throw insErr;
-    }
-  } else {
-    const currentAmount = parseInt(data.amount ?? '0', 10);
-    newAmount = (Number.isNaN(currentAmount) ? 0 : currentAmount) + delta;
-
-    const { error: updErr } = await supabaseClient
-      .from('rep')
-      .update({
-        amount: String(newAmount),
-        given_by: givenByUsername,
-        timegiven: nowIso,
-      })
-      .eq('id', data.id);
-
-    if (updErr) {
-      console.error('rep(give): update error', updErr);
-      throw updErr;
-    }
-  }
-
-  return newAmount;
-}
-
-async function initRepGiveBox() {
-  const box = document.getElementById('rep-give-box');
-  const form = document.getElementById('rep-give-form');
-  const userInput = document.getElementById('rep-username');
-  const amountSelect = document.getElementById('rep-amount');
-  const statusEl = document.getElementById('rep-give-status');
-
-  if (!box || !form || !userInput || !amountSelect || !statusEl) return;
-
-  const current = await getCurrentUserWithRole();
-  if (!current) {
-    box.style.display = 'none';
-    return;
-  }
-
-  if (current.role !== 'admin' && current.role !== 'owner') {
-    box.style.display = 'none';
-    return;
-  }
-
-  box.style.display = 'block';
-
-  // suggestion list
-  const suggestions = document.createElement('div');
-  suggestions.id = 'rep-username-suggestions';
-  suggestions.style.position = 'absolute';
-  suggestions.style.zIndex = '999';
-  suggestions.style.background = '#020617';
-  suggestions.style.border = '1px solid #111827';
-  suggestions.style.borderRadius = '4px';
-  suggestions.style.fontSize = '0.8rem';
-  suggestions.style.display = 'none';
-  document.body.appendChild(suggestions);
-
-  function hideSuggestions() {
-    suggestions.style.display = 'none';
-    suggestions.innerHTML = '';
-  }
-
-  function positionSuggestions() {
-    const rect = userInput.getBoundingClientRect();
-    suggestions.style.left = `${rect.left + window.scrollX}px`;
-    suggestions.style.top = `${rect.bottom + window.scrollY + 2}px`;
-    suggestions.style.minWidth = `${rect.width}px`;
-  }
-
-  userInput.addEventListener('input', async () => {
-    const value = userInput.value.trim();
-    if (!value) {
-      hideSuggestions();
-      return;
-    }
-
-    positionSuggestions();
-
-    const users = await searchUsersByUsernamePrefix(value);
-    if (!users.length) {
-      hideSuggestions();
-      return;
-    }
-
-    suggestions.innerHTML = '';
-    users.forEach((u) => {
-      const item = document.createElement('div');
-      item.textContent = u.username;
-      item.style.padding = '4px 8px';
-      item.style.cursor = 'pointer';
-      item.addEventListener('mouseenter', () => {
-        item.style.background = '#111827';
-      });
-      item.addEventListener('mouseleave', () => {
-        item.style.background = 'transparent';
-      });
-      item.addEventListener('click', () => {
-        userInput.value = u.username;
-        hideSuggestions();
-      });
-      suggestions.appendChild(item);
-    });
-
-    suggestions.style.display = 'block';
-  });
-
-  document.addEventListener('click', (e) => {
-    if (e.target === userInput || suggestions.contains(e.target)) return;
-    hideSuggestions();
-  });
-
-  form.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    statusEl.textContent = '';
-
-    const target = userInput.value.trim();
-    const amountStr = amountSelect.value;
-
-    if (!target) {
-      statusEl.textContent = 'Enter the exact username.';
-      return;
-    }
-    if (!amountStr) {
-      statusEl.textContent = 'Select a rep amount.';
-      return;
-    }
-
-    const { data: userCheck, error: checkErr } = await supabaseClient
-      .from('users')
-      .select('username')
-      .eq('username', target)
-      .maybeSingle();
-
-    if (checkErr) {
-      console.error('rep(give): user check error', checkErr);
-      statusEl.textContent = 'Error checking user.';
-      return;
-    }
-    if (!userCheck) {
-      statusEl.textContent = 'User not found.';
-      return;
-    }
-
-    const delta = parseInt(amountStr, 10);
-
-    // allow -6..-1 and +1..+6
-    if (!delta || delta < -6 || delta > 6 || delta === 0) {
-      statusEl.textContent = 'Invalid rep amount.';
-      return;
-    }
-
-    statusEl.textContent = 'Updating reputation...';
-
-    try {
-      const newAmount = await addRepForUser(target, delta, current.username);
-      statusEl.textContent = `Reputation updated. ${target} now has ${newAmount} rep.`;
-      form.reset();
-      hideSuggestions();
-    } catch (err) {
-      console.error('rep(give): failed', err);
-      statusEl.textContent = 'Failed to update reputation.';
-    }
-  });
-}
-
-// ---------- entry ----------
-
-function initRepModule() {
-  loadRepForCurrentUser().catch((e) => console.error(e));
-  initRepGiveBox().catch((e) => console.error(e));
-
+/**
+ * Opens the reputation details list
+ */
+async function setupRepDetails() {
   const repEl = document.getElementById('profile-rep');
-  const backdrop = document.getElementById('rep-modal-backdrop');
-  const closeBtn = document.getElementById('rep-modal-close');
+  const modal = document.getElementById('rep-modal-backdrop');
+  if (!repEl || !modal) return;
 
-  if (repEl && backdrop) {
-    repEl.addEventListener('click', (e) => {
-      e.preventDefault();
-      openRepDetailsModal().catch((err) => console.error(err));
-    });
+  repEl.style.cursor = 'pointer';
+  repEl.onclick = async () => {
+    const target = getParam('u') || document.getElementById('profile-username').textContent;
+    const body = document.getElementById('rep-modal-body');
+    const title = document.getElementById('rep-modal-title');
+    
+    title.textContent = `Reputation History for ${target}`;
+    body.innerHTML = 'Loading...';
+    modal.style.display = 'flex';
 
-    if (closeBtn) {
-      closeBtn.addEventListener('click', () => {
-        backdrop.style.display = 'none';
-      });
+    const { data, error } = await supabase
+      .from('rep')
+      .select('*')
+      .eq('username', target)
+      .order('timegiven', { ascending: false });
+
+    if (error || !data.length) {
+      body.innerHTML = '<p class="meta">No reputation logs found.</p>';
+      return;
     }
 
-    backdrop.addEventListener('click', (e) => {
-      if (e.target === backdrop) {
-        backdrop.style.display = 'none';
-      }
+    body.innerHTML = '';
+    data.forEach(row => {
+      const entry = document.createElement('div');
+      entry.className = 'rep-entry';
+      entry.style.display = 'flex';
+      entry.style.justifyContent = 'space-between';
+      entry.style.padding = '10px';
+      entry.style.borderBottom = '1px solid #30363d';
+      
+      const val = parseInt(row.amount);
+      const color = val > 0 ? '#10b981' : '#ef4444';
+      const sign = val > 0 ? '+' : '';
+
+      entry.innerHTML = `
+        <div>
+          <strong style="color: ${color}">${sign}${val}</strong>
+          <span class="meta" style="font-size: 0.8rem; margin-left: 10px;">from ${row.given_by}</span>
+        </div>
+        <div class="meta" style="font-size: 0.8rem;">${new Date(row.timegiven).toLocaleDateString()}</div>
+      `;
+      body.appendChild(entry);
     });
-  }
+  };
+
+  // Close logic
+  document.getElementById('rep-modal-close').onclick = () => modal.style.display = 'none';
+  modal.onclick = (e) => { if (e.target === modal) modal.style.display = 'none'; };
 }
 
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', initRepModule);
-} else {
-  initRepModule();
-}
+document.addEventListener('DOMContentLoaded', () => {
+  loadTargetReputation();
+  setupGiveRepModal();
+  setupRepDetails();
+});
