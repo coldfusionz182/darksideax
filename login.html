@@ -514,8 +514,14 @@
         }
 
         const accessToken = data.access_token;
-        if (accessToken) {
-          localStorage.setItem('ds_access_token', accessToken);
+        const refreshToken = data.refresh_token;
+        
+        if (accessToken && refreshToken) {
+          // Sync the session with the Supabase client so other pages (scripts.js) recognize it
+          await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken
+          });
         }
 
         setStatus('Logged in, redirecting...', 'ok');
