@@ -11,24 +11,56 @@ const shoutFooter = document.getElementById('shoutbox-footer');
 let lastShoutTimestamp = null;
 let currentUserCached = null;
 
-// ---------- delete permissions + context menu ----------
-
-// adjust this if you want admins blocked from specific owner ID
 const OWNER_ID = 'PUT_OWNER_USER_ID_HERE';
+
+// DARKSIDE COLOR PALETTE
+const DARKSIDE_PALETTE = {
+  emerald: '#10b981',
+  purple: '#6366f1',
+  blue: '#0ea5e9',
+  gold: '#f59e0b',
+  red: '#ef4444',
+  silver: '#adbac7'
+};
+
+/**
+ * Parses BBCode into clean, safe HTML
+ * Specifically designed for the Darkside palette
+ */
+function parseBBCode(text) {
+  if (!text) return '';
+  
+  let escaped = text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+
+  // [b]...[/b]
+  escaped = escaped.replace(/\[b\](.*?)\[\/b\]/gis, '<b>$1</b>');
+  // [i]...[/i]
+  escaped = escaped.replace(/\[i\](.*?)\[\/i\]/gis, '<i>$1</i>');
+  
+  // [color=name]...[/color]
+  escaped = escaped.replace(/\[color=([a-z]+)\](.*?)\[\/color\]/gis, (match, color, content) => {
+    const hex = DARKSIDE_PALETTE[color.toLowerCase()] || DARKSIDE_PALETTE.silver;
+    return `<span style="color: ${hex}; text-shadow: 0 0 5px ${hex}44;">${content}</span>`;
+  });
+
+  // Mentions (@user)
+  escaped = escaped.replace(/@([a-zA-Z0-9_-]+)/g, '<span style="color:#6366f1; font-weight:700;">@$1</span>');
+
+  return escaped;
+}
 
 function canCurrentUserDeleteShout(currentUser, row) {
   if (!currentUser) return false;
-
-  // owner can delete any shout
   if (currentUser.role === 'owner') return true;
-
-  // admin can delete all except optional owner id
   if (currentUser.role === 'admin') {
     if (row.user_id === OWNER_ID) return false;
     return true;
   }
-
-  // normal users: only their own shouts
   return row.user_id === currentUser.id;
 }
 
@@ -39,10 +71,6 @@ function createShoutContextMenu() {
   menu = document.createElement('div');
   menu.id = 'shout-context-menu';
   menu.className = 'shout-context-menu';
-  menu.style.position = 'absolute';
-  menu.style.zIndex = '9999';
-  menu.style.display = 'none';
-  menu.innerHTML = `<div class="shout-context-item">Delete message</div>`;
   document.body.appendChild(menu);
 
   document.addEventListener('click', () => {
@@ -56,205 +84,154 @@ function createShoutContextMenu() {
 async function renderShout(row, currentUser) {
   if (!shoutBox) return;
 
-  const line = document.createElement('div');
-  line.className = 'shout-line';
+  const me = currentUserCached || currentUser;
+  const isMentioned = me && row.message.toLowerCase().includes(`@${me.username.toLowerCase()}`);
 
-  const textContainer = document.createElement('div');
+  const line = document.createElement('div');
+  line.className = 'shout-line' + (isMentioned ? ' mention' : '');
+
+  const header = document.createElement('div');
+  header.className = 'shout-header';
 
   const userSpan = document.createElement('span');
-  userSpan.className = 'shout-user rank-member';
-
+  userSpan.className = 'shout-user';
+  userSpan.style.cursor = 'contextmenu';
+  
   const userLink = document.createElement('a');
   userLink.className = 'profile-username-link';
   userLink.href = 'profile.html?u=' + encodeURIComponent(row.username);
   userLink.textContent = row.username;
-  userSpan.appendChild(userLink);
+  
+  // Staff coloring
+  if (row.username === 'ColdFusionz') {
+     userLink.style.color = DARKSIDE_PALETTE.purple;
+     userLink.style.textShadow = `0 0 10px ${DARKSIDE_PALETTE.purple}88`;
+  }
 
   const timeSpan = document.createElement('span');
   timeSpan.className = 'shout-time';
   const d = new Date(row.created_at);
-  const hh = d.getHours().toString().padStart(2, '0');
-  const mm = d.getMinutes().toString().padStart(2, '0');
-  timeSpan.textContent = `${hh}:${mm}`;
+  timeSpan.textContent = `${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`;
 
-  const textSpan = document.createElement('span');
-  textSpan.className = 'shout-text';
-  textSpan.textContent = row.message;
+  header.appendChild(userSpan);
+  userSpan.appendChild(userLink);
+  header.appendChild(timeSpan);
 
-  textContainer.appendChild(userSpan);
-  textContainer.appendChild(timeSpan);
-  textContainer.appendChild(textSpan);
+  const textDiv = document.createElement('div');
+  textDiv.className = 'shout-text';
+  textDiv.innerHTML = parseBBCode(row.message);
 
-  line.appendChild(textContainer);
+  line.appendChild(header);
+  line.appendChild(textDiv);
   shoutBox.appendChild(line);
 
-  // ----- hook up delete (context menu) -----
-  const me = currentUserCached || currentUser;
-  if (!me || !window.supabaseClient) return;
-
-  const canDelete = canCurrentUserDeleteShout(me, row);
-  if (!canDelete) return;
-
-  const menu = createShoutContextMenu();
-  const menuItem = menu.querySelector('.shout-context-item');
-
+  // --- Context Menu Logic ---
   userSpan.addEventListener('contextmenu', (e) => {
     e.preventDefault();
+    const menu = createShoutContextMenu();
+    menu.innerHTML = '';
 
-    const rect = userSpan.getBoundingClientRect();
-    menu.style.display = 'block';
-    menu.style.left = `${rect.right + 6}px`;
-    menu.style.top = `${rect.top}px`;
-
-    const handler = async () => {
-      menu.style.display = 'none';
-      menuItem.removeEventListener('click', handler);
-
-      try {
-        const { error } = await window.supabaseClient
-          .from('shouts')
-          .delete()
-          .eq('id', row.id);
-        if (error) throw error;
-        line.remove();
-      } catch (err) {
-        console.error('delete shout error', err);
-        alert('Failed to delete shout.');
-      }
+    // Mention Action
+    const mentionItem = document.createElement('div');
+    mentionItem.className = 'shout-context-item';
+    mentionItem.innerHTML = `<i class="fa fa-at"></i> Mention @${row.username}`;
+    mentionItem.onclick = () => {
+      shoutInput.value = `@${row.username} ` + shoutInput.value;
+      shoutInput.focus();
     };
+    menu.appendChild(mentionItem);
 
-    menuItem.addEventListener('click', handler);
+    // Delete Action
+    if (me && canCurrentUserDeleteShout(me, row)) {
+      const deleteItem = document.createElement('div');
+      deleteItem.className = 'shout-context-item delete';
+      deleteItem.innerHTML = `<i class="fa fa-trash"></i> Delete message`;
+      deleteItem.onclick = async () => {
+        if (!confirm('Delete this message?')) return;
+        const { error } = await window.supabaseClient.from('shouts').delete().eq('id', row.id);
+        if (!error) line.remove();
+      };
+      menu.appendChild(deleteItem);
+    }
+
+    menu.style.display = 'block';
+    menu.style.left = `${e.pageX}px`;
+    menu.style.top = `${e.pageY}px`;
   });
 }
 
 // --- load last 50 shouts ---
 async function loadShouts(currentUser) {
   if (!shoutBox || !window.supabaseClient) return;
-  const supabaseClient = window.supabaseClient;
-
-  const { data, error } = await supabaseClient
+  const { data, error } = await window.supabaseClient
     .from('shouts')
     .select('id, user_id, username, message, created_at')
     .order('created_at', { ascending: false })
     .limit(50);
 
-  if (error) {
-    console.error('loadShouts error', error);
-    return;
-  }
-
+  if (error) return;
   shoutBox.innerHTML = '';
   (data || []).slice().reverse().forEach((row) => renderShout(row, currentUser));
   shoutBox.scrollTop = shoutBox.scrollHeight;
-
-  if (data && data.length > 0) {
-    lastShoutTimestamp = data[0].created_at;
-  }
+  if (data && data.length > 0) lastShoutTimestamp = data[0].created_at;
 }
 
-// --- optional: cheap polling for new shouts ---
 async function hasNewShouts() {
   if (!lastShoutTimestamp || !window.supabaseClient) return true;
-  const supabaseClient = window.supabaseClient;
-
-  const { data, error } = await supabaseClient
+  const { data, error } = await window.supabaseClient
     .from('shouts')
     .select('created_at')
     .order('created_at', { ascending: false })
     .limit(1);
-
-  if (error) {
-    console.error('hasNewShouts error', error);
-    return false;
-  }
-  if (!data || !data.length) return false;
-
-  const latest = data[0].created_at;
-  return new Date(latest) > new Date(lastShoutTimestamp);
+  if (error || !data || !data.length) return false;
+  return new Date(data[0].created_at) > new Date(lastShoutTimestamp);
 }
 
-// --- main setup function ---
 async function setupShoutbox() {
   if (!shoutInput || !shoutSendBtn || !shoutBox || !shoutForm) return;
-  if (!window.getCurrentUserWithRole || !window.supabaseClient) return;
-
-  const supabaseClient = window.supabaseClient;
   const me = await window.getCurrentUserWithRole();
   currentUserCached = me;
 
   if (!me) {
-    // guest
     shoutInput.disabled = true;
     shoutSendBtn.disabled = true;
     if (shoutFooter) shoutFooter.textContent = 'Login to chat in the shoutbox.';
   } else {
-    if (shoutMeta) {
-      shoutMeta.textContent = `Logged in as ${me.username} · live chat`;
-    }
+    if (shoutMeta) shoutMeta.textContent = `Community Chat · Logged in as ${me.username}`;
   }
 
   await loadShouts(me);
 
-    // poll every 15s for new shouts (for other users)
   setInterval(async () => {
-    try {
-      const changed = await hasNewShouts();
-      if (changed) await loadShouts(me);
-    } catch (e) {
-      console.error('shoutbox poll error', e);
-    }
+    if (await hasNewShouts()) await loadShouts(me);
   }, 15000);
 
-  // realtime optional
-  supabaseClient
+  window.supabaseClient
     .channel('public:shouts')
-    .on(
-      'postgres_changes',
-      { event: 'INSERT', schema: 'public', table: 'shouts' },
-      (payload) => {
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'shouts' }, (payload) => {
         renderShout(payload.new, me);
         shoutBox.scrollTop = shoutBox.scrollHeight;
-      }
-    )
+    })
     .subscribe();
 
-  // submit handler – always use users.username
-    // submit handler – always use users.username
   shoutForm.addEventListener('submit', async (e) => {
     e.preventDefault();
-
     const meNow = await window.getCurrentUserWithRole();
-    currentUserCached = meNow;
     if (!meNow) return;
 
     const text = shoutInput.value.trim();
-    if (!text) return;
-    if (text.length > 180) return;
-
-    const msg = text;
+    if (!text || text.length > 180) return;
     shoutInput.value = '';
 
-    const supabaseClient = window.supabaseClient;
-
     try {
-      const { data, error } = await supabaseClient
+      const { data, error } = await window.supabaseClient
         .from('shouts')
-        .insert({
-          user_id: meNow.id,
-          username: meNow.username,
-          message: msg,
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      // show immediately in UI using the returned row
-      await renderShout(data, meNow);
-      shoutBox.scrollTop = shoutBox.scrollHeight;
-    } catch (err) {
-      console.error('send shout error', err);
-    }
+        .insert({ user_id: meNow.id, username: meNow.username, message: text })
+        .select().single();
+      if (!error) {
+        // payload comes via realtime broadcase too, but immediate UI is nicer
+      }
+    } catch (err) { console.error(err); }
   });
 }
 

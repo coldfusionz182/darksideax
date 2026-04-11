@@ -232,135 +232,176 @@ a:hover {
   color: #777;
 }
 
-/* SHOUTBOX */
+/* PREMIUM SHOUTBOX */
 .shoutbox {
-  margin-bottom: 20px;
-  background: radial-gradient(circle at top left, #1e2630 0, #141414 60%);
+  margin-bottom: 24px;
+  background: rgba(13, 17, 23, 0.7);
+  backdrop-filter: blur(8px);
+  border: 1px solid #30363d;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(79, 70, 229, 0.1);
   padding: 0;
 }
 
 .shoutbox-header {
-  padding: 8px 10px;
-  border-bottom: 1px solid #242424;
+  padding: 12px 16px;
+  border-bottom: 1px solid #30363d;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: rgba(0, 0, 0, 0.35);
-  font-size: 13px;
+  background: linear-gradient(to right, rgba(22, 27, 34, 0.9), rgba(13, 17, 23, 0.9));
+  font-size: 0.9rem;
+}
+
+.shoutbox-header i {
+  color: #818cf8;
+  text-shadow: 0 0 8px rgba(99, 102, 241, 0.5);
+  margin-right: 8px;
+}
+
+.shoutbox-title {
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: #f8fafc;
 }
 
 .shout-context-menu {
   position: fixed;
-  z-index: 9999;
-  background: #111;
-  border: 1px solid #333;
-  border-radius: 4px;
-  padding: 4px 0;
-  min-width: 120px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.6);
+  z-index: 10000;
+  background: #161b22;
+  border: 1px solid #444c56;
+  border-radius: 8px;
+  padding: 6px 0;
+  min-width: 160px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.7);
+  animation: fadeIn 0.15s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
 }
 
 .shout-context-item {
-  padding: 4px 10px;
-  font-size: 12px;
+  padding: 8px 14px;
+  font-size: 13px;
   cursor: pointer;
-  color: #eee;
+  color: #adbac7;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  transition: all 0.2s;
 }
 
 .shout-context-item:hover {
-  background: #c0392b;
-  color: #fff;
+  background: #373e47;
+  color: #f8fafc;
 }
 
-#shoutbox-messages {
-  max-height: 220px;      /* adjust to taste */
-  overflow-y: auto;
+.shout-context-item.delete:hover {
+  background: rgba(239, 68, 68, 0.15);
+  color: #fca5a5;
 }
 
-.shoutbox-header i {
-  color: #f5d76e;
-  margin-right: 6px;
-}
-
-.shoutbox-meta {
-  font-size: 11px;
-  color: #aaa;
-}
-
-.dot {
-  display: inline-block;
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  margin-right: 4px;
-}
-
-.dot.online {
-  background-color: #4cd964;
-}
-
-/* box-style chat window */
 .shoutbox-body {
-  max-height: 260px;
-  min-height: 120px;
+  max-height: 280px;
+  min-height: 140px;
   overflow-y: auto;
-  padding: 6px 8px;
-  font-size: 12px;
-  background: #05060b;
-  border-radius: 0 0 4px 4px;
-  box-shadow: inset 0 0 0 1px #020617;
+  padding: 12px;
+  font-size: 0.875rem;
+  background: transparent;
+  scroll-behavior: smooth;
+}
+
+/* Custom scrollbar for chat */
+.shoutbox-body::-webkit-scrollbar {
+  width: 5px;
+}
+.shoutbox-body::-webkit-scrollbar-thumb {
+  background: #30363d;
+  border-radius: 10px;
 }
 
 .shout-line {
   display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  margin-bottom: 6px;
+  transition: background 0.2s;
+  border-left: 3px solid transparent;
+}
+
+.shout-line:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.shout-line.mention {
+  background: rgba(79, 70, 229, 0.08);
+  border-left-color: #6366f1;
+  box-shadow: inset 4px 0 10px rgba(99, 102, 241, 0.05);
+}
+
+.shout-header {
+  display: flex;
   align-items: center;
-  gap: 6px;
-  font-size: 0.83rem;
-  padding: 2px 0;
+  gap: 8px;
+  margin-bottom: 1px;
 }
 
 .shout-user {
   font-weight: 700;
-  margin-right: 2px;
+  font-size: 0.85rem;
 }
 
 .shout-time {
-  color: #888;
-  font-size: 11px;
-  margin-right: 4px;
+  color: #57606a;
+  font-size: 0.75rem;
+  font-weight: 500;
 }
 
 .shout-text {
-  color: #ddd;
+  color: #c9d1d9;
+  line-height: 1.5;
+  word-break: break-word;
 }
+
+.shout-text b { color: #f8fafc; font-weight: 700; }
+.shout-text i { font-style: italic; opacity: 0.9; }
 
 .shoutbox-form {
   display: flex;
-  padding: 6px 8px 8px;
-  border-top: 1px solid #242424;
-  gap: 6px;
+  padding: 12px;
+  border-top: 1px solid #30363d;
+  background: rgba(22, 27, 34, 0.5);
+  gap: 10px;
 }
 
 .shout-input {
   flex: 1;
-  padding: 6px 8px;
-  border-radius: 3px;
-  border: 1px solid #333;
-  background-color: #111;
-  color: #ddd;
-  font-size: 12px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  border: 1px solid #30363d;
+  background-color: #0d1117;
+  color: #f8fafc;
+  font-size: 0.9rem;
+  transition: border-color 0.2s, box-shadow 0.2s;
 }
 
 .shout-input:focus {
   outline: none;
-  border-color: #386b8d;
+  border-color: #6366f1;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
 }
 
 .shoutbox-footer {
-  border-top: 1px solid #242424;
-  padding: 6px 10px;
-  font-size: 11px;
-  color: #888;
+  border-top: 1px solid #30363d;
+  padding: 8px 16px;
+  font-size: 0.75rem;
+  color: #7d8590;
+  background: #161b22;
 }
 
 /* Category / forum – NEW FLEX LAYOUT */
