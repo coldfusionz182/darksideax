@@ -44,7 +44,6 @@ async function updateLastNotificationsSeen(username) {
   try {
     const nowIso = new Date().toISOString();
 
-    // Ensure there is a rep row; if not, create a stub
     const { data: repRow, error: fetchErr } = await supabaseClient
       .from('rep')
       .select('id')
@@ -63,6 +62,7 @@ async function updateLastNotificationsSeen(username) {
         given_by: 'system',
         timegiven: nowIso,
         last_seen_at: nowIso,
+        last_delta: 0,
       });
       if (insErr) {
         console.error('notifications: insert rep for last_seen_at error', insErr);
@@ -150,7 +150,6 @@ function initNotificationsDom(onMarkAllRead) {
 
   function openDropdown() {
     dropdown.classList.add('open');
-    // mark as read when opening the bell
     handleMarkAllRead();
   }
 
@@ -298,7 +297,7 @@ async function fetchReplyNotifications(currentUser, myThreadIds, lastSeen) {
 async function fetchRepNotifications(currentUser, lastSeen) {
   let query = supabaseClient
     .from('rep')
-    .select('id, username, given_by, amount, created_at, timegiven')
+    .select('id, username, given_by, amount, last_delta, created_at, timegiven')
     .eq('username', currentUser.username);
 
   if (lastSeen) {
@@ -320,7 +319,8 @@ async function fetchRepNotifications(currentUser, lastSeen) {
       id: `rep-${row.id}`,
       type: 'rep',
       actor: row.given_by || 'Unknown',
-      amount: row.amount,
+      amount: row.amount,       // total, if you need it later
+      delta: row.last_delta,    // last change (+/-)
       created_at: ts,
     };
   });
@@ -346,13 +346,14 @@ async function refreshNotifications(currentUser, renderNotifications) {
 
     const all = [...replyNotifs, ...likeNotifs, ...repNotifs].map((n) => {
       if (n.type === 'rep') {
-        const amtNum = parseInt(n.amount ?? '0', 10);
-        const amt = Number.isNaN(amtNum) ? n.amount : amtNum;
-        const sign = amt >= 0 ? '+' : '';
-        const prettyAmount = `${sign}${amt}`;
+        const deltaNum = parseInt(n.delta ?? '0', 10);
+        const delta = Number.isNaN(deltaNum) ? n.delta : deltaNum;
+        const sign = delta >= 0 ? '+' : '';
+        const prettyDelta = `${sign}${delta}`;
+
         return {
           ...n,
-          title: `${n.actor} gave you ${prettyAmount} rep`,
+          title: `${n.actor} gave you ${prettyDelta} rep`,
           meta: new Date(n.created_at).toLocaleString(),
         };
       }
@@ -382,7 +383,6 @@ async function refreshNotifications(currentUser, renderNotifications) {
 async function startNotifications() {
   let currentUser = await getCurrentUserProfileWithLastSeen();
 
-  // init DOM once; pass in mark‑all‑read callback only if logged in
   const dom = initNotificationsDom(
     currentUser
       ? async () => {
@@ -398,7 +398,6 @@ async function startNotifications() {
 
   if (!dom) return;
 
-  // guests: just empty list
   if (!currentUser) {
     dom.renderNotifications([]);
     return;
