@@ -139,8 +139,13 @@ const activeStaff = users.filter((u) => {
               ? 'Administrator'
               : 'Staff');
 
+      // Determine Branding Class
+      let brandingClass = 'ds-user-member';
+      if (u.role === 'owner') brandingClass = 'ds-user-owner';
+      else if (u.role === 'admin') brandingClass = 'ds-user-admin';
+
       line.innerHTML = `
-        <span class="staff-name">${displayName}</span>
+        <span class="staff-name ${brandingClass}">${displayName}</span>
         <span class="staff-role">${roleLabel}</span>
       `;
 

@@ -10,7 +10,7 @@ const shoutFooter = document.getElementById('shoutbox-footer');
 
 let lastShoutTimestamp = null;
 let currentUserCached = null;
-const avatarCache = {}; // Global cache for avatars
+const avatarCache = {}; // Global cache for {url, role}
 
 // Palette for avatars and BBCode
 const DS_PALETTE = {
@@ -23,16 +23,16 @@ const DS_PALETTE = {
 };
 
 /**
- * Fetches user avatar from database with local caching
+ * Fetches user avatar and role from database with local caching
  */
-async function fetchAvatarWithCache(username) {
+async function fetchUserDataWithCache(username) {
   if (!username) return null;
   if (avatarCache[username] !== undefined) return avatarCache[username];
 
   try {
     const { data, error } = await window.supabaseClient
       .from('users')
-      .select('avatar_url')
+      .select('avatar_url, role')
       .eq('username', username)
       .single();
     
@@ -41,8 +41,8 @@ async function fetchAvatarWithCache(username) {
       return null;
     }
     
-    avatarCache[username] = data.avatar_url;
-    return data.avatar_url;
+    avatarCache[username] = { url: data.avatar_url, role: data.role };
+    return avatarCache[username];
   } catch (e) {
     avatarCache[username] = null;
     return null;
@@ -117,14 +117,6 @@ async function renderShout(row, currentUser, isOptimistic = false) {
   avatar.style.borderColor = getAvatarColor(row.username || 'guest');
   avatar.style.color = getAvatarColor(row.username || 'guest');
 
-  // Load Real Avatar if possible
-  fetchAvatarWithCache(row.username).then(url => {
-    if (url) {
-      avatar.innerHTML = `<img src="${url}" alt="${row.username}">`;
-      avatar.style.borderColor = 'transparent';
-    }
-  });
-
   // Content Wrap
   const content = document.createElement('div');
   content.className = 'ds-shout-content';
@@ -134,16 +126,28 @@ async function renderShout(row, currentUser, isOptimistic = false) {
   topBar.className = 'ds-line-top';
 
   const userLink = document.createElement('a');
-  userLink.className = 'ds-shout-user';
+  userLink.className = 'ds-shout-user ds-user-member'; // default
   userLink.href = 'profile.html?u=' + encodeURIComponent(row.username);
   userLink.textContent = row.username;
   userLink.style.cursor = 'contextmenu';
 
-  // Special Owner Glow
-  if (row.username === 'ColdFusionz') {
-     userLink.style.color = '#818cf8';
-     userLink.style.textShadow = '0 0 8px rgba(129, 140, 248, 0.5)';
-  }
+  // Load Real Avatar + Role for Branding
+  fetchUserDataWithCache(row.username).then(res => {
+    if (res) {
+      if (res.url) {
+        avatar.innerHTML = `<img src="${res.url}" alt="${row.username}">`;
+        avatar.style.borderColor = 'transparent';
+      }
+      // Apply Branding Class
+      if (res.role === 'owner') {
+        userLink.classList.remove('ds-user-member');
+        userLink.classList.add('ds-user-owner');
+      } else if (res.role === 'admin') {
+        userLink.classList.remove('ds-user-member');
+        userLink.classList.add('ds-user-admin');
+      }
+    }
+  });
 
   const time = document.createElement('span');
   time.className = 'ds-shout-time';

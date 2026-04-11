@@ -271,7 +271,7 @@ a:hover {
 }
 
 .ds-shout-body {
-  height: 380px; /* Locked height */
+  height: 320px; /* Reduced vertical footprint */
   overflow-y: auto;
   padding: 10px;
   background: #0d1117;

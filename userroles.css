@@ -1,77 +1,57 @@
-/* === Shared role styles (Owner baby blue, Admin pink) === */
+/* === SPARKLY BRANDING SYSTEM === */
 
-/* Base role styles (used everywhere) */
-.user-title-owner {
-  font-weight: 700;
-  color: #7cc8ff;
+/* OWNER: Vibrant Purple with Shimmer */
+.ds-user-owner {
+  font-weight: 800 !important;
+  color: #a855f7; 
+  text-shadow: 0 0 10px rgba(168, 85, 247, 0.4);
+  background: linear-gradient(90deg, #a855f7, #e879f9, #a855f7);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: dsSparkle 3s linear infinite;
+  display: inline-block;
 }
 
-.user-title-admin {
-  font-weight: 700;
-  color: #ff86b3;
+/* ADMIN: Vibrant Pink with Shimmer */
+.ds-user-admin {
+  font-weight: 800 !important;
+  color: #ec4899;
+  text-shadow: 0 0 10px rgba(236, 72, 153, 0.4);
+  background: linear-gradient(90deg, #ec4899, #f472b6, #ec4899);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: dsSparkle 3s linear infinite;
+  display: inline-block;
 }
 
-/* Staff list only – add a soft animated glow */
-.current-staff-box .staff-name.user-title-owner {
-  text-shadow:
-    0 0 4px rgba(124, 200, 255, 0.7),
-    0 0 8px rgba(124, 200, 255, 0.4);
-  animation: staffOwnerGlow 3s ease-in-out infinite;
+/* MEMBER: Lush Green (No Shimmer) */
+.ds-user-member {
+  font-weight: 700 !important;
+  color: #10b981 !important; 
+  text-shadow: 0 0 4px rgba(16, 185, 129, 0.2);
 }
 
-.current-staff-box .staff-name.user-title-admin {
-  text-shadow:
-    0 0 4px rgba(255, 134, 179, 0.7),
-    0 0 8px rgba(255, 134, 179, 0.4);
-  animation: staffAdminGlow 3s ease-in-out infinite;
+/* SPARKLE ANIMATION */
+@keyframes dsSparkle {
+  to { background-position: 200% center; }
 }
 
-@keyframes staffOwnerGlow {
-  0% {
-    text-shadow:
-      0 0 2px rgba(124, 200, 255, 0.4),
-      0 0 4px rgba(124, 200, 255, 0.2);
-  }
-  50% {
-    text-shadow:
-      0 0 6px rgba(124, 200, 255, 0.9),
-      0 0 12px rgba(124, 200, 255, 0.6);
-  }
-  100% {
-    text-shadow:
-      0 0 2px rgba(124, 200, 255, 0.4),
-      0 0 4px rgba(124, 200, 255, 0.2);
-  }
+/* Legacy mappings (to prevent breakages during transition) */
+.user-title-owner { @extend .ds-user-owner; }
+.user-title-admin { @extend .ds-user-admin; }
+
+/* Shoutbox & Staff List Integration Helpers */
+.staff-name.ds-user-owner, .staff-name.ds-user-admin {
+  font-size: 1.05rem;
 }
 
-@keyframes staffAdminGlow {
-  0% {
-    text-shadow:
-      0 0 2px rgba(255, 134, 179, 0.4),
-      0 0 4px rgba(255, 134, 179, 0.2);
-  }
-  50% {
-    text-shadow:
-      0 0 6px rgba(255, 134, 179, 0.9),
-      0 0 12px rgba(255, 134, 179, 0.6);
-  }
-  100% {
-    text-shadow:
-      0 0 2px rgba(255, 134, 179, 0.4),
-      0 0 4px rgba(255, 134, 179, 0.2);
-  }
+.profile-username-link {
+  transition: transform 0.2s;
+  display: inline-block;
 }
 
-/* Shoutbox clickable usernames – behaviour only; colour comes from user-title-* */
-.shoutbox .profile-username-link {
-  cursor: pointer;
-}
-
-.shoutbox .profile-username-link:hover {
-  text-decoration: underline;
-}
-
-/* Staff list usernames – layout only; colour/glow from user-title-* */
-.current-staff-box .staff-name {
-  cursor: default;
+.profile-username-link:hover {
+  transform: scale(1.03);
 }
