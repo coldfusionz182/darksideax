@@ -7,7 +7,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
   <link href="styles.css" rel="stylesheet">
-  <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
   <script src="ds-core-min.js"></script>
   <style>
     :root {
@@ -367,12 +366,6 @@
       color: var(--ds-success);
     }
 
-    /* Turnstile responsive fix */
-    .cf-turnstile {
-      margin: 14px 0;
-      display: flex;
-      justify-content: center;
-    }
   </style>
 </head>
 
@@ -460,8 +453,6 @@
 
                   <div id="login-status" class="login-status"></div>
 
-                  <!-- Turnstile Widget (Using Test Key) -->
-                  <div class="cf-turnstile" data-sitekey="1x00000000000000000000AA" data-theme="dark"></div>
                 </form>
               </div>
             </section>
@@ -496,12 +487,6 @@
       submitBtn.disabled = true;
       setStatus('Logging in...', '');
 
-      const captchaToken = turnstile.getResponse();
-      if (!captchaToken) {
-        setStatus('Please complete the CAPTCHA verification.', 'error');
-        submitBtn.disabled = false;
-        return;
-      }
 
       try {
         const response = await fetch(`${supabaseUrl}/auth/v1/token?grant_type=password`, {
@@ -514,7 +499,6 @@
             email: emailEl.value.trim(),
             password: passEl.value,
             gotrue_meta_security: {
-              captcha_token: captchaToken,
               security_sig: typeof _ds_core === 'function' ? _ds_core() : null
             }
           })
@@ -526,7 +510,6 @@
           console.error(data);
           setStatus('Login failed: ' + (data.error_description || data.error || 'Unknown error'), 'error');
           submitBtn.disabled = false;
-          if (typeof turnstile !== 'undefined') turnstile.reset();
           return;
         }
 
@@ -543,7 +526,6 @@
         console.error('Login error:', err);
         setStatus('Network error during login.', 'error');
         submitBtn.disabled = false;
-        if (typeof turnstile !== 'undefined') turnstile.reset();
       }
     });
   </script>
