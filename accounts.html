@@ -138,6 +138,7 @@
       white-space: nowrap;
     }
   </style>
+  <link href="notifications.css" rel="stylesheet">
 </head>
 <body>
 
@@ -155,13 +156,31 @@
         <ul class="top-links">
           <li><a href="#">Rules</a></li>
         </ul>
-        <div class="auth-links">
-          <a href="login.html" class="btn btn-small btn-outline">
-            <i class="fa fa-sign-in-alt"></i> Login
-          </a>
-          <a href="#" class="btn btn-small btn-primary">
-            <i class="fa fa-user-plus"></i> Register
-          </a>
+        <div class="auth-area">
+          <div class="notif-wrapper">
+            <button class="notif-bell-btn" id="notif-bell-btn" type="button" aria-label="Notifications">
+              <i class="fa fa-bell" id="n-bell-icon"></i>
+              <span class="notif-count" id="notif-count">0</span>
+            </button>
+            <div class="notif-dropdown" id="notif-dropdown">
+              <div class="notif-dropdown-header">
+                <span><i class="fa fa-bell"></i> Notifications</span>
+                <span class="badge" id="notif-badge-count">0</span>
+              </div>
+              <button type="button" class="notif-clear-btn" id="notif-clear-btn">
+                <i class="fa fa-check-double"></i> Mark all as read
+              </button>
+              <div class="notif-list" id="notif-list"></div>
+            </div>
+          </div>
+          <div class="auth-links">
+            <a href="login.html" class="btn btn-small btn-outline">
+              <i class="fa fa-sign-in-alt"></i> Login
+            </a>
+            <a href="#" class="btn btn-small btn-primary">
+              <i class="fa fa-user-plus"></i> Register
+            </a>
+          </div>
         </div>
       </div>
     </div>
@@ -250,5 +269,6 @@
 
 <script type="module" src="scripts.js"></script>
 <script type="module" src="accounts-threads.js"></script>
+<script type="module" src="notifications.js"></script>
 </body>
 </html>

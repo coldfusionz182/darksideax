@@ -625,6 +625,7 @@
       .admin-search input:focus { width: 100%; }
     }
   </style>
+  <link href="notifications.css" rel="stylesheet">
 </head>
 <body class="admin-body">
 <div class="admin-wrapper">
@@ -654,6 +655,12 @@
         <a href="index.html">
           <i class="fa fa-home"></i>
           <span>Back to Forum</span>
+        </a>
+      </li>
+      <li>
+        <a href="#" id="admin-logout-btn">
+          <i class="fa fa-power-off" style="color: #f43f5e;"></i>
+          <span style="color: #f43f5e;">Sign Out</span>
         </a>
       </li>
     </ul>
@@ -822,5 +829,6 @@
 </div>
 
 <script type="module" src="adminpanel.js"></script>
+<script type="module" src="notifications.js"></script>
 </body>
 </html>

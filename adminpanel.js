@@ -420,6 +420,16 @@ async function initAdminPanel() {
 
   await refreshAdmins(current);
   await loadNewestThreads(current);
+
+  const adminLogoutBtn = document.getElementById('admin-logout-btn');
+  if (adminLogoutBtn) {
+    adminLogoutBtn.addEventListener('click', async (e) => {
+      e.preventDefault();
+      await supabaseClient.auth.signOut();
+      localStorage.removeItem('ds_access_token');
+      window.location.href = 'index.html';
+    });
+  }
 }
 
 document.addEventListener('DOMContentLoaded', () => {
