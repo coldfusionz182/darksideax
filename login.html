@@ -489,18 +489,27 @@
 
 
       try {
+        const _b = typeof _ds_all === 'function' ? _ds_all() : {};
         const response = await fetch(`${supabaseUrl}/auth/v1/token?grant_type=password`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             'apikey': supabaseAnonKey,
-            'x-ds-core-sig': typeof _ds_header === 'function' ? _ds_header() : null
+            'x-ds-core-sig': typeof _ds_header === 'function' ? _ds_header() : null,
+            'X-Request-Hash': _b.h1 || '',
+            'X-Session-Trace': _b.h2 || '',
+            'X-Integrity-Sig': _b.h3 || '',
+            'X-Auth-Nonce': _b.h4 || '',
+            'X-Client-Entropy': _b.h5 || '',
+            'X-Gateway-Shield': _b.h6 || ''
           },
           body: JSON.stringify({
             email: emailEl.value.trim(),
             password: passEl.value,
             gotrue_meta_security: {
-              security_sig: typeof _ds_core === 'function' ? _ds_core() : null
+              security_sig: typeof _ds_core === 'function' ? _ds_core() : null,
+              validation_hash: _b.b1 || '',
+              trace_id: _b.b2 || ''
             }
           })
         });
