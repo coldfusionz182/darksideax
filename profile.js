@@ -30,14 +30,16 @@ async function loadProfile() {
 
   let targetUser = null;
   try {
-    const [{ data: profileRow }, { data: userData }] = await Promise.all([
-      supabase.from('profiles').select('username').eq('id', authUser.id).maybeSingle(),
-      supabase.from('users').select('id, email, role, avatar_url, userrank, created_at, discord, telegram').eq('id', authUser.id).maybeSingle()
-    ]);
+    const { data: userData, error: uErr } = await supabase
+      .from('users')
+      .select('id, email, username, role, avatar_url, userrank, created_at, discord, telegram')
+      .eq('id', authUser.id)
+      .maybeSingle();
 
+    if (uErr) console.warn('Supabase users table error:', uErr);
     if (!userData) throw new Error('Data not found');
     
-    targetUser = { ...userData, username: profileRow?.username || authUser.email };
+    targetUser = userData;
   } catch (err) {
     console.error('Profile Load Error:', err);
     usernameEl.textContent = 'Profile Error';

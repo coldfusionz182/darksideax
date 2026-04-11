@@ -105,7 +105,7 @@ async function setupRepDetails() {
     const { data, error } = await supabase
       .from('rep')
       .select('*')
-      .eq('username', target)
+      .ilike('username', target)
       .order('timegiven', { ascending: false });
 
     if (error || !data.length) {
