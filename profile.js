@@ -61,7 +61,6 @@ async function loadProfile() {
   }
 
   // Social Inputs (Load existing)
-  document.getElementById('social-edit-section').style.display = 'block';
   if (targetUser.discord) document.getElementById('discord-input').value = targetUser.discord;
   if (targetUser.telegram) document.getElementById('telegram-input').value = targetUser.telegram;
 
@@ -94,7 +93,6 @@ async function loadProfile() {
     document.getElementById('profile-email-row').style.display = 'flex';
     document.getElementById('profile-email').textContent = targetUser.email;
     document.getElementById('profile-uid-row').style.display = 'flex';
-    document.getElementById('avatar-edit-row').style.display = 'flex';
     if (document.getElementById('avatar-url-input')) document.getElementById('avatar-url-input').value = targetUser.avatar_url || '';
   }
 

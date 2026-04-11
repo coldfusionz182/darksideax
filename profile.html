@@ -127,37 +127,38 @@
                </button>
             </div>
 
-            <!-- AVATAR URL EDIT (Owner Only) -->
-            <div class="profile-info-row profile-info-row-avatar" id="avatar-edit-row" style="display:none;">
-              <span class="info-label">Avatar URL:</span>
-              <input
-                type="text"
-                id="avatar-url-input"
-                class="avatar-url-input"
-                placeholder="Paste image URL (https://...)"
-              >
-              <div class="avatar-url-actions">
-                <button type="button" class="btn btn-small btn-primary" id="avatar-url-save">
-                  <i class="fa fa-image"></i> Set avatar
-                </button>
-                <span class="avatar-url-status" id="avatar-url-status"></span>
-              </div>
-            </div>
+            <!-- PROFILE SETTINGS (Always visible for owner) -->
+            <div id="profile-settings-section" style="padding-top:15px; border-top:1px solid #30363d; margin-top:15px;">
+               <div style="font-size: 14px; font-weight: bold; color: #fff; margin-bottom: 12px;"><i class="fa fa-cog"></i> Profile Settings</div>
+               
+               <div class="profile-info-row" style="flex-direction:column; gap:8px;">
+                 <span class="info-label"><i class="fa fa-image"></i> Avatar URL:</span>
+                 <input type="text" id="avatar-url-input" class="avatar-url-input" placeholder="Paste image URL (https://...)">
+               </div>
 
-            <!-- SOCIAL HANDLES (Owner Only) -->
-            <div id="social-edit-section" style="display:none; padding-top:15px; border-top:1px solid #30363d; margin-top:15px;">
                <div class="profile-info-row" style="flex-direction:column; gap:8px;">
                  <span class="info-label"><i class="fab fa-discord"></i> Discord Handle:</span>
                  <input type="text" id="discord-input" class="avatar-url-input" placeholder="e.g. Username#1234">
                </div>
-               <div class="profile-info-row" style="flex-direction:column; gap:8px;">
+
+               <div class="profile-info-row" style="flex-direction:column; gap:8px; margin-bottom: 15px;">
                  <span class="info-label"><i class="fab fa-telegram"></i> Telegram Handle:</span>
                  <input type="text" id="telegram-input" class="avatar-url-input" placeholder="e.g. ColdFusionz">
                </div>
-               <button type="button" class="btn btn-small btn-outline" id="btn-save-socials" style="width:100%; margin-top:10px;">
-                 <i class="fa fa-save"></i> Save Social Handles
-               </button>
-               <span id="socials-status" style="display:block; font-size:11px; margin-top:5px; text-align:center;"></span>
+               
+               <div style="display: flex; gap: 10px;">
+                 <button type="button" class="btn btn-small btn-primary" id="avatar-url-save" style="flex:1;">
+                   <i class="fa fa-image"></i> Save Avatar
+                 </button>
+                 <button type="button" class="btn btn-small btn-outline" id="btn-save-socials" style="flex:1;">
+                   <i class="fa fa-save"></i> Save Socials
+                 </button>
+               </div>
+               
+               <div style="display: flex; justify-content: space-between; margin-top: 5px;">
+                 <span class="avatar-url-status" id="avatar-url-status" style="font-size:11px;"></span>
+                 <span id="socials-status" style="font-size:11px; text-align:right;"></span>
+               </div>
             </div>
           </section>
         </div>
