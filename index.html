@@ -348,32 +348,34 @@
         </section>
 
         <!-- SHOUTBOX -->
-        <section class="shoutbox card-panel">
-          <div class="shoutbox-header">
-            <div class="shoutbox-title">
+        <section class="ds-shout-wrap">
+          <div class="ds-shout-header">
+            <div class="ds-shout-title">
               <i class="fa fa-comments"></i> Shoutbox
             </div>
-            <div class="shoutbox-meta" id="shoutbox-meta">
-              <span class="dot online"></span> Live chat · login to post
+            <div class="ds-shout-meta" id="shoutbox-meta">
+              <span class="dot online"></span> Community Chat · Login to post
             </div>
           </div>
 
-          <div class="shoutbox-body" id="shoutbox-messages"></div>
+          <div class="ds-shout-body" id="shoutbox-messages"></div>
 
-          <form class="shoutbox-form" id="shoutbox-form">
-            <input
-              type="text"
-              id="shout-input"
-              class="shout-input"
-              placeholder="Type your message and press Enter..."
-              maxlength="180"
-            >
-            <button type="submit" class="btn btn-small btn-primary" id="shout-send">
-              <i class="fa fa-paper-plane"></i>
-            </button>
-          </form>
+          <div class="ds-shout-form-wrap">
+            <form class="ds-shout-form" id="shoutbox-form">
+              <input
+                type="text"
+                id="shout-input"
+                class="ds-shout-input"
+                placeholder="Type your message and press Enter..."
+                maxlength="180"
+              >
+              <button type="submit" class="btn btn-small btn-primary" id="shout-send">
+                <i class="fa fa-paper-plane"></i>
+              </button>
+            </form>
+          </div>
 
-          <div class="shoutbox-footer" id="shoutbox-footer">
+          <div class="ds-shout-footer" id="shoutbox-footer">
             Shoutbox is for quick chat only. No advertising, no support requests, no spam. Violations will result in mutes.
           </div>
         </section>

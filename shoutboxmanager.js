@@ -1,5 +1,5 @@
-// shoutboxmanager.js
-// Requires window.supabaseClient and window.getCurrentUserWithRole from scripts.js
+// shoutboxmanager.js - PREMIUM REBUILD
+// Integrated with window.supabaseClient and window.getCurrentUserWithRole
 
 const shoutInput  = document.getElementById('shout-input');
 const shoutSendBtn = document.getElementById('shout-send');
@@ -11,12 +11,10 @@ const shoutFooter = document.getElementById('shoutbox-footer');
 let lastShoutTimestamp = null;
 let currentUserCached = null;
 
-const OWNER_ID = 'PUT_OWNER_USER_ID_HERE';
-
-// DARKSIDE COLOR PALETTE
-const DARKSIDE_PALETTE = {
+// Palette for avatars and BBCode
+const DS_PALETTE = {
   emerald: '#10b981',
-  purple: '#6366f1',
+  purple: '#818cf8',
   blue: '#0ea5e9',
   gold: '#f59e0b',
   red: '#ef4444',
@@ -24,12 +22,10 @@ const DARKSIDE_PALETTE = {
 };
 
 /**
- * Parses BBCode into clean, safe HTML
- * Specifically designed for the Darkside palette
+ * Clean & Safe BBCode Parser
  */
 function parseBBCode(text) {
   if (!text) return '';
-  
   let escaped = text
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
@@ -37,152 +33,146 @@ function parseBBCode(text) {
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#039;');
 
-  // [b]...[/b]
+  // Formatting [b], [i]
   escaped = escaped.replace(/\[b\](.*?)\[\/b\]/gis, '<b>$1</b>');
-  // [i]...[/i]
   escaped = escaped.replace(/\[i\](.*?)\[\/i\]/gis, '<i>$1</i>');
   
-  // [color=name]...[/color]
-  escaped = escaped.replace(/\[color=([a-z]+)\](.*?)\[\/color\]/gis, (match, color, content) => {
-    const hex = DARKSIDE_PALETTE[color.toLowerCase()] || DARKSIDE_PALETTE.silver;
-    return `<span style="color: ${hex}; text-shadow: 0 0 5px ${hex}44;">${content}</span>`;
+  // Custom colors
+  escaped = escaped.replace(/\[color=([a-z]+)\](.*?)\[\/color\]/gis, (m, c, content) => {
+    const hex = DS_PALETTE[c.toLowerCase()] || DS_PALETTE.silver;
+    return `<span style="color: ${hex}">${content}</span>`;
   });
 
-  // Mentions (@user)
-  escaped = escaped.replace(/@([a-zA-Z0-9_-]+)/g, '<span style="color:#818cf8; font-weight:700; text-shadow: 0 0 8px rgba(129, 140, 248, 0.4);">@$1</span>');
+  // Highlighted Mentions
+  escaped = escaped.replace(/@([a-zA-Z0-9_-]+)/g, '<span style="color:#818cf8; font-weight:700; text-shadow:0 0 5px rgba(129,140,248,0.3)">@$1</span>');
 
   return escaped;
 }
 
-function canCurrentUserDeleteShout(currentUser, row) {
-  if (!currentUser) return false;
-  if (currentUser.role === 'owner') return true;
-  if (currentUser.role === 'admin') {
-    if (row.user_id === OWNER_ID) return false;
-    return true;
-  }
-  return row.user_id === currentUser.id;
+function getAvatarColor(username) {
+  const colors = ['#818cf8', '#10b981', '#f59e0b', '#ef4444', '#0ea5e9'];
+  let hash = 0;
+  for (let i = 0; i < username.length; i++) hash = username.charCodeAt(i) + ((hash << 5) - hash);
+  return colors[Math.abs(hash) % colors.length];
 }
 
 function createShoutContextMenu() {
-  let menu = document.getElementById('shout-context-menu');
+  let menu = document.getElementById('ds-context-menu');
   if (menu) return menu;
-
   menu = document.createElement('div');
-  menu.id = 'shout-context-menu';
-  menu.className = 'shout-context-menu';
+  menu.id = 'ds-context-menu';
+  menu.className = 'ds-context-menu';
   document.body.appendChild(menu);
-
-  document.addEventListener('click', () => {
-    menu.style.display = 'none';
-  });
-
+  document.addEventListener('click', () => menu.style.display = 'none');
   return menu;
 }
 
-// --- small helper: render one shout line ---
 async function renderShout(row, currentUser) {
   if (!shoutBox) return;
 
   const me = currentUserCached || currentUser;
   const isMentioned = me && row.message.toLowerCase().includes(`@${me.username.toLowerCase()}`);
 
-  const line = document.createElement('div');
-  line.className = 'shout-line' + (isMentioned ? ' mention' : '');
+  // Base Item
+  const item = document.createElement('div');
+  item.className = 'ds-shout-item' + (isMentioned ? ' mention' : '');
 
-  const header = document.createElement('div');
-  header.className = 'shout-header';
+  // Avatar
+  const avatar = document.createElement('div');
+  avatar.className = 'ds-shout-avatar';
+  avatar.textContent = (row.username || '?')[0].toUpperCase();
+  avatar.style.borderColor = getAvatarColor(row.username || 'guest');
+  avatar.style.color = getAvatarColor(row.username || 'guest');
 
-  const userSpan = document.createElement('span');
-  userSpan.className = 'shout-user';
-  userSpan.style.cursor = 'contextmenu';
-  
+  // Content Wrap
+  const content = document.createElement('div');
+  content.className = 'ds-shout-content';
+
+  // Top Bar (User + Time)
+  const topBar = document.createElement('div');
+  topBar.className = 'ds-line-top';
+
   const userLink = document.createElement('a');
-  userLink.className = 'profile-username-link';
+  userLink.className = 'ds-shout-user';
   userLink.href = 'profile.html?u=' + encodeURIComponent(row.username);
   userLink.textContent = row.username;
-  
-  // Staff coloring
+  userLink.style.cursor = 'contextmenu';
+
+  // Special Owner Glow
   if (row.username === 'ColdFusionz') {
      userLink.style.color = '#818cf8';
-     userLink.style.textShadow = `0 0 10px rgba(129, 140, 248, 0.6)`;
+     userLink.style.textShadow = '0 0 8px rgba(129, 140, 248, 0.5)';
   }
 
-  const timeSpan = document.createElement('span');
-  timeSpan.className = 'shout-time';
+  const time = document.createElement('span');
+  time.className = 'ds-shout-time';
   const d = new Date(row.created_at);
-  timeSpan.textContent = `${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`;
+  time.textContent = `${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`;
 
-  header.appendChild(userSpan);
-  userSpan.appendChild(userLink);
-  header.appendChild(timeSpan);
+  topBar.appendChild(userLink);
+  topBar.appendChild(time);
 
-  const textDiv = document.createElement('div');
-  textDiv.className = 'shout-text';
-  textDiv.innerHTML = parseBBCode(row.message);
+  // Message Text
+  const text = document.createElement('div');
+  text.className = 'ds-shout-text';
+  text.innerHTML = parseBBCode(row.message);
 
-  line.appendChild(header);
-  line.appendChild(textDiv);
-  shoutBox.appendChild(line);
+  content.appendChild(topBar);
+  content.appendChild(text);
 
-  // --- Context Menu Logic ---
-  userSpan.addEventListener('contextmenu', (e) => {
+  item.appendChild(avatar);
+  item.appendChild(content);
+
+  shoutBox.appendChild(item);
+
+  // --- Context Menu (Right Click Username) ---
+  userLink.addEventListener('contextmenu', (e) => {
     e.preventDefault();
     const menu = createShoutContextMenu();
     menu.innerHTML = '';
 
-    // Mention Action
-    const mentionItem = document.createElement('div');
-    mentionItem.className = 'shout-context-item';
-    mentionItem.innerHTML = `<i class="fa fa-at"></i> Mention @${row.username}`;
-    mentionItem.onclick = () => {
+    const mentionAction = document.createElement('div');
+    mentionAction.className = 'ds-context-item';
+    mentionAction.innerHTML = `<i class="fa fa-at"></i> Mention @${row.username}`;
+    mentionAction.onclick = () => {
       shoutInput.value = `@${row.username} ` + shoutInput.value;
       shoutInput.focus();
     };
-    menu.appendChild(mentionItem);
+    menu.appendChild(mentionAction);
 
-    // Delete Action
-    if (me && canCurrentUserDeleteShout(me, row)) {
-      const deleteItem = document.createElement('div');
-      deleteItem.className = 'shout-context-item delete';
-      deleteItem.innerHTML = `<i class="fa fa-trash"></i> Delete message`;
-      deleteItem.onclick = async () => {
+    if (me && (me.role === 'admin' || me.role === 'owner' || me.id === row.user_id)) {
+      const del = document.createElement('div');
+      del.className = 'ds-context-item delete';
+      del.innerHTML = `<i class="fa fa-trash"></i> Delete message`;
+      del.onclick = async () => {
         if (!confirm('Delete this message?')) return;
         const { error } = await window.supabaseClient.from('shouts').delete().eq('id', row.id);
-        if (!error) line.remove();
+        if (!error) item.remove();
       };
-      menu.appendChild(deleteItem);
+      menu.appendChild(del);
     }
 
     menu.style.display = 'block';
     menu.style.left = `${e.pageX}px`;
     menu.style.top = `${e.pageY}px`;
   });
+
+  // Scroll to bottom
+  shoutBox.scrollTop = shoutBox.scrollHeight;
 }
 
-// --- load last 50 shouts ---
 async function loadShouts(currentUser) {
   if (!shoutBox || !window.supabaseClient) return;
-  const { data, error } = await window.supabaseClient
-    .from('shouts')
-    .select('id, user_id, username, message, created_at')
-    .order('created_at', { ascending: false })
-    .limit(50);
-
+  const { data, error } = await window.supabaseClient.from('shouts').select('*').order('created_at', { ascending: false }).limit(50);
   if (error) return;
   shoutBox.innerHTML = '';
-  (data || []).slice().reverse().forEach((row) => renderShout(row, currentUser));
-  shoutBox.scrollTop = shoutBox.scrollHeight;
-  if (data && data.length > 0) lastShoutTimestamp = data[0].created_at;
+  (data || []).slice().reverse().forEach(row => renderShout(row, currentUser));
+  if (data && data.length) lastShoutTimestamp = data[0].created_at;
 }
 
 async function hasNewShouts() {
   if (!lastShoutTimestamp || !window.supabaseClient) return true;
-  const { data, error } = await window.supabaseClient
-    .from('shouts')
-    .select('created_at')
-    .order('created_at', { ascending: false })
-    .limit(1);
+  const { data, error } = await window.supabaseClient.from('shouts').select('created_at').order('created_at', { ascending: false }).limit(1);
   if (error || !data || !data.length) return false;
   return new Date(data[0].created_at) > new Date(lastShoutTimestamp);
 }
@@ -195,48 +185,35 @@ async function setupShoutbox() {
   if (!me) {
     shoutInput.disabled = true;
     shoutSendBtn.disabled = true;
-    if (shoutFooter) shoutFooter.textContent = 'Login to chat in the shoutbox.';
+    if (shoutFooter) shoutFooter.textContent = 'Login to participate in community chat.';
   } else {
-    if (shoutMeta) shoutMeta.textContent = `Community Chat · Logged in as ${me.username}`;
+    if (shoutMeta) shoutMeta.textContent = `Live Chat · Logged in as ${me.username}`;
+    if (shoutFooter) shoutFooter.textContent = 'Keep it chill. No spam or advertising.';
   }
 
   await loadShouts(me);
 
+  // Poll for safety
   setInterval(async () => {
     if (await hasNewShouts()) await loadShouts(me);
-  }, 15000);
+  }, 20000);
 
-  window.supabaseClient
-    .channel('public:shouts')
-    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'shouts' }, (payload) => {
-        renderShout(payload.new, me);
-        shoutBox.scrollTop = shoutBox.scrollHeight;
-    })
-    .subscribe();
+  // Realtime
+  window.supabaseClient.channel('public:shouts').on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'shouts' }, (p) => {
+    renderShout(p.new, me);
+  }).subscribe();
 
   shoutForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     const meNow = await window.getCurrentUserWithRole();
     if (!meNow) return;
-
-    const text = shoutInput.value.trim();
-    if (!text || text.length > 180) return;
+    const t = shoutInput.value.trim();
+    if (!t || t.length > 180) return;
     shoutInput.value = '';
-
-    try {
-      const { data, error } = await window.supabaseClient
-        .from('shouts')
-        .insert({ user_id: meNow.id, username: meNow.username, message: text })
-        .select().single();
-      if (!error) {
-        // payload comes via realtime broadcase too, but immediate UI is nicer
-      }
-    } catch (err) { console.error(err); }
+    const { error } = await window.supabaseClient.from('shouts').insert({ user_id: meNow.id, username: meNow.username, message: t });
+    if (error) console.error(error);
   });
 }
 
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', setupShoutbox);
-} else {
-  setupShoutbox();
-}
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', setupShoutbox);
+else setupShoutbox();
