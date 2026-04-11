@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <title>Login • Darkside</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
   <link href="styles.css" rel="stylesheet">
+  <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
   <style>
     :root {
       --ds-bg: #020617;
@@ -45,12 +47,10 @@
     /* header strip */
     #header {
       border-bottom: 1px solid rgba(148, 163, 184, 0.15);
-      background: linear-gradient(
-        to right,
-        rgba(15, 23, 42, 0.85),
-        rgba(15, 23, 42, 0.4),
-        rgba(8, 18, 35, 0.9)
-      );
+      background: linear-gradient(to right,
+          rgba(15, 23, 42, 0.85),
+          rgba(15, 23, 42, 0.4),
+          rgba(8, 18, 35, 0.9));
       backdrop-filter: blur(12px);
     }
 
@@ -365,8 +365,16 @@
     .login-status.ok {
       color: var(--ds-success);
     }
+
+    /* Turnstile responsive fix */
+    .cf-turnstile {
+      margin: 14px 0;
+      display: flex;
+      justify-content: center;
+    }
   </style>
 </head>
+
 <body>
   <div id="page">
     <header id="header">
@@ -425,12 +433,7 @@
                       <i class="fa fa-envelope"></i>
                       Email
                     </label>
-                    <input
-                      type="email"
-                      id="login-email"
-                      class="input-text"
-                      autocomplete="email"
-                      required>
+                    <input type="email" id="login-email" class="input-text" autocomplete="email" required>
                   </div>
 
                   <div class="login-input-group">
@@ -438,11 +441,7 @@
                       <i class="fa fa-key"></i>
                       Password
                     </label>
-                    <input
-                      type="password"
-                      id="login-password"
-                      class="input-text"
-                      autocomplete="current-password"
+                    <input type="password" id="login-password" class="input-text" autocomplete="current-password"
                       required>
                   </div>
 
@@ -459,6 +458,9 @@
                   </button>
 
                   <div id="login-status" class="login-status"></div>
+
+                  <!-- Turnstile Widget (Using Test Key) -->
+                  <div class="cf-turnstile" data-sitekey="1x00000000000000000000AA" data-theme="dark"></div>
                 </form>
               </div>
             </section>
@@ -493,15 +495,27 @@
       submitBtn.disabled = true;
       setStatus('Logging in...', '');
 
+      const captchaToken = turnstile.getResponse();
+      if (!captchaToken) {
+        setStatus('Please complete the CAPTCHA verification.', 'error');
+        submitBtn.disabled = false;
+        return;
+      }
+
       const { data, error } = await supabase.auth.signInWithPassword({
         email: emailEl.value.trim(),
-        password: passEl.value
+        password: passEl.value,
+        options: {
+          captchaToken: captchaToken
+        }
       });
 
       if (error) {
         console.error(error);
         setStatus('Login failed: ' + error.message, 'error');
         submitBtn.disabled = false;
+        // Reset turnstile on error so they can try again
+        if (typeof turnstile !== 'undefined') turnstile.reset();
         return;
       }
 
@@ -518,4 +532,5 @@
     });
   </script>
 </body>
+
 </html>
