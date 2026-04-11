@@ -48,6 +48,14 @@ async function updateHeaderAuthState() {
   const current = await getCurrentUserWithRole();
   if (!current) {
     window.dsUserRole = 'guest';
+    authLinks.innerHTML = `
+      <a href="login.html" class="btn btn-small btn-outline">
+        <i class="fa fa-sign-in-alt"></i> Login
+      </a>
+      <a href="#" class="btn btn-small btn-primary">
+        <i class="fa fa-user-plus"></i> Register
+      </a>
+    `;
     return;
   }
 
