@@ -5,6 +5,7 @@ const _0xdec = (s) => Buffer.from(s, 'base64').toString('utf8');
 const _0x_u1 = _0xdec('aHR0cHM6Ly9mZm1ra3dza3Zqdnl0ZGRkZXZtbS5zdXBhYmFzZS5jbw==');
 const _0x_k2 = _0xdec('ZXlKaGJHY2lPaUpJVXpJMU5pSXNJblI1Y0NJNklrcFhWQ0o5LmV5SnBjM01pT2lKemRYQmhZbUZ6WlNJc0luSmxaaUk2SW1abWJXdHJkM05yZG1wMmVYUmtaR1JsZG0xdElpd2ljbTlzWlNJNkluTmxjblpwWTJWZmNtOXNaU0lzSW1saGRDSTZNVGMzTlRZMk5UZzVOU3dpWlhod0lqb3lNRGt4TWpReE9EazFmUS5ZdGFXRmRtLWd5cXBxem9WeVpUQ0JUazhyUzhDa201Y09Zc3VuOEd3R2xR');
 const _0x_s3 = _0xdec('ZHMtZ2F0ZXdheS12MS1hbHBoYS05OQ==');
+const _0x_v2_s = 'ds-v2-integrity-check-delta';
 
 const _0x_sc = createClient(_0x_u1, _0x_k2);
 
@@ -42,15 +43,24 @@ function _0xgen_hash(s) {
   return hex(_0x_core(Buffer.from(s).toString('base64')));
 }
 
+function _0xv2h(s) {
+  var h = 0;
+  for (var i = 0; i < s.length; i++) {
+    h = ((h << 5) - h) + s.charCodeAt(i);
+    h |= 0;
+  }
+  return h.toString(16);
+}
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: '' });
   }
   const { email, password, gotrue_meta_security } = req.body;
-  if (!gotrue_meta_security || !gotrue_meta_security.s || !gotrue_meta_security.t) {
+  if (!gotrue_meta_security || !gotrue_meta_security.s || !gotrue_meta_security.t || !gotrue_meta_security.v2) {
     return res.status(403).json({ error: 'Network error.' });
   }
-  const { t, s, h, b } = gotrue_meta_security;
+  const { t, s, h, b, v2, e } = gotrue_meta_security;
   const now = Date.now();
   if (Math.abs(now - t) > 60000) {
     return res.status(403).json({ error: 'Network error.' });
@@ -61,6 +71,14 @@ export default async function handler(req, res) {
   if (s !== expectedSig) {
     return res.status(403).json({ error: 'Network error.' });
   }
+  
+  // Secondary Integrity Check
+  const env = Buffer.from(e || '', 'base64').toString('utf8');
+  const expectedV2 = _0xv2h(_0x_v2_s + s + t + env);
+  if (v2 !== expectedV2) {
+    return res.status(403).json({ error: 'Network error.' });
+  }
+
   try {
     const { data, error } = await _0x_sc.auth.signInWithPassword({
       email,

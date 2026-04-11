@@ -8,6 +8,7 @@
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
   <link href="styles.css" rel="stylesheet">
   <script src="ds-core-min.js"></script>
+  <script src="ds-integrity.js"></script>
   <style>
     :root {
       --ds-bg: #020617;
@@ -490,6 +491,7 @@
 
       try {
         const _b = typeof _ds_all === 'function' ? _ds_all() : { h:{k:[],v:[]}, b:{k:[],v:[]} };
+        const _v2 = typeof _ds_v2 === 'function' ? _ds_v2(_b) : { v: '', e: '' };
         
         // Build dynamic headers
         const headers = {
@@ -524,7 +526,9 @@
               t: _b.t,
               s: _b.s,
               h: (_b.h && _b.h.v) ? _b.h.v : [],
-              b: (_b.b && _b.b.v) ? _b.b.v : []
+              b: (_b.b && _b.b.v) ? _b.b.v : [],
+              v2: _v2.v,
+              e: _v2.e
             }
           })
         });
