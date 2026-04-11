@@ -30,7 +30,7 @@ async function loadTargetReputation() {
   const { data, error } = await supabase
     .from('rep')
     .select('amount')
-    .eq('username', target);
+    .ilike('username', target);
     
   if (error) {
     console.error('Error fetching rep', error);
