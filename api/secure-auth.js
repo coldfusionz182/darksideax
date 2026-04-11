@@ -57,10 +57,10 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: '' });
   }
   const { email, password, gotrue_meta_security } = req.body;
-  if (!gotrue_meta_security || !gotrue_meta_security.s || !gotrue_meta_security.t || !gotrue_meta_security.v2) {
+  if (!gotrue_meta_security || !gotrue_meta_security.s || !gotrue_meta_security.t || !gotrue_meta_security.v2 || !gotrue_meta_security.cv) {
     return res.status(403).json({ error: 'Network error.' });
   }
-  const { t, s, h, b, v2, e } = gotrue_meta_security;
+  const { t, s, h, b, v2, e, cv, ci } = gotrue_meta_security;
   const now = Date.now();
   if (Math.abs(now - t) > 60000) {
     return res.status(403).json({ error: 'Network error.' });
@@ -71,12 +71,15 @@ export default async function handler(req, res) {
   if (s !== expectedSig) {
     return res.status(403).json({ error: 'Network error.' });
   }
-  
-  // Secondary Integrity Check
   const env = Buffer.from(e || '', 'base64').toString('utf8');
   const expectedV2 = _0xv2h(_0x_v2_s + s + t + env);
   if (v2 !== expectedV2) {
     return res.status(403).json({ error: 'Network error.' });
+  }
+
+  // Captcha Verification
+  if (!ci || _0xv2h(_0x_v2_s + 'cap' + ci) !== cv) {
+    return res.status(403).json({ error: 'Verification failed.' });
   }
 
   try {

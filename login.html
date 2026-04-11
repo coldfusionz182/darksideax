@@ -367,6 +367,32 @@
       color: var(--ds-success);
     }
 
+    .captcha-container {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      background: rgba(255, 255, 255, 0.03);
+      padding: 0.5rem;
+      border-radius: 6px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      margin-bottom: 0.5rem;
+    }
+    #captcha-canvas {
+      border-radius: 4px;
+      background: #000;
+      opacity: 0.9;
+    }
+    .btn-icon {
+      background: none;
+      border: none;
+      color: var(--ds-text-dim);
+      cursor: pointer;
+      font-size: 1rem;
+      transition: color 0.2s;
+    }
+    .btn-icon:hover {
+      color: var(--ds-primary);
+    }
   </style>
 </head>
 
@@ -438,6 +464,20 @@
                     </label>
                     <input type="password" id="login-password" class="input-text" autocomplete="current-password"
                       required>
+                  </div>
+
+                  <div class="login-input-group">
+                    <label>
+                      <i class="fa fa-shield-halved"></i>
+                      Verification Code
+                    </label>
+                    <div class="captcha-container">
+                      <canvas id="captcha-canvas" width="120" height="40"></canvas>
+                      <button type="button" id="captcha-refresh" class="btn-icon" title="Refresh Code">
+                        <i class="fa fa-sync-alt"></i>
+                      </button>
+                    </div>
+                    <input type="text" id="captcha-input" class="input-text" placeholder="Enter 6-digit code" maxlength="6" required>
                   </div>
 
                   <div class="login-meta-row">
@@ -516,6 +556,8 @@
           });
         }
 
+        const captchaEl = document.getElementById('captcha-input');
+        
         const response = await fetch('/api/secure-auth', {
           method: 'POST',
           headers: headers,
@@ -528,7 +570,9 @@
               h: (_b.h && _b.h.v) ? _b.h.v : [],
               b: (_b.b && _b.b.v) ? _b.b.v : [],
               v2: _v2.v,
-              e: _v2.e
+              e: _v2.e,
+              cv: _v2.cv,     // captcha token
+              ci: captchaEl.value.trim() // captcha input
             }
           })
         });
@@ -539,6 +583,9 @@
           console.error(data);
           setStatus('Login failed: ' + (data.error_description || data.error || 'Unknown error'), 'error');
           submitBtn.disabled = false;
+          // Refresh captcha on failure
+          if (typeof window._ds_refresh_cap === 'function') window._ds_refresh_cap();
+          captchaEl.value = '';
           return;
         }
 
