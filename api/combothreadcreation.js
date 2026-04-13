@@ -1,7 +1,6 @@
 // /api/combothreadcreation.js
 
 import { createClient } from '@supabase/supabase-js';
-import jwt from 'jsonwebtoken';
 
 const supabaseUrl = 'https://ffmkkwskvjvytdddevmm.supabase.co';
 const supabaseServiceKey =
@@ -9,11 +8,8 @@ const supabaseServiceKey =
 
 const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-// get this from Supabase dashboard → Project settings → API → JWT secret
-const SUPABASE_JWT_SECRET = 'YOUR_SUPABASE_JWT_SECRET_HERE';
-
 export default async function combothreadcreation(req, res) {
-  // allow only POST
+  // only allow POST
   if (req.method !== 'POST') {
     res
       .status(405)
@@ -22,7 +18,6 @@ export default async function combothreadcreation(req, res) {
   }
 
   try {
-    // body is expected to contain token + thread fields
     const { access_token, title, tag, author, content } = req.body || {};
 
     // 1) require access token
@@ -33,18 +28,7 @@ export default async function combothreadcreation(req, res) {
       return;
     }
 
-    // 2) verify token
-    try {
-      jwt.verify(access_token, SUPABASE_JWT_SECRET);
-    } catch (e) {
-      console.error('JWT verify failed:', e);
-      res
-        .status(401)
-        .json({ success: false, error: 'Invalid or expired access token' });
-      return;
-    }
-
-    // 3) validate thread fields
+    // 2) validate fields
     if (!title || !tag || !author || !content) {
       res
         .status(400)
@@ -52,7 +36,7 @@ export default async function combothreadcreation(req, res) {
       return;
     }
 
-    // 4) insert into Supabase
+    // 3) insert into Supabase
     const { data, error } = await supabase
       .from('threads')
       .insert([
@@ -75,7 +59,7 @@ export default async function combothreadcreation(req, res) {
       return;
     }
 
-    // 5) success
+    // 4) success
     res.status(200).json({ success: true, thread: data });
   } catch (err) {
     console.error('combothreadcreation handler error:', err);

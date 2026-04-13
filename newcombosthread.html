@@ -429,49 +429,65 @@ Highlight any sensitive part and click 'Hide text' to wrap it in [HIDDEN] tags."
   </div>
 
   <script type="module">
-    import './scripts.js';
-    import { initCreateThreadAvatar } from './avatars.js';
-    import { initPostToolbar } from './PostToolbar.js';
+  import './scripts.js';
+  import { initCreateThreadAvatar } from './avatars.js';
+  import { initPostToolbar } from './PostToolbar.js';
 
-    document.addEventListener('DOMContentLoaded', () => {
-      initCreateThreadAvatar();
-      initPostToolbar();
-    });
+  document.addEventListener('DOMContentLoaded', () => {
+    initCreateThreadAvatar();
+    initPostToolbar();
+  });
 
-    const form = document.getElementById('new-thread-form');
-    const statusEl = document.getElementById('thread-status');
+  const form = document.getElementById('new-thread-form');
+  const statusEl = document.getElementById('thread-status');
 
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
 
-      const title = document.getElementById('thread-title').value.trim();
-      const tag = document.getElementById('thread-tag').value.trim();
-      const content = document.getElementById('thread-content').value.trim();
-      const author = window.currentUser?.username || 'Anonymous';
+    const title = document.getElementById('thread-title').value.trim();
+    const tag = document.getElementById('thread-tag').value.trim();
+    const content = document.getElementById('thread-content').value.trim();
+    const author = window.currentUser?.username || 'Anonymous';
 
-      statusEl.textContent = 'Creating combo thread...';
+    statusEl.textContent = 'Creating combo thread...';
 
-      try {
-        const resp = await fetch('/api/combothreadcreation', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ title, tag, author, content }),
-        });
+    // READ SUPABASE ACCESS TOKEN FROM LOCALSTORAGE
+    const stored = localStorage.getItem('sb-ffmkkwskvjvytdddevmm-auth-token');
+    const parsed = stored ? JSON.parse(stored) : null;
+    const access_token = parsed?.access_token || null;
 
-        const json = await resp.json();
+    if (!access_token) {
+      statusEl.textContent = 'You must be logged in to create a thread.';
+      return;
+    }
 
-        if (!resp.ok || !json.success) {
-          statusEl.textContent = json.error || 'Failed to create combo thread.';
-          return;
-        }
+    try {
+      const resp = await fetch('/api/combothreadcreation', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          access_token,
+          title,
+          tag,
+          author,
+          content,
+        }),
+      });
 
-        window.location.href = 'combos.html';
-      } catch (err) {
-        console.error('create-combo-thread error', err);
-        statusEl.textContent = 'Network error creating combo thread.';
+      const json = await resp.json();
+
+      if (!resp.ok || !json.success) {
+        statusEl.textContent = json.error || 'Failed to create combo thread.';
+        return;
       }
-    });
-  </script>
+
+      window.location.href = 'combos.html';
+    } catch (err) {
+      console.error('create-combo-thread error', err);
+      statusEl.textContent = 'Network error creating combo thread.';
+    }
+  });
+</script>
   <script type="module" src="notifications.js"></script>
 </body>
 
