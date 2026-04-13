@@ -449,11 +449,27 @@ Optional: add an avatar line like [avatar=https://link/to/your-image.jpg]"
 
     statusEl.textContent = 'Creating account thread...';
 
+    // read Supabase auth token from localStorage
+    const stored = localStorage.getItem('sb-ffmkkwskvjvytdddevmm-auth-token');
+    const parsed = stored ? JSON.parse(stored) : null;
+    const access_token = parsed?.access_token || null;
+
+    if (!access_token) {
+      statusEl.textContent = 'You must be logged in to create a thread.';
+      return;
+    }
+
     try {
       const resp = await fetch('/api/create-thread', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title, tag, author, content }),
+        body: JSON.stringify({
+          access_token,
+          title,
+          tag,
+          author,
+          content,
+        }),
       });
 
       const json = await resp.json();
