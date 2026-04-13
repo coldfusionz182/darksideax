@@ -16,8 +16,17 @@ export default async function softwarethreadcreation(req, res) {
   }
 
   try {
-    const { title, tag, author, content } = req.body || {};
+    const { access_token, title, tag, author, content } = req.body || {};
 
+    // require token
+    if (!access_token) {
+      res
+        .status(401)
+        .json({ success: false, error: 'Missing access token' });
+      return;
+    }
+
+    // validate fields
     if (!title || !tag || !author || !content) {
       res
         .status(400)

@@ -444,17 +444,34 @@ Highlight any sensitive part and click 'Hide text' to wrap it in [HIDDEN] tags."
 
     statusEl.textContent = 'Creating software thread...';
 
+    // read Supabase auth token from localStorage
+    const stored = localStorage.getItem('sb-ffmkkwskvjvytdddevmm-auth-token');
+    const parsed = stored ? JSON.parse(stored) : null;
+    const access_token = parsed?.access_token || null;
+
+    if (!access_token) {
+      statusEl.textContent = 'You must be logged in to create a thread.';
+      return;
+    }
+
     try {
       const resp = await fetch('/api/softwarethreadcreation', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title, tag, author, content }),
+        body: JSON.stringify({
+          access_token,
+          title,
+          tag,
+          author,
+          content,
+        }),
       });
 
       const json = await resp.json();
 
       if (!resp.ok || !json.success) {
-        statusEl.textContent = json.error || 'Failed to create software thread.';
+        statusEl.textContent =
+          json.error || 'Failed to create software thread.';
         return;
       }
 
@@ -465,6 +482,7 @@ Highlight any sensitive part and click 'Hide text' to wrap it in [HIDDEN] tags."
     }
   });
 </script>
+<script type="module" src="notifications.js"></script>
 <script type="module" src="notifications.js"></script>
 </body>
 </html>
