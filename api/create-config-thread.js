@@ -21,7 +21,7 @@ export default async function handler(req, res) {
     if (!access_token) {
       res
         .status(401)
-        .json({ success: false, error: 'Missing access token' });
+        .json({ success: false, error: 'Not Logged in' });
       return;
     }
 

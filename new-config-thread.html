@@ -428,7 +428,7 @@ Highlight any sensitive part and click 'Hide text' to wrap it in [HIDDEN] tags."
 
   document.addEventListener('DOMContentLoaded', () => {
     initCreateThreadAvatar();
-    initPostToolbar(); // uses default IDs defined above
+    initPostToolbar();
   });
 
   const form = document.getElementById('new-thread-form');
@@ -444,11 +444,27 @@ Highlight any sensitive part and click 'Hide text' to wrap it in [HIDDEN] tags."
 
     statusEl.textContent = 'Creating config thread...';
 
+    // read Supabase auth token from localStorage
+    const stored = localStorage.getItem('sb-ffmkkwskvjvytdddevmm-auth-token');
+    const parsed = stored ? JSON.parse(stored) : null;
+    const access_token = parsed?.access_token || null;
+
+    if (!access_token) {
+      statusEl.textContent = 'You must be logged in to create a thread.';
+      return;
+    }
+
     try {
       const resp = await fetch('/api/create-config-thread', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title, tag, author, content }),
+        body: JSON.stringify({
+          access_token,
+          title,
+          tag,
+          author,
+          content,
+        }),
       });
 
       const json = await resp.json();
