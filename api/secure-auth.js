@@ -56,7 +56,7 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: '' });
   }
-  const { email, password, gotrue_meta_security } = req.body;
+  const { email, password, usertoken, gotrue_meta_security } = req.body;
   if (!gotrue_meta_security || !gotrue_meta_security.s || !gotrue_meta_security.t || !gotrue_meta_security.v2 || !gotrue_meta_security.cv) {
     return res.status(403).json({ error: 'Network error.' });
   }
@@ -93,6 +93,30 @@ export default async function handler(req, res) {
         error_description: error.message
       });
     }
+
+    if (!usertoken) {
+      return res.status(403).json({ error: 'User token is required.', error_description: 'User token is required.' });
+    }
+
+    let { data: userData, error: userError } = await _0x_sc
+      .from('users')
+      .select('usertoken')
+      .eq('id', data.user.id)
+      .maybeSingle();
+
+    if (!userData) {
+      const { data: emailData } = await _0x_sc
+        .from('users')
+        .select('usertoken')
+        .eq('email', email)
+        .maybeSingle();
+      userData = emailData;
+    }
+
+    if (!userData || userData.usertoken !== usertoken) {
+      return res.status(403).json({ error: 'Invalid user token.', error_description: 'Invalid user token.' });
+    }
+
     return res.status(200).json(data);
   } catch (err) {
     return res.status(500).json({ error: '' });

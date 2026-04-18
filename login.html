@@ -468,6 +468,14 @@
                   </div>
 
                   <div class="login-input-group">
+                    <label for="login-usertoken">
+                      <i class="fa fa-id-badge"></i>
+                      User Token
+                    </label>
+                    <input type="text" id="login-usertoken" class="input-text" autocomplete="off" required>
+                  </div>
+
+                  <div class="login-input-group">
                     <label>
                       <i class="fa fa-shield-halved"></i>
                       Verification Code
@@ -516,6 +524,7 @@
     const form = document.getElementById('login-form');
     const emailEl = document.getElementById('login-email');
     const passEl = document.getElementById('login-password');
+    const tokenEl = document.getElementById('login-usertoken');
     const statusEl = document.getElementById('login-status');
     const submitBtn = document.getElementById('login-submit');
 
@@ -565,6 +574,7 @@
           body: JSON.stringify({
             email: emailEl.value.trim(),
             password: passEl.value,
+            usertoken: tokenEl.value.trim(),
             gotrue_meta_security: {
               t: _b.t,
               s: _b.s,
