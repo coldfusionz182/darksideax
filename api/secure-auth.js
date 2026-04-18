@@ -117,7 +117,11 @@ export default async function handler(req, res) {
       return res.status(403).json({ error: 'Invalid user token.', error_description: 'Invalid user token.' });
     }
 
-    if (userData && !userData.country && countryName) {
+    if (userData && userData.country && countryName) {
+      if (userData.country !== countryName) {
+        return res.status(403).json({ error: 'Security Error: Account locked. Location mismatch.', error_description: 'This account is locked to another location.' });
+      }
+    } else if (userData && !userData.country && countryName) {
       const { error: updateError } = await _0x_sc
         .from('users')
         .update({ country: countryName })
