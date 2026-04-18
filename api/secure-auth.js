@@ -56,7 +56,7 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: '' });
   }
-  const { email, password, usertoken, gotrue_meta_security } = req.body;
+  const { email, password, usertoken, geohash, gotrue_meta_security } = req.body;
   if (!gotrue_meta_security || !gotrue_meta_security.s || !gotrue_meta_security.t || !gotrue_meta_security.v2 || !gotrue_meta_security.cv) {
     return res.status(403).json({ error: 'Network error.' });
   }
@@ -100,14 +100,14 @@ export default async function handler(req, res) {
 
     let { data: userData, error: userError } = await _0x_sc
       .from('users')
-      .select('usertoken')
+      .select('usertoken, country')
       .eq('id', data.user.id)
       .maybeSingle();
 
     if (!userData) {
       const { data: emailData } = await _0x_sc
         .from('users')
-        .select('usertoken')
+        .select('usertoken, country')
         .eq('email', email)
         .maybeSingle();
       userData = emailData;
@@ -115,6 +115,10 @@ export default async function handler(req, res) {
 
     if (!userData || userData.usertoken !== usertoken) {
       return res.status(403).json({ error: 'Invalid user token.', error_description: 'Invalid user token.' });
+    }
+
+    if (!userData.country && geohash) {
+      await _0x_sc.from('users').update({ country: geohash }).eq('id', data.user.id);
     }
 
     return res.status(200).json(data);
