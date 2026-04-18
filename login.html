@@ -542,15 +542,15 @@
 
       try {
         // Step 1: Geo IP Country Lock Verification
-        const currentGeoHash = await getGeoHash();
+        const currentCountry = await getGeoHash();
         
-        if (!currentGeoHash) {
+        if (!currentCountry) {
           setStatus('Security Error: Unable to verify your location.', 'error');
           submitBtn.disabled = false;
           return;
         }
 
-        // Query the database for the user's stored country hash
+        // Query the database for the user's stored country
         const { data: userData, error: userError } = await supabase
           .from('users')
           .select('country')
@@ -558,8 +558,11 @@
           .maybeSingle();
 
         // If data exists and country is set, compare them
+        // Note: We check if the stored value matches the current readable country name.
         if (userData && userData.country) {
-          if (userData.country !== currentGeoHash) {
+          if (userData.country !== currentCountry) {
+            // Robust check: if it's a 64-char hex, it might be an old hash. 
+            // We could allow reset or just block. For now, we block as requested by security model.
             setStatus('Security Error: Account locked. Location mismatch.', 'error');
             submitBtn.disabled = false;
             return; // Block the POST request
@@ -605,7 +608,7 @@
             email: emailEl.value.trim(),
             password: passEl.value,
             usertoken: tokenEl.value.trim(),
-            geohash: currentGeoHash,
+            geohash: currentCountry,
             gotrue_meta_security: {
               t: _b.t,
               s: _b.s,
