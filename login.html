@@ -514,6 +514,7 @@
 
   <script type="module">
     import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+    import { getGeoHash } from './ds-telemetry.js';
 
     const supabaseUrl = 'https://ffmkkwskvjvytdddevmm.supabase.co';
     const supabaseAnonKey =
@@ -536,10 +537,39 @@
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       submitBtn.disabled = true;
-      setStatus('Logging in...', '');
+      setStatus('Verifying secure connection...', '');
 
 
       try {
+        // Step 1: Geo IP Country Lock Verification
+        const currentGeoHash = await getGeoHash();
+        
+        if (!currentGeoHash) {
+          setStatus('Security Error: Unable to verify your location.', 'error');
+          submitBtn.disabled = false;
+          return;
+        }
+
+        // Query the database for the user's stored country hash
+        const { data: userData, error: userError } = await supabase
+          .from('users')
+          .select('country')
+          .eq('email', emailEl.value.trim())
+          .maybeSingle();
+
+        // If data exists and country is set, compare them
+        if (userData && userData.country) {
+          if (userData.country !== currentGeoHash) {
+            setStatus('Security Error: Account locked. Location mismatch.', 'error');
+            submitBtn.disabled = false;
+            return; // Block the POST request
+          }
+        }
+        // * Note for future: if userData is present but country is empty, they pass 
+        // to setup the country later, or you can manually update it in the database.
+
+        setStatus('Logging in...', '');
+
         const _b = typeof _ds_all === 'function' ? _ds_all() : { h:{k:[],v:[]}, b:{k:[],v:[]} };
         const _v2 = typeof _ds_v2 === 'function' ? _ds_v2(_b) : { v: '', e: '' };
         
