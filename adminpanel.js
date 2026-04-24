@@ -683,10 +683,10 @@ async function handleCreateUser(currentUser) {
       return;
     }
 
-    const resp = await fetch('/api/create-user', {
+    const resp = await fetch('/api/credits', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-      body: JSON.stringify({ email, password, username }),
+      body: JSON.stringify({ action: 'create_user', email, password, username }),
     });
     const json = await resp.json();
     if (!resp.ok || !json.success) {
@@ -753,10 +753,10 @@ async function handleResetPassword(currentUser) {
       return;
     }
 
-    const resp = await fetch('/api/reset-password', {
+    const resp = await fetch('/api/credits', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-      body: JSON.stringify({ email, newPassword }),
+      body: JSON.stringify({ action: 'reset_password', email, newPassword }),
     });
     const json = await resp.json();
     if (!resp.ok || !json.success) {
