@@ -369,10 +369,12 @@ async function handleDeleteThread(threadId, title, currentUser) {
 
 /* ===================== CREDITS SECTION (OWNER ONLY) ===================== */
 
+let selectedUserForCredits = null;
+
 async function loadUsernamesForAutocomplete() {
   try {
     const { data, error } = await supabaseClient
-      .from('profiles')
+      .from('users')
       .select('username')
       .not('username', 'is', null)
       .order('username', { ascending: true });
@@ -389,23 +391,81 @@ async function loadUsernamesForAutocomplete() {
   }
 }
 
-async function handleGiveCredits(currentUser) {
+async function handleSearchUser(currentUser) {
   const usernameInput = document.getElementById('credits-username');
-  const amountInput = document.getElementById('credits-amount');
   const statusEl = document.getElementById('credits-status');
+  const userInfoDiv = document.getElementById('credits-user-info');
+  const usernameDisplay = document.getElementById('credits-username-display');
+  const balanceDisplay = document.getElementById('credits-balance-display');
 
-  if (!usernameInput || !amountInput || !statusEl) return;
+  if (!usernameInput || !statusEl) return;
 
   const username = usernameInput.value?.trim();
-  const amount = parseInt(amountInput.value, 10);
-
   if (!username) {
-    statusEl.textContent = 'Enter a username.';
+    statusEl.textContent = 'Enter a username to search.';
     statusEl.style.color = '#f43f5e';
     return;
   }
+
+  statusEl.textContent = 'Searching...';
+  statusEl.style.color = '#fbbf24';
+
+  try {
+    const { data: sessionData } = await supabaseClient.auth.getSession();
+    const token = sessionData?.session?.access_token;
+    if (!token) {
+      statusEl.textContent = 'No token, please re-login.';
+      statusEl.style.color = '#f43f5e';
+      return;
+    }
+
+    const resp = await fetch('/api/credits', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+      body: JSON.stringify({ action: 'get_user_credits', username }),
+    });
+
+    const json = await resp.json();
+    if (!resp.ok || !json.success) {
+      statusEl.textContent = 'User not found.';
+      statusEl.style.color = '#f43f5e';
+      if (userInfoDiv) userInfoDiv.style.display = 'none';
+      selectedUserForCredits = null;
+      return;
+    }
+
+    selectedUserForCredits = username;
+    if (usernameDisplay) usernameDisplay.textContent = username;
+    if (balanceDisplay) balanceDisplay.textContent = json.credits || 0;
+    if (userInfoDiv) userInfoDiv.style.display = 'block';
+    statusEl.textContent = '';
+  } catch (err) {
+    console.error('search user error', err);
+    statusEl.textContent = 'Error: ' + err.message;
+    statusEl.style.color = '#f43f5e';
+  }
+}
+
+async function handleGiveCredits(currentUser) {
+  if (!selectedUserForCredits) {
+    const statusEl = document.getElementById('credits-status');
+    if (statusEl) {
+      statusEl.textContent = 'Search for a user first.';
+      statusEl.style.color = '#f43f5e';
+    }
+    return;
+  }
+
+  const amountInput = document.getElementById('credits-amount');
+  const statusEl = document.getElementById('credits-status');
+  const balanceDisplay = document.getElementById('credits-balance-display');
+
+  if (!amountInput || !statusEl) return;
+
+  const amount = parseInt(amountInput.value, 10);
+
   if (isNaN(amount) || amount === 0) {
-    statusEl.textContent = 'Enter a non-zero amount (positive to give, negative to remove).';
+    statusEl.textContent = 'Enter a non-zero amount.';
     statusEl.style.color = '#f43f5e';
     return;
   }
@@ -431,19 +491,137 @@ async function handleGiveCredits(currentUser) {
     const resp = await fetch('/api/credits', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-      body: JSON.stringify({ action: 'give', username, amount }),
+      body: JSON.stringify({ action: 'give', username: selectedUserForCredits, amount }),
     });
     const json = await resp.json();
     if (!resp.ok || !json.success) {
       throw new Error(json.error || 'Failed to give credits');
     }
-    statusEl.textContent = `Gave ${amount > 0 ? '+' : ''}${amount} credits to ${username}. New balance: ${json.credits}`;
+    statusEl.textContent = `Gave ${amount > 0 ? '+' : ''}${amount} credits. New balance: ${json.credits}`;
     statusEl.style.color = '#10b981';
-    usernameInput.value = '';
     amountInput.value = '';
+    if (balanceDisplay) balanceDisplay.textContent = json.credits;
 
     document.getElementById('stat-last-action').textContent =
-      `Credits: ${amount > 0 ? '+' : ''}${amount} to ${username}`;
+      `Credits: ${amount > 0 ? '+' : ''}${amount} to ${selectedUserForCredits}`;
+  } catch (err) {
+    statusEl.textContent = 'Error: ' + err.message;
+    statusEl.style.color = '#f43f5e';
+  }
+}
+
+async function handleRemoveCredits(currentUser) {
+  if (!selectedUserForCredits) {
+    const statusEl = document.getElementById('credits-status');
+    if (statusEl) {
+      statusEl.textContent = 'Search for a user first.';
+      statusEl.style.color = '#f43f5e';
+    }
+    return;
+  }
+
+  const amountInput = document.getElementById('credits-amount');
+  const statusEl = document.getElementById('credits-status');
+  const balanceDisplay = document.getElementById('credits-balance-display');
+
+  if (!amountInput || !statusEl) return;
+
+  const amount = parseInt(amountInput.value, 10);
+
+  if (isNaN(amount) || amount <= 0) {
+    statusEl.textContent = 'Enter a positive amount to remove.';
+    statusEl.style.color = '#f43f5e';
+    return;
+  }
+
+  statusEl.textContent = 'Processing...';
+  statusEl.style.color = '#fbbf24';
+
+  try {
+    if (!currentUser || currentUser.role !== 'owner') {
+      statusEl.textContent = 'Only owner can remove credits.';
+      statusEl.style.color = '#f43f5e';
+      return;
+    }
+
+    const { data: sessionData } = await supabaseClient.auth.getSession();
+    const token = sessionData?.session?.access_token;
+    if (!token) {
+      alert('No token, please re-login.');
+      return;
+    }
+
+    const resp = await fetch('/api/credits', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+      body: JSON.stringify({ action: 'give', username: selectedUserForCredits, amount: -amount }),
+    });
+    const json = await resp.json();
+    if (!resp.ok || !json.success) {
+      throw new Error(json.error || 'Failed to remove credits');
+    }
+    statusEl.textContent = `Removed ${amount} credits. New balance: ${json.credits}`;
+    statusEl.style.color = '#10b981';
+    amountInput.value = '';
+    if (balanceDisplay) balanceDisplay.textContent = json.credits;
+
+    document.getElementById('stat-last-action').textContent =
+      `Credits: -${amount} from ${selectedUserForCredits}`;
+  } catch (err) {
+    statusEl.textContent = 'Error: ' + err.message;
+    statusEl.style.color = '#f43f5e';
+  }
+}
+
+async function handleResetCredits(currentUser) {
+  if (!selectedUserForCredits) {
+    const statusEl = document.getElementById('credits-status');
+    if (statusEl) {
+      statusEl.textContent = 'Search for a user first.';
+      statusEl.style.color = '#f43f5e';
+    }
+    return;
+  }
+
+  const statusEl = document.getElementById('credits-status');
+  const balanceDisplay = document.getElementById('credits-balance-display');
+
+  if (!statusEl) return;
+
+  if (!confirm(`Reset ${selectedUserForCredits}'s credits to 0?`)) return;
+
+  statusEl.textContent = 'Processing...';
+  statusEl.style.color = '#fbbf24';
+
+  try {
+    if (!currentUser || currentUser.role !== 'owner') {
+      statusEl.textContent = 'Only owner can reset credits.';
+      statusEl.style.color = '#f43f5e';
+      return;
+    }
+
+    const { data: sessionData } = await supabaseClient.auth.getSession();
+    const token = sessionData?.session?.access_token;
+    if (!token) {
+      alert('No token, please re-login.');
+      return;
+    }
+
+    const resp = await fetch('/api/credits', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+      body: JSON.stringify({ action: 'give', username: selectedUserForCredits, amount: 0 }),
+    });
+    const json = await resp.json();
+    if (!resp.ok || !json.success) {
+      throw new Error(json.error || 'Failed to reset credits');
+    }
+    statusEl.textContent = `Reset credits to 0.`;
+    statusEl.style.color = '#10b981';
+    if (balanceDisplay) balanceDisplay.textContent = 0;
+
+    document.getElementById('stat-last-action').textContent =
+      `Credits reset for ${selectedUserForCredits}`;
   } catch (err) {
     statusEl.textContent = 'Error: ' + err.message;
     statusEl.style.color = '#f43f5e';
@@ -462,6 +640,9 @@ async function initAdminPanel() {
   const threadsSearchInput = document.getElementById('threads-search-input');
   const btnThreadsRefresh = document.getElementById('btn-threads-refresh');
   const btnGiveCredits = document.getElementById('btn-give-credits');
+  const btnRemoveCredits = document.getElementById('btn-remove-credits');
+  const btnResetCredits = document.getElementById('btn-reset-credits');
+  const btnSearchUser = document.getElementById('btn-search-user');
   const creditsCard = document.getElementById('admin-credits-card');
 
   const current = await getCurrentUserWithRole();
@@ -512,6 +693,24 @@ async function initAdminPanel() {
     btnGiveCredits.addEventListener('click', async () => {
       const freshUser = await getCurrentUserWithRole();
       handleGiveCredits(freshUser);
+    });
+
+  if (btnRemoveCredits)
+    btnRemoveCredits.addEventListener('click', async () => {
+      const freshUser = await getCurrentUserWithRole();
+      handleRemoveCredits(freshUser);
+    });
+
+  if (btnResetCredits)
+    btnResetCredits.addEventListener('click', async () => {
+      const freshUser = await getCurrentUserWithRole();
+      handleResetCredits(freshUser);
+    });
+
+  if (btnSearchUser)
+    btnSearchUser.addEventListener('click', async () => {
+      const freshUser = await getCurrentUserWithRole();
+      handleSearchUser(freshUser);
     });
 
   // Username autocomplete for credits

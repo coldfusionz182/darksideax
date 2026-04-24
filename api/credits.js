@@ -57,6 +57,41 @@ export default async function handler(req, res) {
       return;
     }
 
+    // --- GET_USER_CREDITS: fetch any user's credits by username (owner only) ---
+    if (action === 'get_user_credits') {
+      const { username } = body;
+
+      if (!username || typeof username !== 'string' || !username.trim()) {
+        res.status(400).json({ success: false, error: 'Missing username' });
+        return;
+      }
+
+      const { data: requesterRow, error: requesterErr } = await supabaseAdmin
+        .from('users')
+        .select('role')
+        .eq('id', userId)
+        .maybeSingle();
+
+      if (requesterErr || !requesterRow || requesterRow.role !== 'owner') {
+        res.status(403).json({ success: false, error: 'Only owner can view other users credits' });
+        return;
+      }
+
+      const { data: targetUser, error: targetError } = await supabaseAdmin
+        .from('users')
+        .select('credits')
+        .eq('username', username.trim())
+        .maybeSingle();
+
+      if (targetError || !targetUser) {
+        res.status(404).json({ success: false, error: 'User not found' });
+        return;
+      }
+
+      res.status(200).json({ success: true, credits: targetUser.credits || 0 });
+      return;
+    }
+
     // --- GIVE: owner gives credits to a user ---
     if (action === 'give') {
       const { data: userRow, error: userErr } = await supabaseAdmin
