@@ -454,9 +454,9 @@ async function initAdminPanel() {
 
   if (deniedSection) deniedSection.style.display = 'none';
 
-  // Hide credits card by default (show when Credits tab is clicked)
+  // Show credits card by default
   if (creditsCard) {
-    creditsCard.style.display = 'none';
+    creditsCard.style.display = 'block';
   }
 
   if (userInfo) {
@@ -489,34 +489,6 @@ async function initAdminPanel() {
 
   if (btnGiveCredits)
     btnGiveCredits.addEventListener('click', () => handleGiveCredits(current));
-
-  // Tab switching
-  const menuItems = document.querySelectorAll('.admin-menu li[data-tab]');
-  menuItems.forEach(item => {
-    item.addEventListener('click', (e) => {
-      e.preventDefault();
-      const tab = item.dataset.tab;
-      
-      // Update active state
-      menuItems.forEach(mi => mi.classList.remove('active'));
-      item.classList.add('active');
-      
-      // Show/hide sections
-      const adminCard = document.getElementById('admin-card');
-      const creditsCard = document.getElementById('admin-credits-card');
-      const threadsCard = document.getElementById('admin-threads-card');
-      
-      if (tab === 'admins') {
-        if (adminCard) adminCard.style.display = 'block';
-        if (creditsCard) creditsCard.style.display = 'none';
-        if (threadsCard) threadsCard.style.display = 'block';
-      } else if (tab === 'credits') {
-        if (adminCard) adminCard.style.display = 'none';
-        if (creditsCard) creditsCard.style.display = 'block';
-        if (threadsCard) threadsCard.style.display = 'none';
-      }
-    });
-  });
 
   await refreshAdmins(current);
   await loadNewestThreads(current);
