@@ -97,7 +97,7 @@ async function loadMarketplaceThreads() {
 
       mainTd.innerHTML = `
         <div class="thread-title">
-          <a href="thread.html?id=${row.id}">${row.title}</a>
+          <a href="marketplacethread.html?id=${row.id}">${row.title}</a>
           ${row.price ? `<span class="marketplace-price">$${row.price}</span>` : ''}
         </div>
         <div class="thread-meta">

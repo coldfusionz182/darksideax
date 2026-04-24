@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Marketplace Listing • Darkside</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+  <link href="styles.css" rel="stylesheet">
+
+  <style>
+    body {
+      background: radial-gradient(circle at top, #151826 0, #05060a 55%);
+    }
+
+    /* ====== Thread header ====== */
+    .thread-header-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .thread-title-main {
+      font-size: 1.15rem;
+      font-weight: 600;
+    }
+
+    .thread-tag-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 3px 8px;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      background: rgba(168, 85, 247, 0.16);
+      color: #e9d5ff;
+    }
+    .thread-tag-pill i {
+      font-size: 0.7rem;
+    }
+
+    .marketplace-price-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 14px;
+      border-radius: 6px;
+      background: rgba(34, 197, 94, 0.15);
+      border: 1px solid rgba(34, 197, 94, 0.4);
+      color: #4ade80;
+      font-size: 1.1rem;
+      font-weight: 700;
+    }
+    .marketplace-price-badge i {
+      font-size: 0.9rem;
+    }
+
+    .thread-meta-row {
+      margin-top: 4px;
+      font-size: 0.8rem;
+      color: #9ca3c9;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .thread-meta-row .dot {
+      width: 4px;
+      height: 4px;
+      border-radius: 999px;
+      background: #4b5563;
+    }
+
+    /* ====== Video embed ====== */
+    .marketplace-video-box {
+      margin-top: 14px;
+      background: #05070d;
+      border-radius: 8px;
+      border: 1px solid #181c2d;
+      overflow: hidden;
+      box-shadow: 0 0 18px rgba(0,0,0,0.7);
+    }
+    .marketplace-video-box iframe {
+      width: 100%;
+      aspect-ratio: 16/9;
+      display: block;
+      border: none;
+    }
+
+    /* ====== Main layout ====== */
+    .thread-layout {
+      display: grid;
+      grid-template-columns: 240px minmax(0, 1fr);
+      gap: 18px;
+    }
+
+    /* ====== Author sidebar ====== */
+    .thread-sidebar {
+      border-right: 1px solid #181c2d;
+      padding-right: 14px;
+      font-size: 0.85rem;
+      color: #9ca3c9;
+    }
+
+    .author-avatar-wrapper {
+      margin-bottom: 10px;
+    }
+    .author-avatar {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid #181c2d;
+      box-shadow: 0 0 12px rgba(0,0,0,0.6);
+    }
+
+    .author-name {
+      font-size: 1.05rem;
+      font-weight: 600;
+      margin-bottom: 4px;
+      color: #e5e7ff;
+    }
+
+    .author-rank {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #ffd37a;
+      margin-bottom: 8px;
+    }
+
+    .author-meta {
+      margin-top: 8px;
+      font-size: 0.8rem;
+    }
+    .author-meta div + div {
+      margin-top: 2px;
+    }
+
+    /* ====== Main content box ====== */
+    .thread-content-box {
+      background: #05070d;
+      border-radius: 8px;
+      border: 1px solid #181c2d;
+      padding: 14px 16px;
+      box-shadow: 0 0 18px rgba(0,0,0,0.7);
+    }
+
+    .thread-post-body-main {
+      font-size: 0.95rem;
+      line-height: 1.6;
+      white-space: pre-wrap;
+    }
+
+    .post-body a,
+    .post-body a:link,
+    .post-body a:visited,
+    .post-body a:hover,
+    .post-body a:active {
+      color: inherit;
+      text-decoration: underline;
+    }
+
+    /* ====== Replies box ====== */
+    .thread-replies-box {
+      margin-top: 18px;
+      background: #05070d;
+      border-radius: 8px;
+      border: 1px solid #181c2d;
+      padding: 12px 14px;
+    }
+
+    .reply-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+      font-size: 0.9rem;
+    }
+
+    .reply-form textarea {
+      width: 100%;
+      background: #050811;
+      border: 1px solid #181c2d;
+      border-radius: 4px;
+      padding: 8px 10px;
+      min-height: 80px;
+      resize: vertical;
+      color: #f5f6ff;
+      font-size: 0.9rem;
+    }
+
+    .reply-form textarea:focus {
+      outline: none;
+      border-color: #a855f7;
+      box-shadow: 0 0 0 1px rgba(168, 85, 247, 0.5);
+    }
+
+    .reply-actions {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 8px;
+      font-size: 0.8rem;
+    }
+
+    .replies-list {
+      margin-top: 14px;
+      border-top: 1px solid #181c2d;
+      padding-top: 10px;
+      font-size: 0.9rem;
+    }
+
+    .reply-item {
+      border-bottom: 1px solid #101321;
+      padding: 8px 0;
+    }
+
+    .reply-meta {
+      font-size: 0.78rem;
+      color: #a0a4c0;
+      margin-bottom: 4px;
+    }
+
+    .reply-body {
+      white-space: pre-wrap;
+    }
+
+    /* ====== Like area ====== */
+    .thread-like-area {
+      margin-top: 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.85rem;
+    }
+
+    .btn-like {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      border-radius: 3px;
+      border: 1px solid #303856;
+      background: #141826;
+      cursor: pointer;
+      font-size: 0.8rem;
+      color: #cbd0ff;
+    }
+
+    .btn-like i {
+      font-size: 0.8rem;
+    }
+
+    .btn-like.liked {
+      border-color: #22c55e;
+      background: rgba(34, 197, 94, 0.12);
+      color: #bbf7d0;
+    }
+
+    @media (max-width: 768px) {
+      .thread-layout {
+        grid-template-columns: 1fr;
+      }
+      .thread-sidebar {
+        border-right: none;
+        border-bottom: 1px solid #181c2d;
+        padding-bottom: 10px;
+        margin-bottom: 10px;
+      }
+    }
+  </style>
+  <link href="notifications.css" rel="stylesheet">
+</head>
+<body>
+<div id="page">
+  <!-- HEADER -->
+  <header id="header">
+    <div class="wrapper header-inner">
+      <div class="header-left">
+        <div class="header-logo">
+          <span class="logo-text">Darkside</span>
+          <span class="logo-slogan">Beyond the Limits</span>
+        </div>
+      </div>
+      <div class="header-right">
+<div class="auth-area">
+          <div class="notif-wrapper">
+            <button class="notif-bell-btn" id="notif-bell-btn" type="button" aria-label="Notifications">
+              <i class="fa fa-bell" id="n-bell-icon"></i>
+              <span class="notif-count" id="notif-count">0</span>
+            </button>
+            <div class="notif-dropdown" id="notif-dropdown">
+              <div class="notif-dropdown-header">
+                <span><i class="fa fa-bell"></i> Notifications</span>
+                <span class="badge" id="notif-badge-count">0</span>
+              </div>
+              <button type="button" class="notif-clear-btn" id="notif-clear-btn">
+                <i class="fa fa-check-double"></i> Mark all as read
+              </button>
+              <div class="notif-list" id="notif-list"></div>
+            </div>
+          </div>
+          <div class="auth-links"></div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- NAVBAR -->
+  <nav id="navbar">
+    <div class="wrapper navbar-inner">
+      <ul class="nav-main">
+        <li><a href="index.html"><i class="fa fa-home"></i> Home</a></li>
+        <li><a href="configs.html"><i class="fa fa-sliders-h"></i> Configs</a></li>
+        <li><a href="combos.html"><i class="fa fa-list"></i> Combos</a></li>
+        <li><a href="software.html"><i class="fa fa-cubes"></i> Software</a></li>
+        <li><a href="crackingtutorials.html"><i class="fa fa-graduation-cap"></i> Cracking Tutorials</a></li>
+        <li><a href="marketplace.html" class="active"><i class="fa fa-store"></i> Marketplace</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <!-- CONTENT -->
+  <main id="container">
+    <div class="wrapper">
+      <section class="category">
+        <header class="cat-header">
+          <div class="thread-header-bar">
+            <span id="thread-title-display" class="thread-title-main">Loading listing...</span>
+            <div style="display:flex;align-items:center;gap:10px;">
+              <span class="marketplace-price-badge" id="thread-price-badge" style="display:none;">
+                <i class="fa fa-tag"></i><span id="thread-price-text"></span>
+              </span>
+              <span class="thread-tag-pill" id="thread-tag-pill" style="display:none;">
+                <i class="fa fa-tag"></i><span id="thread-tag-text"></span>
+              </span>
+            </div>
+          </div>
+          <div class="thread-meta-row">
+            <span id="thread-meta-display"></span>
+            <span class="dot"></span>
+            <span id="thread-created-at"></span>
+          </div>
+        </header>
+
+        <!-- Video embed (shown if embed_url exists) -->
+        <div class="marketplace-video-box" id="thread-video-box" style="display:none;">
+          <iframe id="thread-video-iframe" src="" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+        </div>
+
+        <div class="cat-body card-panel">
+          <div class="thread-layout">
+            <!-- left: author info -->
+            <aside class="thread-sidebar">
+              <div class="author-avatar-wrapper">
+                <img id="thread-avatar-img" class="author-avatar"
+                     src="images/default-avatar.png" alt="Avatar">
+              </div>
+              <div class="author-name" id="thread-author-name">Author</div>
+              <div class="author-rank" id="thread-author-rank">Member</div>
+              <div class="author-meta">
+                <div id="thread-author-extra"></div>
+              </div>
+            </aside>
+
+            <!-- right: content + replies -->
+            <div>
+              <!-- main content box -->
+              <article class="thread-content-box">
+                <div id="thread-content-display"
+                     class="thread-post-body-main post-body">
+                  <!-- filled via scripts.js -->
+                </div>
+              </article>
+
+              <!-- replies box -->
+              <section class="thread-replies-box">
+                <div class="reply-header">
+                  <span><i class="fa fa-comments"></i> Replies</span>
+                  <span id="reply-info-text">Login to leave a reply.</span>
+                </div>
+
+                <form id="reply-form" class="reply-form">
+                  <textarea id="reply-text" placeholder="Write your reply..."></textarea>
+                  <div class="reply-actions">
+                    <span id="reply-status"></span>
+                    <button type="submit" class="btn btn-primary btn-small" id="reply-submit">
+                      <i class="fa fa-paper-plane"></i> Post Reply
+                    </button>
+                  </div>
+                </form>
+
+                <div class="thread-like-area">
+                  <button class="btn-like" id="thread-like-btn">
+                    <i class="fa fa-heart"></i>
+                    <span id="thread-like-text">Like</span>
+                  </button>
+                  <span id="thread-like-count">0 likes</span>
+                </div>
+
+                <div class="replies-list" id="replies-list">
+                  <div class="reply-item" id="replies-placeholder">
+                    <div class="reply-meta">No replies yet. Be the first to drop one.</div>
+                  </div>
+                </div>
+              </section>
+
+              <!-- back link -->
+              <div class="card-panel" style="margin-top:15px;">
+                <a href="marketplace.html"><i class="fa fa-arrow-left"></i> Back to Marketplace</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+</div>
+
+<!-- load main logic + avatar loader + replies -->
+<script type="module" src="scripts.js"></script>
+<script type="module" src="threadreplies.js"></script>
+<script type="module">
+  import { initAvatarForThread } from './AvatarThreadLoader.js';
+
+  function getYouTubeEmbedUrl(url) {
+    if (!url) return null;
+    const match = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([\w-]{11})/);
+    if (match) return `https://www.youtube.com/embed/${match[1]}`;
+    if (url.includes('youtube.com/embed/')) return url;
+    return url;
+  }
+
+  window.addEventListener('ds-thread-loaded', (e) => {
+    const thread = e.detail.thread;
+    initAvatarForThread(thread);
+
+    // Price badge
+    if (thread.price) {
+      const priceBadge = document.getElementById('thread-price-badge');
+      const priceText = document.getElementById('thread-price-text');
+      if (priceBadge && priceText) {
+        priceText.textContent = '$' + thread.price;
+        priceBadge.style.display = 'inline-flex';
+      }
+    }
+
+    // Video embed
+    if (thread.embed_url) {
+      const embedUrl = getYouTubeEmbedUrl(thread.embed_url);
+      if (embedUrl) {
+        const videoBox = document.getElementById('thread-video-box');
+        const videoIframe = document.getElementById('thread-video-iframe');
+        if (videoBox && videoIframe) {
+          videoIframe.src = embedUrl;
+          videoBox.style.display = 'block';
+        }
+      }
+    }
+  });
+</script>
+<script type="module" src="notifications.js"></script>
+</body>
+</html>
