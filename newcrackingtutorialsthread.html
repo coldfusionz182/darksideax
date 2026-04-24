@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>New Thread • Cracking Tutorials • Darkside</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+  <link href="styles.css" rel="stylesheet">
+
+    <style>
+    /* Premium Glassmorphic New Thread Editor */
+    body {
+      background-color: #09090b;
+    }
+    
+    .new-thread-shell {
+      max-width: 900px;
+      margin: 30px auto;
+      font-family: "Inter", sans-serif;
+    }
+
+    .new-thread-card {
+      background: rgba(15, 23, 42, 0.4);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 12px;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+      overflow: hidden;
+    }
+
+    .editor-header-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 18px 24px;
+      background: rgba(0, 0, 0, 0.2);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .editor-header-left {
+      font-size: 1.15rem;
+      font-weight: 600;
+      color: #f8fafc;
+      letter-spacing: 0.02em;
+    }
+
+    .user-header-card {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .author-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      border: 2px solid rgba(99, 102, 241, 0.5); /* Indigo accent */
+      object-fit: cover;
+      box-shadow: 0 0 10px rgba(99, 102, 241, 0.3);
+    }
+
+    .header-username {
+      font-weight: 600;
+      color: #e2e8f0;
+      display: block;
+      font-size: 0.95rem;
+    }
+
+    .user-rank-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 0.7rem;
+      padding: 2px 6px;
+      border-radius: 4px;
+      margin-top: 4px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .rank-member { background: rgba(56, 189, 248, 0.15); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3); }
+
+    .editor-container {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .editor-row-label {
+      padding: 16px 24px 8px;
+      background: rgba(0, 0, 0, 0.1);
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+    }
+    
+    .editor-row-label span:first-child {
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: #94a3b8;
+      font-weight: 600;
+    }
+
+    .editor-input {
+      width: 100%;
+      padding: 14px 24px;
+      border: none;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      background: transparent;
+      color: #f8fafc;
+      font-size: 1.05rem;
+      font-family: inherit;
+      transition: background 0.2s ease;
+    }
+
+    .editor-input::placeholder { color: #475569; }
+    .editor-input:focus { outline: none; background: rgba(255, 255, 255, 0.02); }
+
+    .meta-row {
+      padding: 14px 24px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      background: rgba(0, 0, 0, 0.15);
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .meta-row .form-label {
+      font-size: 0.85rem;
+      color: #94a3b8;
+      font-weight: 500;
+    }
+
+    .form-control {
+      background: rgba(15, 23, 42, 0.8);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: #e2e8f0;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      cursor: pointer;
+    }
+
+    .editor-toolbar {
+      padding: 10px 24px;
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      background: rgba(0, 0, 0, 0.2);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .toolbar-btn {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: #cbd5e1;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+    }
+
+    .toolbar-btn:hover {
+      background: rgba(99, 102, 241, 0.2);
+      border-color: rgba(99, 102, 241, 0.5);
+      color: #fff;
+    }
+
+    .editor-textarea {
+      width: 100%;
+      min-height: 320px;
+      border: none;
+      resize: vertical;
+      background: transparent;
+      color: #e2e8f0;
+      font-size: 0.95rem;
+      line-height: 1.6;
+      padding: 16px 24px;
+      font-family: "Roboto Mono", Consolas, monospace;
+      transition: background 0.2s ease;
+    }
+
+    .editor-textarea:focus { outline: none; background: rgba(255, 255, 255, 0.01); }
+
+    .bottom-actions {
+      padding: 16px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(0, 0, 0, 0.3);
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    
+    .action-info {
+        font-size: 0.8rem;
+        color: #64748b;
+    }
+
+    .btn-create-thread {
+        background: linear-gradient(135deg, #6366f1, #4f46e5);
+        color: #fff;
+        border: none;
+        padding: 10px 24px;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 0.95rem;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.2s ease;
+        box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+    }
+    
+    .btn-create-thread:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(99, 102, 241, 0.5);
+    }
+
+    .color-palette {
+      position: absolute;
+      z-index: 9999;
+      background: rgba(15, 23, 42, 0.95);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      padding: 8px;
+      display: grid;
+      grid-template-columns: repeat(5, 22px);
+      gap: 6px;
+      backdrop-filter: blur(8px);
+      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+    }
+
+    .color-palette button {
+      width: 22px;
+      height: 22px;
+      border-radius: 4px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      cursor: pointer;
+      padding: 0;
+      transition: transform 0.1s ease;
+    }
+    
+    .color-palette button:hover {
+        transform: scale(1.15);
+    }
+  </style>
+  <link href="notifications.css" rel="stylesheet">
+</head>
+<body>
+
+<div id="page">
+  <!-- HEADER -->
+  <header id="header">
+    <div class="wrapper header-inner">
+      <div class="header-left">
+        <div class="header-logo">
+          <span class="logo-text">Darkside</span>
+          <span class="logo-slogan">Beyond the Limits</span>
+        </div>
+      </div>
+      <div class="header-right">
+<div class="auth-area">
+          <div class="notif-wrapper">
+            <button class="notif-bell-btn" id="notif-bell-btn" type="button" aria-label="Notifications">
+              <i class="fa fa-bell" id="n-bell-icon"></i>
+              <span class="notif-count" id="notif-count">0</span>
+            </button>
+            <div class="notif-dropdown" id="notif-dropdown">
+              <div class="notif-dropdown-header">
+                <span><i class="fa fa-bell"></i> Notifications</span>
+                <span class="badge" id="notif-badge-count">0</span>
+              </div>
+              <button type="button" class="notif-clear-btn" id="notif-clear-btn">
+                <i class="fa fa-check-double"></i> Mark all as read
+              </button>
+              <div class="notif-list" id="notif-list"></div>
+            </div>
+          </div>
+          <div class="auth-links"></div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- NAVBAR -->
+  <nav id="navbar">
+    <div class="wrapper navbar-inner">
+      <ul class="nav-main">
+        <li><a href="index.html"><i class="fa fa-home"></i> Home</a></li>
+        <li><a href="configs.html"><i class="fa fa-sliders-h"></i> Configs</a></li>
+        <li><a href="combos.html"><i class="fa fa-list"></i> Combos</a></li>
+        <li><a href="software.html"><i class="fa fa-cubes"></i> Software</a></li>
+        <li><a href="crackingtutorials.html" class="active"><i class="fa fa-graduation-cap"></i> Cracking Tutorials</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <!-- CONTENT -->
+  <main id="container">
+    <div class="wrapper">
+      <div class="new-thread-shell">
+        <div class="new-thread-card">
+          <div class="card-body">
+
+            <div class="editor-header-bar">
+              <div class="editor-header-left">Post a new Cracking Tutorial</div>
+              <div class="editor-header-user">
+                <div class="user-header-card">
+                  <img id="create-thread-avatar-img" class="author-avatar" src="images/default-avatar.png" alt="Avatar">
+                  <div>
+                    <span class="header-username" id="user-name-display">User</span>
+                    <span class="user-rank-badge rank-member" id="user-rank-badge">
+                      <i class="fa fa-user"></i>
+                      <span id="user-rank-text">Member</span>
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <form id="new-thread-form">
+              <div class="editor-container">
+
+                <div class="editor-row-label">
+                  <span>Subject</span>
+                </div>
+                <input
+                  type="text"
+                  id="thread-title"
+                  class="editor-input"
+                  required
+                  placeholder="Enter tutorial title..."
+                >
+
+                <div class="meta-row">
+                  <label class="form-label" for="thread-tag">Tag</label>
+                  <select id="thread-tag" class="form-control" required>
+                    <option value="My Project">My Project</option>
+                    <option value="Cracked">Cracked</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
+
+                <div class="editor-row-label">
+                  <span>Message</span>
+                  <span style="font-size:0.75rem;color:#9ca3c9;">Highlight text then click Hide / Color / Link.</span>
+                </div>
+
+                <div class="editor-toolbar">
+                  <button type="button" class="toolbar-btn" data-format="bold">
+                    <i class="fa fa-bold"></i>
+                  </button>
+                  <button type="button" class="toolbar-btn" data-format="italic">
+                    <i class="fa fa-italic"></i>
+                  </button>
+                  <button type="button" class="toolbar-btn" data-format="underline">
+                    <i class="fa fa-underline"></i>
+                  </button>
+                  <button type="button" class="toolbar-btn" id="btn-hide-text">
+                    <i class="fa fa-user-secret"></i> Hide text
+                  </button>
+                  <button type="button" class="toolbar-btn" id="btn-color">
+                    <i class="fa fa-palette"></i>
+                  </button>
+                  <button type="button" class="toolbar-btn" id="btn-link">
+                    <i class="fa fa-link"></i>
+                  </button>
+                </div>
+
+                <div id="color-palette" class="color-palette" style="display:none;">
+                  <button data-color="#ffffff" style="background:#ffffff;"></button>
+                  <button data-color="#000000" style="background:#000000;"></button>
+                  <button data-color="#ff0000" style="background:#ff0000;"></button>
+                  <button data-color="#ffa500" style="background:#ffa500;"></button>
+                  <button data-color="#ffff00" style="background:#ffff00;"></button>
+                  <button data-color="#00ff00" style="background:#00ff00;"></button>
+                  <button data-color="#00ffff" style="background:#00ffff;"></button>
+                  <button data-color="#0000ff" style="background:#0000ff;"></button>
+                  <button data-color="#ff00ff" style="background:#ff00ff;"></button>
+                </div>
+
+                <textarea
+                  id="thread-content"
+                  class="editor-textarea"
+                  required
+                  placeholder="Describe the tutorial, steps, tools used, and any notes.
+
+Highlight any sensitive part and click 'Hide text' to wrap it in [HIDDEN] tags."
+                ></textarea>
+              </div>
+
+              <div class="hint-line">
+                Hidden text appears as <code>[HIDDEN]secret[/HIDDEN]</code> here.
+              </div>
+
+              <div class="bottom-actions">
+                <span id="thread-status" class="small-link"></span>
+                <div>
+                  <button type="submit" class="btn-create-thread" id="thread-submit">
+                    <i class="fa fa-paper-plane"></i> Create Thread
+                  </button>
+                  <a href="crackingtutorials.html" class="small-link" style="margin-left:10px;">
+                    <i class="fa fa-arrow-left"></i> Back to Cracking Tutorials
+                  </a>
+                </div>
+              </div>
+            </form>
+
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script type="module">
+  import './scripts.js';
+  import { initCreateThreadAvatar } from './avatars.js';
+  import { initPostToolbar } from './PostToolbar.js';
+
+  document.addEventListener('DOMContentLoaded', () => {
+    initCreateThreadAvatar();
+    initPostToolbar();
+  });
+
+  const form = document.getElementById('new-thread-form');
+  const statusEl = document.getElementById('thread-status');
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const title = document.getElementById('thread-title').value.trim();
+    const tag = document.getElementById('thread-tag').value.trim();
+    const content = document.getElementById('thread-content').value.trim();
+    const author = window.currentUser?.username || 'Anonymous';
+
+    statusEl.textContent = 'Creating cracking tutorial thread...';
+
+    // read Supabase auth token from localStorage
+    const stored = localStorage.getItem('sb-ffmkkwskvjvytdddevmm-auth-token');
+    const parsed = stored ? JSON.parse(stored) : null;
+    const access_token = parsed?.access_token || null;
+
+    if (!access_token) {
+      statusEl.textContent = 'You must be logged in to create a thread.';
+      return;
+    }
+
+    try {
+      const resp = await fetch('/api/crackingtutorialsthreadcreation', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          access_token,
+          title,
+          tag,
+          author,
+          content,
+        }),
+      });
+
+      const json = await resp.json();
+
+      if (!resp.ok || !json.success) {
+        statusEl.textContent =
+          json.error || 'Failed to create cracking tutorial thread.';
+        return;
+      }
+
+      window.location.href = 'crackingtutorials.html';
+    } catch (err) {
+      console.error('create-cracking-tutorial-thread error', err);
+      statusEl.textContent = 'Network error creating cracking tutorial thread.';
+    }
+  });
+</script>
+<script type="module" src="notifications.js"></script>
+</body>
+</html>
