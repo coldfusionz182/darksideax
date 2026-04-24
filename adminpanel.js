@@ -628,6 +628,135 @@ async function handleResetCredits(currentUser) {
   }
 }
 
+/* ===================== BAN SECTION (OWNER ONLY) ===================== */
+
+async function handleBanUser(currentUser) {
+  const usernameInput = document.getElementById('ban-username');
+  const statusEl = document.getElementById('ban-status');
+
+  if (!usernameInput || !statusEl) return;
+
+  const username = usernameInput.value?.trim();
+  if (!username) {
+    statusEl.textContent = 'Username is required.';
+    statusEl.style.color = '#f43f5e';
+    return;
+  }
+
+  if (!confirm(`Ban user "${username}"? This will delete their account and prevent re-registration.`)) return;
+
+  statusEl.textContent = 'Banning user...';
+  statusEl.style.color = '#fbbf24';
+
+  try {
+    if (!currentUser || currentUser.role !== 'owner') {
+      statusEl.textContent = 'Only owner can ban users.';
+      statusEl.style.color = '#f43f5e';
+      return;
+    }
+
+    const { data: sessionData } = await supabaseClient.auth.getSession();
+    const token = sessionData?.session?.access_token;
+    if (!token) {
+      statusEl.textContent = 'No token, please re-login.';
+      statusEl.style.color = '#f43f5e';
+      return;
+    }
+
+    const resp = await fetch('/api/ban', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+      body: JSON.stringify({ action: 'ban', username }),
+    });
+    const json = await resp.json();
+    if (!resp.ok || !json.success) {
+      throw new Error(json.error || 'Failed to ban user');
+    }
+
+    statusEl.textContent = `Banned: ${json.banned} (${json.email})`;
+    statusEl.style.color = '#10b981';
+    usernameInput.value = '';
+
+    document.getElementById('stat-last-action').textContent = `Banned user: ${json.banned}`;
+    await loadBannedUsers();
+  } catch (err) {
+    statusEl.textContent = 'Error: ' + err.message;
+    statusEl.style.color = '#f43f5e';
+  }
+}
+
+async function handleUnbanUser(email) {
+  if (!confirm(`Unban "${email}"? They will be able to re-register.`)) return;
+
+  try {
+    const { data: sessionData } = await supabaseClient.auth.getSession();
+    const token = sessionData?.session?.access_token;
+    if (!token) {
+      alert('No token, please re-login.');
+      return;
+    }
+
+    const resp = await fetch('/api/ban', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+      body: JSON.stringify({ action: 'unban', email }),
+    });
+    const json = await resp.json();
+    if (!resp.ok || !json.success) {
+      throw new Error(json.error || 'Failed to unban');
+    }
+
+    document.getElementById('stat-last-action').textContent = `Unbanned: ${json.unbanned}`;
+    await loadBannedUsers();
+  } catch (err) {
+    alert('Error: ' + err.message);
+  }
+}
+
+async function loadBannedUsers() {
+  const tbody = document.getElementById('banned-tbody');
+  if (!tbody) return;
+
+  try {
+    const { data: sessionData } = await supabaseClient.auth.getSession();
+    const token = sessionData?.session?.access_token;
+    if (!token) return;
+
+    const resp = await fetch('/api/ban', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+      body: JSON.stringify({ action: 'list' }),
+    });
+    const json = await resp.json();
+    if (!resp.ok || !json.success) {
+      tbody.innerHTML = '<tr><td colspan="4" class="admin-empty">Failed to load banned list</td></tr>';
+      return;
+    }
+
+    const banned = json.banned || [];
+    if (banned.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="4" class="admin-empty">No banned users</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = banned.map(b => `
+      <tr>
+        <td>${b.email}</td>
+        <td>${b.username || 'N/A'}</td>
+        <td>${new Date(b.created_at).toLocaleDateString()}</td>
+        <td style="text-align:right;">
+          <button class="btn-owner-ghost" style="font-size:0.75rem; padding:4px 12px; border-color:#10b981; color:#10b981;" onclick="handleUnbanUser('${b.email}')">
+            <i class="fa fa-check"></i> Unban
+          </button>
+        </td>
+      </tr>
+    `).join('');
+  } catch (err) {
+    console.error('load banned users error', err);
+    tbody.innerHTML = '<tr><td colspan="4" class="admin-empty">Error loading banned list</td></tr>';
+  }
+}
+
 /* ===================== CREATE USER SECTION (OWNER ONLY) ===================== */
 
 function generatePassword() {
