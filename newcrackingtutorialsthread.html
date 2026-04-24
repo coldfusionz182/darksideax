@@ -313,18 +313,6 @@
 
             <div class="editor-header-bar">
               <div class="editor-header-left">Post a new Cracking Tutorial</div>
-              <div class="editor-header-user">
-                <div class="user-header-card">
-                  <img id="create-thread-avatar-img" class="author-avatar" src="images/default-avatar.png" alt="Avatar">
-                  <div>
-                    <span class="header-username" id="user-name-display">User</span>
-                    <span class="user-rank-badge rank-member" id="user-rank-badge">
-                      <i class="fa fa-user"></i>
-                      <span id="user-rank-text">Member</span>
-                    </span>
-                  </div>
-                </div>
-              </div>
             </div>
 
             <form id="new-thread-form">
@@ -341,14 +329,6 @@
                   placeholder="Enter tutorial title..."
                 >
 
-                <div class="meta-row">
-                  <label class="form-label" for="thread-tag">Tag</label>
-                  <select id="thread-tag" class="form-control" required>
-                    <option value="My Project">My Project</option>
-                    <option value="Cracked">Cracked</option>
-                    <option value="Other">Other</option>
-                  </select>
-                </div>
 
                 <div class="editor-row-label">
                   <span>Message</span>
@@ -424,11 +404,9 @@ Highlight any sensitive part and click 'Hide text' to wrap it in [HIDDEN] tags."
 
 <script type="module">
   import './scripts.js';
-  import { initCreateThreadAvatar } from './avatars.js';
   import { initPostToolbar } from './PostToolbar.js';
 
   document.addEventListener('DOMContentLoaded', () => {
-    initCreateThreadAvatar();
     initPostToolbar();
   });
 
@@ -439,7 +417,7 @@ Highlight any sensitive part and click 'Hide text' to wrap it in [HIDDEN] tags."
     e.preventDefault();
 
     const title = document.getElementById('thread-title').value.trim();
-    const tag = document.getElementById('thread-tag').value.trim();
+    const tag = 'Other';
     const content = document.getElementById('thread-content').value.trim();
     const author = window.currentUser?.username || 'Anonymous';
 
