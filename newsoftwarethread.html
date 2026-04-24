@@ -349,6 +349,17 @@
                   </select>
                 </div>
 
+                <div class="meta-row">
+                  <label class="form-label" for="thread-embed">Embed URL</label>
+                  <input
+                    type="url"
+                    id="thread-embed"
+                    class="form-control"
+                    placeholder="YouTube, Discord video, or any URL (optional)"
+                    style="flex:1;"
+                  >
+                </div>
+
                 <div class="editor-row-label">
                   <span>Message</span>
                   <span style="font-size:0.75rem;color:#9ca3c9;">Highlight text then click Hide / Color / Link.</span>
@@ -439,6 +450,7 @@ Highlight any sensitive part and click 'Hide text' to wrap it in [HIDDEN] tags."
 
     const title = document.getElementById('thread-title').value.trim();
     const tag = document.getElementById('thread-tag').value.trim();
+    const embed_url = document.getElementById('thread-embed').value.trim();
     const content = document.getElementById('thread-content').value.trim();
     const author = window.currentUser?.username || 'Anonymous';
 
@@ -464,6 +476,7 @@ Highlight any sensitive part and click 'Hide text' to wrap it in [HIDDEN] tags."
           tag,
           author,
           content,
+          embed_url: embed_url || null,
         }),
       });
 

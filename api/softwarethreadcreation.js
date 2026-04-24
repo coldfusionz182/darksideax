@@ -16,7 +16,7 @@ export default async function softwarethreadcreation(req, res) {
   }
 
   try {
-    const { access_token, title, tag, author, content } = req.body || {};
+    const { access_token, title, tag, author, content, embed_url } = req.body || {};
 
     // require token
     if (!access_token) {
@@ -43,6 +43,7 @@ export default async function softwarethreadcreation(req, res) {
           author,
           content,
           section: 'software',
+          embed_url: embed_url || null,
         },
       ])
       .select()

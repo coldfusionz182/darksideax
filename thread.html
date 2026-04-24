@@ -245,6 +245,39 @@
       color: #bbf7d0;
     }
 
+    /* ====== Video embed ====== */
+    .thread-video-box {
+      margin-top: 14px;
+      background: #05070d;
+      border-radius: 8px;
+      border: 1px solid #181c2d;
+      overflow: hidden;
+      box-shadow: 0 0 18px rgba(0,0,0,0.7);
+    }
+    .thread-video-box iframe {
+      width: 100%;
+      aspect-ratio: 16/9;
+      display: block;
+      border: none;
+    }
+    .thread-video-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 14px;
+      padding: 8px 14px;
+      background: rgba(15, 23, 42, 0.8);
+      border: 1px solid #181c2d;
+      border-radius: 6px;
+      color: #93c5fd;
+      font-size: 0.85rem;
+      text-decoration: none;
+    }
+    .thread-video-link:hover {
+      color: #bfdbfe;
+      border-color: #5865f2;
+    }
+
     @media (max-width: 768px) {
       .thread-layout {
         grid-template-columns: 1fr;
@@ -322,6 +355,14 @@
           </div>
         </header>
 
+        <!-- Video embed (shown if embed_url exists) -->
+        <div class="thread-video-box" id="thread-video-box" style="display:none;">
+          <iframe id="thread-video-iframe" src="" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+        </div>
+        <a id="thread-video-link" class="thread-video-link" style="display:none;" target="_blank" rel="noopener">
+          <i class="fa fa-external-link-alt"></i> <span id="thread-video-link-text">View Media</span>
+        </a>
+
         <div class="cat-body card-panel">
           <div class="thread-layout">
             <!-- left: author info -->
@@ -397,9 +438,40 @@
 <script type="module">
   import { initAvatarForThread } from './AvatarThreadLoader.js';
 
+  function getEmbedUrl(url) {
+    if (!url) return null;
+    // YouTube
+    const ytMatch = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([\w-]{11})/);
+    if (ytMatch) return `https://www.youtube.com/embed/${ytMatch[1]}`;
+    if (url.includes('youtube.com/embed/')) return url;
+    // Not embeddable – use as link
+    return null;
+  }
+
   window.addEventListener('ds-thread-loaded', (e) => {
     const thread = e.detail.thread;
     initAvatarForThread(thread);
+
+    if (thread.embed_url) {
+      const embedUrl = getEmbedUrl(thread.embed_url);
+      if (embedUrl) {
+        const videoBox = document.getElementById('thread-video-box');
+        const videoIframe = document.getElementById('thread-video-iframe');
+        if (videoBox && videoIframe) {
+          videoIframe.src = embedUrl;
+          videoBox.style.display = 'block';
+        }
+      } else {
+        // Non-YouTube URL – show as clickable link
+        const videoLink = document.getElementById('thread-video-link');
+        const videoLinkText = document.getElementById('thread-video-link-text');
+        if (videoLink && videoLinkText) {
+          videoLink.href = thread.embed_url;
+          videoLinkText.textContent = thread.embed_url;
+          videoLink.style.display = 'inline-flex';
+        }
+      }
+    }
   });
 </script>
 <script type="module" src="notifications.js"></script>
