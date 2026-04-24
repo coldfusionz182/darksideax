@@ -210,6 +210,33 @@
     #rep-give-box .shout-input {
       min-height: 30px;
     }
+
+    /* ====== Credits ====== */
+    .credits-balance-box {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: 6px;
+      background: rgba(245, 158, 11, 0.12);
+      border: 1px solid rgba(245, 158, 11, 0.35);
+      font-size: 0.8rem;
+      color: #fbbf24;
+      font-weight: 600;
+    }
+    .credits-balance-box i {
+      color: #f59e0b;
+    }
+
+    #credits-give-box .shout-input {
+      min-height: 30px;
+    }
+    .credits-give-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+    }
   </style>
 </head>
 <body>
@@ -299,6 +326,56 @@
 
       <!-- Shoutbox + forums column -->
       <div class="content-column">
+
+        <!-- CREDITS BALANCE (shown for all logged-in users) -->
+        <section class="card-panel" id="credits-balance-section" style="margin-bottom:16px; display:none;">
+          <div class="shoutbox-header">
+            <div class="shoutbox-title">
+              <i class="fa fa-coins"></i> Your Credits
+            </div>
+          </div>
+          <div style="margin-top:8px;">
+            <span class="credits-balance-box">
+              <i class="fa fa-coins"></i>
+              <span id="credits-balance-value">0</span> Credits
+            </span>
+          </div>
+        </section>
+
+        <!-- CREDITS GIVE BOX (owner only) -->
+        <section class="card-panel" id="credits-give-box" style="margin-bottom:16px; display:none;">
+          <div class="shoutbox-header">
+            <div class="shoutbox-title">
+              <i class="fa fa-coins"></i> Give Credits
+            </div>
+            <div class="shoutbox-meta">
+              Add or remove credits from a user.
+            </div>
+          </div>
+
+          <form id="credits-give-form" class="reply-form" style="margin-top:8px;">
+            <div class="credits-give-row">
+              <input
+                type="text"
+                id="credits-username"
+                class="shout-input"
+                placeholder="Exact username..."
+                style="flex:1 1 160px; max-width:220px;"
+              >
+              <input
+                type="number"
+                id="credits-amount"
+                class="shout-input"
+                placeholder="Amount (e.g. 100 or -50)"
+                style="flex:1 1 120px; max-width:160px;"
+              >
+              <button type="submit" class="btn btn-small btn-primary">
+                <i class="fa fa-coins"></i> Give Credits
+              </button>
+            </div>
+            <div id="credits-give-status" style="margin-top:6px; font-size:0.8rem;"></div>
+          </form>
+        </section>
 
         <!-- REP GIVE BOX -->
         <section class="card-panel" id="rep-give-box" style="margin-bottom:16px; display:none;">
@@ -708,5 +785,6 @@
 <script type="module" src="staffonline.js"></script>
 <script type="module" src="notifications.js"></script>
 <script type="module" src="rep.js"></script>
+<script type="module" src="credits.js"></script>
 <script type="module" src="sitestats.js"></script>
 <script src="usertitleanims.js"></script>
