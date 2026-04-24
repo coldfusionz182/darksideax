@@ -202,12 +202,12 @@ export default async function handler(req, res) {
         .eq('id', userId)
         .maybeSingle();
 
-      if (requesterErr || !requesterRow || requesterRow.role !== 'owner') {
-        res.status(403).json({ success: false, error: 'Only owner can create users' });
+      if (requesterErr || !requesterRow) {
+        res.status(403).json({ success: false, error: 'User not found' });
         return;
       }
 
-      const { email, password, username } = body;
+      const { email, password, username, role } = body;
 
       if (!email || typeof email !== 'string' || !email.trim()) {
         res.status(400).json({ success: false, error: 'Missing email' });
@@ -215,6 +215,22 @@ export default async function handler(req, res) {
       }
       if (!password || typeof password !== 'string' || password.length < 6) {
         res.status(400).json({ success: false, error: 'Password must be at least 6 characters' });
+        return;
+      }
+
+      // Validate role based on requester's role
+      const requesterRole = requesterRow.role;
+      let targetRole = role || 'member';
+
+      if (requesterRole === 'admin') {
+        // Admins can only create members
+        if (targetRole !== 'member') {
+          res.status(403).json({ success: false, error: 'Admins can only create member accounts' });
+          return;
+        }
+      } else if (requesterRole !== 'owner') {
+        // Only owner and admin can create users
+        res.status(403).json({ success: false, error: 'Only owner and admin can create users' });
         return;
       }
 
@@ -252,7 +268,7 @@ export default async function handler(req, res) {
       const insertData = {
         id: newUserId,
         email: email.trim().toLowerCase(),
-        role: 'user',
+        role: targetRole,
         credits: 0,
         usertoken,
       };
@@ -280,6 +296,7 @@ export default async function handler(req, res) {
           username: insertData.username || null,
           usertoken,
           password,
+          role: targetRole,
         },
       });
       return;
@@ -337,8 +354,107 @@ export default async function handler(req, res) {
       return;
     }
 
+    // --- APPROVE_THREAD: approve a pending thread (owner/admin only) ---
+    if (action === 'approve_thread') {
+      const { data: requesterRow, error: requesterErr } = await supabaseAdmin
+        .from('users')
+        .select('role')
+        .eq('id', userId)
+        .maybeSingle();
+
+      if (requesterErr || !requesterRow || (requesterRow.role !== 'owner' && requesterRow.role !== 'admin')) {
+        res.status(403).json({ success: false, error: 'Only owner and admin can approve threads' });
+        return;
+      }
+
+      const { threadId } = body;
+
+      if (!threadId) {
+        res.status(400).json({ success: false, error: 'Missing thread ID' });
+        return;
+      }
+
+      const { error: updateErr } = await supabaseAdmin
+        .from('threads')
+        .update({ approved: true })
+        .eq('id', threadId);
+
+      if (updateErr) {
+        console.error('approve thread error', updateErr);
+        res.status(500).json({ success: false, error: 'Failed to approve thread' });
+        return;
+      }
+
+      res.status(200).json({ success: true, threadId });
+      return;
+    }
+
+    // --- DECLINE_THREAD: decline/delete a pending thread (owner/admin only) ---
+    if (action === 'decline_thread') {
+      const { data: requesterRow, error: requesterErr } = await supabaseAdmin
+        .from('users')
+        .select('role')
+        .eq('id', userId)
+        .maybeSingle();
+
+      if (requesterErr || !requesterRow || (requesterRow.role !== 'owner' && requesterRow.role !== 'admin')) {
+        res.status(403).json({ success: false, error: 'Only owner and admin can decline threads' });
+        return;
+      }
+
+      const { threadId } = body;
+
+      if (!threadId) {
+        res.status(400).json({ success: false, error: 'Missing thread ID' });
+        return;
+      }
+
+      const { error: deleteErr } = await supabaseAdmin
+        .from('threads')
+        .delete()
+        .eq('id', threadId);
+
+      if (deleteErr) {
+        console.error('decline thread error', deleteErr);
+        res.status(500).json({ success: false, error: 'Failed to decline thread' });
+        return;
+      }
+
+      res.status(200).json({ success: true, threadId });
+      return;
+    }
+
+    // --- LIST_PENDING_THREADS: get pending threads (owner/admin only) ---
+    if (action === 'list_pending_threads') {
+      const { data: requesterRow, error: requesterErr } = await supabaseAdmin
+        .from('users')
+        .select('role')
+        .eq('id', userId)
+        .maybeSingle();
+
+      if (requesterErr || !requesterRow || (requesterRow.role !== 'owner' && requesterRow.role !== 'admin')) {
+        res.status(403).json({ success: false, error: 'Only owner and admin can view pending threads' });
+        return;
+      }
+
+      const { data: threads, error: listErr } = await supabaseAdmin
+        .from('threads')
+        .select('id, title, tag, author, content, created_at, section')
+        .eq('approved', false)
+        .order('created_at', { ascending: false });
+
+      if (listErr) {
+        console.error('list pending threads error', listErr);
+        res.status(500).json({ success: false, error: 'Failed to load pending threads' });
+        return;
+      }
+
+      res.status(200).json({ success: true, threads: threads || [] });
+      return;
+    }
+
     // Unknown action
-    res.status(400).json({ success: false, error: 'Unknown action. Use: get, give, spend, create_user, reset_password' });
+    res.status(400).json({ success: false, error: 'Unknown action. Use: get, give, spend, create_user, reset_password, approve_thread, decline_thread, list_pending_threads' });
   } catch (err) {
     console.error('credits handler error:', err);
     res.status(500).json({ success: false, error: 'Server error' });

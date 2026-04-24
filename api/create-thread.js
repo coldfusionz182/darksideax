@@ -25,7 +25,7 @@ export default async function handler(req, res) {
       return;
     }
 
-    const insertData = { title, tag, author, content, section };
+    const insertData = { title, tag, author, content, section, approved: false };
     
     if (embed_url) insertData.embed_url = embed_url;
     if (marketplace_status) insertData.marketplace_status = marketplace_status;

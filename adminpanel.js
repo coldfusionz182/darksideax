@@ -672,21 +672,68 @@ async function handleBanUser(currentUser) {
     if (!resp.ok || !json.success) {
       throw new Error(json.error || 'Failed to ban user');
     }
-
-    statusEl.textContent = `Banned: ${json.banned} (${json.email})`;
     statusEl.style.color = '#10b981';
     usernameInput.value = '';
 
     document.getElementById('stat-last-action').textContent = `Banned user: ${json.banned}`;
-    await loadBannedUsers();
   } catch (err) {
     statusEl.textContent = 'Error: ' + err.message;
     statusEl.style.color = '#f43f5e';
   }
 }
 
-async function handleUnbanUser(email) {
-  if (!confirm(`Unban "${email}"? They will be able to re-register.`)) return;
+/* ===================== PENDING THREADS SECTION (OWNER/ADMIN ONLY) ===================== */
+
+async function loadPendingThreads() {
+  const tbody = document.getElementById('pending-tbody');
+  if (!tbody) return;
+
+  try {
+    const { data: sessionData } = await supabaseClient.auth.getSession();
+    const token = sessionData?.session?.access_token;
+    if (!token) return;
+
+    const resp = await fetch('/api/credits', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+      body: JSON.stringify({ action: 'list_pending_threads' }),
+    });
+    const json = await resp.json();
+    if (!resp.ok || !json.success) {
+      tbody.innerHTML = '<tr><td colspan="5" class="admin-empty">Failed to load pending threads</td></tr>';
+      return;
+    }
+
+    const threads = json.threads || [];
+    if (threads.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="5" class="admin-empty">No pending threads</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = threads.map(t => `
+      <tr>
+        <td>${t.title}</td>
+        <td>${t.author}</td>
+        <td>${t.section}</td>
+        <td>${new Date(t.created_at).toLocaleDateString()}</td>
+        <td style="text-align:right;">
+          <button class="btn-owner-ghost" style="font-size:0.75rem; padding:4px 12px; border-color:#10b981; color:#10b981;" onclick="handleApproveThread(${t.id})">
+            <i class="fa fa-check"></i> Approve
+          </button>
+          <button class="btn-owner-ghost" style="font-size:0.75rem; padding:4px 12px; border-color:var(--admin-danger); color:var(--admin-danger);" onclick="handleDeclineThread(${t.id})">
+            <i class="fa fa-times"></i> Decline
+          </button>
+        </td>
+      </tr>
+    `).join('');
+  } catch (err) {
+    console.error('load pending threads error', err);
+    tbody.innerHTML = '<tr><td colspan="5" class="admin-empty">Error loading pending threads</td></tr>';
+  }
+}
+
+async function handleApproveThread(threadId) {
+  if (!confirm('Approve this thread? It will become visible to all users.')) return;
 
   try {
     const { data: sessionData } = await supabaseClient.auth.getSession();
@@ -696,64 +743,49 @@ async function handleUnbanUser(email) {
       return;
     }
 
-    const resp = await fetch('/api/ban', {
+    const resp = await fetch('/api/credits', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-      body: JSON.stringify({ action: 'unban', email }),
+      body: JSON.stringify({ action: 'approve_thread', threadId }),
     });
     const json = await resp.json();
     if (!resp.ok || !json.success) {
-      throw new Error(json.error || 'Failed to unban');
+      throw new Error(json.error || 'Failed to approve thread');
     }
 
-    document.getElementById('stat-last-action').textContent = `Unbanned: ${json.unbanned}`;
-    await loadBannedUsers();
+    document.getElementById('stat-last-action').textContent = `Approved thread: ${json.threadId}`;
+    await loadPendingThreads();
+    await loadNewestThreads();
   } catch (err) {
     alert('Error: ' + err.message);
   }
 }
 
-async function loadBannedUsers() {
-  const tbody = document.getElementById('banned-tbody');
-  if (!tbody) return;
+async function handleDeclineThread(threadId) {
+  if (!confirm('Decline this thread? It will be permanently deleted.')) return;
 
   try {
     const { data: sessionData } = await supabaseClient.auth.getSession();
     const token = sessionData?.session?.access_token;
-    if (!token) return;
+    if (!token) {
+      alert('No token, please re-login.');
+      return;
+    }
 
-    const resp = await fetch('/api/ban', {
+    const resp = await fetch('/api/credits', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-      body: JSON.stringify({ action: 'list' }),
+      body: JSON.stringify({ action: 'decline_thread', threadId }),
     });
     const json = await resp.json();
     if (!resp.ok || !json.success) {
-      tbody.innerHTML = '<tr><td colspan="4" class="admin-empty">Failed to load banned list</td></tr>';
-      return;
+      throw new Error(json.error || 'Failed to decline thread');
     }
 
-    const banned = json.banned || [];
-    if (banned.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="4" class="admin-empty">No banned users</td></tr>';
-      return;
-    }
-
-    tbody.innerHTML = banned.map(b => `
-      <tr>
-        <td>${b.email}</td>
-        <td>${b.username || 'N/A'}</td>
-        <td>${new Date(b.created_at).toLocaleDateString()}</td>
-        <td style="text-align:right;">
-          <button class="btn-owner-ghost" style="font-size:0.75rem; padding:4px 12px; border-color:#10b981; color:#10b981;" onclick="handleUnbanUser('${b.email}')">
-            <i class="fa fa-check"></i> Unban
-          </button>
-        </td>
-      </tr>
-    `).join('');
+    document.getElementById('stat-last-action').textContent = `Declined thread: ${json.threadId}`;
+    await loadPendingThreads();
   } catch (err) {
-    console.error('load banned users error', err);
-    tbody.innerHTML = '<tr><td colspan="4" class="admin-empty">Error loading banned list</td></tr>';
+    alert('Error: ' + err.message);
   }
 }
 
@@ -772,6 +804,7 @@ async function handleCreateUser(currentUser) {
   const emailInput = document.getElementById('create-user-email');
   const passwordInput = document.getElementById('create-user-password');
   const usernameInput = document.getElementById('create-user-username');
+  const roleInput = document.getElementById('create-user-role');
   const statusEl = document.getElementById('create-user-status');
   const resultDiv = document.getElementById('create-user-result');
   const credentialsDiv = document.getElementById('create-user-credentials');
@@ -781,6 +814,7 @@ async function handleCreateUser(currentUser) {
   const email = emailInput.value?.trim();
   const password = passwordInput.value;
   const username = usernameInput?.value?.trim() || '';
+  const role = roleInput?.value || 'member';
 
   if (!email) {
     statusEl.textContent = 'Email is required.';
@@ -798,8 +832,8 @@ async function handleCreateUser(currentUser) {
   if (resultDiv) resultDiv.style.display = 'none';
 
   try {
-    if (!currentUser || currentUser.role !== 'owner') {
-      statusEl.textContent = 'Only owner can create users.';
+    if (!currentUser || (currentUser.role !== 'owner' && currentUser.role !== 'admin')) {
+      statusEl.textContent = 'Only owner and admin can create users.';
       statusEl.style.color = '#f43f5e';
       return;
     }
@@ -815,7 +849,7 @@ async function handleCreateUser(currentUser) {
     const resp = await fetch('/api/credits', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-      body: JSON.stringify({ action: 'create_user', email, password, username }),
+      body: JSON.stringify({ action: 'create_user', email, password, username, role }),
     });
     const json = await resp.json();
     if (!resp.ok || !json.success) {
@@ -827,7 +861,7 @@ async function handleCreateUser(currentUser) {
 
     // Show credentials
     if (resultDiv && credentialsDiv) {
-      const creds = `Email: ${json.user.email}\nUsername: ${json.user.username || '(not set)'}\nPassword: ${json.user.password}\nUser Token: ${json.user.usertoken}`;
+      const creds = `Email: ${json.user.email}\nUsername: ${json.user.username || '(not set)'}\nPassword: ${json.user.password}\nUser Token: ${json.user.usertoken}\nRole: ${json.user.role}`;
       credentialsDiv.textContent = creds;
       resultDiv.style.display = 'block';
     }
@@ -836,7 +870,7 @@ async function handleCreateUser(currentUser) {
     passwordInput.value = '';
     if (usernameInput) usernameInput.value = '';
 
-    document.getElementById('stat-last-action').textContent = `Created user: ${json.user.email}`;
+    document.getElementById('stat-last-action').textContent = `Created user: ${json.user.email} (${json.user.role})`;
   } catch (err) {
     statusEl.textContent = 'Error: ' + err.message;
     statusEl.style.color = '#f43f5e';
@@ -920,11 +954,11 @@ async function initAdminPanel() {
   const btnResetCredits = document.getElementById('btn-reset-credits');
   const btnSearchUser = document.getElementById('btn-search-user');
   const btnBanUser = document.getElementById('btn-ban-user');
-  const btnRefreshBans = document.getElementById('btn-refresh-bans');
   const btnGeneratePassword = document.getElementById('btn-generate-password');
   const btnCopyCredentials = document.getElementById('btn-copy-credentials');
   const btnResetPassword = document.getElementById('btn-reset-password');
   const btnGenerateResetPassword = document.getElementById('btn-generate-reset-password');
+  const btnRefreshPending = document.getElementById('btn-refresh-pending');
   const creditsCard = document.getElementById('admin-credits-card');
 
   const current = await getCurrentUserWithRole();
@@ -1006,8 +1040,9 @@ async function initAdminPanel() {
       const freshUser = await getCurrentUserWithRole();
       handleBanUser(freshUser);
     });
-  if (btnRefreshBans)
-    btnRefreshBans.addEventListener('click', () => loadBannedUsers());
+
+  if (btnRefreshPending)
+    btnRefreshPending.addEventListener('click', () => loadPendingThreads());
 
   // Generate password for create user
   if (btnGeneratePassword) {
@@ -1088,7 +1123,7 @@ async function initAdminPanel() {
 
   await refreshAdmins(current);
   await loadNewestThreads(current);
-  await loadBannedUsers();
+  await loadPendingThreads();
 
   const adminLogoutBtn = document.getElementById('admin-logout-btn');
   if (adminLogoutBtn) {

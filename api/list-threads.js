@@ -22,8 +22,9 @@ export default async function handler(req, res) {
     let query = supabase
       .from('threads')
       .select(
-        'id, title, tag, author, content, created_at, replies, views, last_post_user, last_post_time, section, marketplace_status, is_locked'
+        'id, title, tag, author, content, created_at, replies, views, last_post_user, last_post_time, section, marketplace_status, is_locked, approved'
       )
+      .eq('approved', true)
       .order('created_at', { ascending: false })
       .limit(limit);
 

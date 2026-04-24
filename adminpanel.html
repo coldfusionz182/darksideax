@@ -821,16 +821,11 @@
         <div class="admin-card-title-wrap">
           <div class="admin-card-title">
             <i class="fa fa-ban"></i>
-            Ban Management
+            Ban User
           </div>
           <div class="admin-card-sub">
-            Ban users permanently. Banned users are removed and cannot re-register. Owner only.
+            Ban a user permanently. Owner only.
           </div>
-        </div>
-        <div class="admin-toolbar">
-          <button id="btn-refresh-bans" class="btn-owner-ghost">
-            <i class="fa fa-rotate-right"></i> Refresh
-          </button>
         </div>
       </div>
 
@@ -838,7 +833,7 @@
         <input
           type="text"
           id="ban-username"
-          placeholder="Search username to ban..."
+          placeholder="Username to ban..."
           style="flex:1 1 200px; max-width:280px; background:rgba(0,0,0,0.2); border:1px solid var(--admin-border); border-radius:var(--admin-radius-pill); padding:8px 16px; font-size:0.85rem; color:var(--admin-text-main); font-family:inherit;"
         >
         <button id="btn-ban-user" class="btn-owner-ghost" style="border-color:var(--admin-danger); color:var(--admin-danger);">
@@ -847,26 +842,6 @@
       </div>
 
       <div id="ban-status" style="margin-top:8px; font-size:0.8rem; color:var(--admin-text-muted);"></div>
-
-      <div class="admin-table-wrap" style="margin-top:16px;">
-        <table class="admin-table">
-          <thead>
-          <tr>
-            <th>Email</th>
-            <th>Username</th>
-            <th>Banned At</th>
-            <th style="text-align:right;">Actions</th>
-          </tr>
-          </thead>
-          <tbody id="banned-tbody">
-          <tr>
-            <td colspan="4" class="admin-empty">
-              Loading banned list…
-            </td>
-          </tr>
-          </tbody>
-        </table>
-      </div>
     </section>
 
     <!-- Create user card (owner only) -->
@@ -915,6 +890,17 @@
             placeholder="Display name"
             style="background:rgba(0,0,0,0.2); border:1px solid var(--admin-border); border-radius:var(--admin-radius-pill); padding:8px 16px; font-size:0.85rem; color:var(--admin-text-main); font-family:inherit;"
           >
+        </div>
+        <div style="display:flex; flex-direction:column; gap:6px; flex:1 1 200px; max-width:280px;">
+          <label style="font-size:0.75rem; color:var(--admin-text-muted);">Role</label>
+          <select
+            id="create-user-role"
+            style="background:rgba(0,0,0,0.2); border:1px solid var(--admin-border); border-radius:var(--admin-radius-pill); padding:8px 16px; font-size:0.85rem; color:var(--admin-text-main); font-family:inherit; cursor:pointer;"
+          >
+            <option value="member">Member</option>
+            <option value="admin">Admin</option>
+            <option value="owner">Owner</option>
+          </select>
         </div>
         <div style="display:flex; flex-direction:column; gap:6px; padding-top:18px;">
           <button id="btn-create-user" class="btn-owner-primary">
@@ -982,6 +968,47 @@
       </div>
 
       <div id="reset-password-status" style="margin-top:8px; font-size:0.8rem; color:var(--admin-text-muted);"></div>
+    </section>
+
+    <!-- Pending threads card (owner/admin only) -->
+    <section class="admin-card" id="admin-pending-threads-card">
+      <div class="admin-card-header">
+        <div class="admin-card-title-wrap">
+          <div class="admin-card-title">
+            <i class="fa fa-clock"></i>
+            Pending Threads
+          </div>
+          <div class="admin-card-sub">
+            Threads awaiting approval. Owner and admins can approve or decline.
+          </div>
+        </div>
+        <div class="admin-toolbar">
+          <button id="btn-refresh-pending" class="btn-owner-ghost">
+            <i class="fa fa-rotate-right"></i> Refresh
+          </button>
+        </div>
+      </div>
+
+      <div class="admin-table-wrap">
+        <table class="admin-table">
+          <thead>
+          <tr>
+            <th>Title</th>
+            <th>Author</th>
+            <th>Section</th>
+            <th>Created</th>
+            <th style="text-align:right;">Actions</th>
+          </tr>
+          </thead>
+          <tbody id="pending-tbody">
+          <tr>
+            <td colspan="5" class="admin-empty">
+              Loading pending threads…
+            </td>
+          </tr>
+          </tbody>
+        </table>
+      </div>
     </section>
 
     <!-- Newest threads card -->
