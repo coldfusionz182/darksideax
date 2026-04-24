@@ -68,6 +68,7 @@ export default async function marketplacethreadcreation(req, res) {
           section: 'marketplace',
           price,
           embed_url: embed_url || null,
+          marketplace_status: 'for_sale',
         },
       ])
       .select()

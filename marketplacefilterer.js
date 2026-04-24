@@ -30,6 +30,35 @@ async function handleDeleteThread(threadId) {
   }
 }
 
+async function handleToggleStatus(threadId, currentStatus) {
+  const newStatus = currentStatus === 'for_sale' ? 'sold' : 'for_sale';
+  if (!confirm(`Mark as ${newStatus === 'sold' ? 'SOLD' : 'FOR SALE'}?`)) return;
+  try {
+    const { data: sessionData } = await window.supabaseClient.auth.getSession();
+    const token = sessionData?.session?.access_token;
+    if (!token) { alert('No token, please re-login.'); return; }
+    const resp = await fetch('/api/update-marketplace-status', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+      body: JSON.stringify({ id: threadId, marketplace_status: newStatus }),
+    });
+    const json = await resp.json();
+    if (!resp.ok || !json.success) {
+      throw new Error(json.error || 'Failed to update status');
+    }
+    loadMarketplaceThreads();
+  } catch (err) {
+    alert('Failed to update status: ' + err.message);
+  }
+}
+
+function getStatusBadge(status) {
+  if (status === 'sold') {
+    return '<span class="marketplace-status-badge status-sold">SOLD</span>';
+  }
+  return '<span class="marketplace-status-badge status-for-sale">FOR SALE</span>';
+}
+
 function getYouTubeEmbedUrl(url) {
   if (!url) return null;
   // Match youtube.com/watch?v= or youtu.be/ or youtube.com/embed/
@@ -132,6 +161,7 @@ async function loadMarketplaceThreads() {
           · ${new Date(row.created_at).toLocaleDateString()}
           ${row.tag ? ` · <span class="badge-pill">${row.tag}</span>` : ''}
         </div>
+        ${row.marketplace_status ? `<div style="margin-top:6px;">${getStatusBadge(row.marketplace_status)}</div>` : ''}
         ${mediaHtml}
       `;
 
@@ -154,14 +184,28 @@ async function loadMarketplaceThreads() {
       tr.appendChild(viewsTd);
 
       if (_isOwner) {
-        const delTd = document.createElement('td');
-        delTd.className = 'col-stats';
-        const btn = document.createElement('button');
-        btn.style.cssText = 'background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.4);color:#f87171;padding:3px 8px;border-radius:4px;cursor:pointer;font-size:11px;';
-        btn.innerHTML = '<i class="fa fa-trash"></i>';
-        btn.addEventListener('click', () => handleDeleteThread(row.id));
-        delTd.appendChild(btn);
-        tr.appendChild(delTd);
+        const actionsTd = document.createElement('td');
+        actionsTd.className = 'col-stats';
+        actionsTd.style.display = 'flex';
+        actionsTd.style.gap = '4px';
+        actionsTd.style.alignItems = 'center';
+        
+        // Toggle status button
+        const toggleBtn = document.createElement('button');
+        toggleBtn.style.cssText = 'background:rgba(99,102,241,0.15);border:1px solid rgba(99,102,241,0.4);color:#a5b4fc;padding:3px 8px;border-radius:4px;cursor:pointer;font-size:10px;';
+        toggleBtn.innerHTML = '<i class="fa fa-exchange-alt"></i>';
+        toggleBtn.title = 'Toggle Status';
+        toggleBtn.addEventListener('click', () => handleToggleStatus(row.id, row.marketplace_status || 'for_sale'));
+        actionsTd.appendChild(toggleBtn);
+        
+        // Delete button
+        const delBtn = document.createElement('button');
+        delBtn.style.cssText = 'background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.4);color:#f87171;padding:3px 8px;border-radius:4px;cursor:pointer;font-size:11px;';
+        delBtn.innerHTML = '<i class="fa fa-trash"></i>';
+        delBtn.addEventListener('click', () => handleDeleteThread(row.id));
+        actionsTd.appendChild(delBtn);
+        
+        tr.appendChild(actionsTd);
       }
 
       threadListEl.appendChild(tr);

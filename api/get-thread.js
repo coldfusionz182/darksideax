@@ -26,7 +26,7 @@ export default async function handler(req, res) {
 
     const { data, error } = await supabase
       .from('threads')
-      .select('id, title, tag, author, content, created_at, section, price, embed_url')
+      .select('id, title, tag, author, content, created_at, section, price, embed_url, marketplace_status')
       .eq('id', id)
       .maybeSingle();
 

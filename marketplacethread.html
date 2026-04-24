@@ -262,6 +262,48 @@
       color: #bbf7d0;
     }
 
+    .marketplace-status-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 12px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .status-for-sale {
+      background: rgba(34, 197, 94, 0.15);
+      border: 1px solid rgba(34, 197, 94, 0.4);
+      color: #4ade80;
+    }
+    .status-sold {
+      background: rgba(239, 68, 68, 0.15);
+      border: 1px solid rgba(239, 68, 68, 0.4);
+      color: #f87171;
+    }
+
+    .marketplace-actions {
+      margin-top: 14px;
+      display: flex;
+      gap: 8px;
+    }
+    .marketplace-actions button {
+      padding: 6px 12px;
+      border-radius: 4px;
+      border: 1px solid;
+      background: rgba(15, 23, 42, 0.8);
+      cursor: pointer;
+      font-size: 0.8rem;
+    }
+    .btn-toggle-status {
+      border-color: rgba(99, 102, 241, 0.4);
+      color: #a5b4fc;
+    }
+    .btn-toggle-status:hover {
+      background: rgba(99, 102, 241, 0.15);
+    }
+
     @media (max-width: 768px) {
       .thread-layout {
         grid-template-columns: 1fr;
@@ -333,6 +375,7 @@
           <div class="thread-header-bar">
             <span id="thread-title-display" class="thread-title-main">Loading listing...</span>
             <div style="display:flex;align-items:center;gap:10px;">
+              <span class="marketplace-status-badge" id="thread-status-badge" style="display:none;"></span>
               <span class="marketplace-price-badge" id="thread-price-badge" style="display:none;">
                 <i class="fa fa-tag"></i><span id="thread-price-text"></span>
               </span>
@@ -375,6 +418,11 @@
                 <div id="thread-content-display"
                      class="thread-post-body-main post-body">
                   <!-- filled via scripts.js -->
+                </div>
+                <div class="marketplace-actions" id="marketplace-actions" style="display:none;">
+                  <button class="btn-toggle-status" id="btn-toggle-status">
+                    <i class="fa fa-exchange-alt"></i> Toggle Status
+                  </button>
                 </div>
               </article>
 
@@ -440,6 +488,16 @@
     const thread = e.detail.thread;
     initAvatarForThread(thread);
 
+    // Status badge
+    if (thread.marketplace_status) {
+      const statusBadge = document.getElementById('thread-status-badge');
+      if (statusBadge) {
+        statusBadge.textContent = thread.marketplace_status === 'sold' ? 'SOLD' : 'FOR SALE';
+        statusBadge.className = 'marketplace-status-badge ' + (thread.marketplace_status === 'sold' ? 'status-sold' : 'status-for-sale');
+        statusBadge.style.display = 'inline-flex';
+      }
+    }
+
     // Price badge
     if (thread.price) {
       const priceBadge = document.getElementById('thread-price-badge');
@@ -462,6 +520,40 @@
         }
       }
     }
+
+    // Owner actions (toggle status)
+    (async () => {
+      const user = await window.getCurrentUserWithRole?.();
+      if (user && (user.role === 'owner' || user.role === 'admin')) {
+        const actionsDiv = document.getElementById('marketplace-actions');
+        const toggleBtn = document.getElementById('btn-toggle-status');
+        if (actionsDiv && toggleBtn) {
+          actionsDiv.style.display = 'flex';
+          toggleBtn.addEventListener('click', async () => {
+            const newStatus = thread.marketplace_status === 'for_sale' ? 'sold' : 'for_sale';
+            if (!confirm(`Mark as ${newStatus === 'sold' ? 'SOLD' : 'FOR SALE'}?`)) return;
+            try {
+              const { data: sessionData } = await window.supabaseClient.auth.getSession();
+              const token = sessionData?.session?.access_token;
+              if (!token) { alert('No token, please re-login.'); return; }
+              const resp = await fetch('/api/update-marketplace-status', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify({ id: thread.id, marketplace_status: newStatus }),
+              });
+              const json = await resp.json();
+              if (!resp.ok || !json.success) {
+                throw new Error(json.error || 'Failed to update status');
+              }
+              // Reload page to show updated status
+              window.location.reload();
+            } catch (err) {
+              alert('Failed to update status: ' + err.message);
+            }
+          });
+        }
+      }
+    })();
   });
 </script>
 <script type="module" src="notifications.js"></script>
