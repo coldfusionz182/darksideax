@@ -369,6 +369,26 @@ async function handleDeleteThread(threadId, title, currentUser) {
 
 /* ===================== CREDITS SECTION (OWNER ONLY) ===================== */
 
+async function loadUsernamesForAutocomplete() {
+  try {
+    const { data, error } = await supabaseClient
+      .from('profiles')
+      .select('username')
+      .not('username', 'is', null)
+      .order('username', { ascending: true });
+    
+    if (error) {
+      console.error('loadUsernamesForAutocomplete error', error);
+      return [];
+    }
+    
+    return (data || []).map(p => p.username);
+  } catch (err) {
+    console.error('loadUsernamesForAutocomplete catch', err);
+    return [];
+  }
+}
+
 async function handleGiveCredits(currentUser) {
   const usernameInput = document.getElementById('credits-username');
   const amountInput = document.getElementById('credits-amount');
@@ -489,6 +509,24 @@ async function initAdminPanel() {
 
   if (btnGiveCredits)
     btnGiveCredits.addEventListener('click', () => handleGiveCredits(current));
+
+  // Username autocomplete for credits
+  const creditsUsernameInput = document.getElementById('credits-username');
+  if (creditsUsernameInput) {
+    loadUsernamesForAutocomplete().then(usernames => {
+      if (!usernames.length) return;
+      
+      const datalist = document.createElement('datalist');
+      datalist.id = 'credits-username-datalist';
+      usernames.forEach(username => {
+        const option = document.createElement('option');
+        option.value = username;
+        datalist.appendChild(option);
+      });
+      document.body.appendChild(datalist);
+      creditsUsernameInput.setAttribute('list', 'credits-username-datalist');
+    });
+  }
 
   await refreshAdmins(current);
   await loadNewestThreads(current);
