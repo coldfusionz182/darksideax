@@ -278,22 +278,6 @@
       border-color: #5865f2;
     }
 
-    /* ====== Lock badge ====== */
-    .thread-lock-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 4px 12px;
-      border-radius: 6px;
-      background: rgba(239, 68, 68, 0.15);
-      border: 1px solid rgba(239, 68, 68, 0.4);
-      color: #f87171;
-      font-size: 11px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-    }
-
     /* ====== Thread actions ====== */
     .thread-actions {
       margin-top: 14px;
@@ -314,20 +298,6 @@
     }
     .btn-edit:hover {
       background: rgba(99, 102, 241, 0.15);
-    }
-    .btn-lock {
-      border-color: rgba(239, 68, 68, 0.4);
-      color: #f87171;
-    }
-    .btn-lock:hover {
-      background: rgba(239, 68, 68, 0.15);
-    }
-    .btn-unlock {
-      border-color: rgba(34, 197, 94, 0.4);
-      color: #4ade80;
-    }
-    .btn-unlock:hover {
-      background: rgba(34, 197, 94, 0.15);
     }
 
     /* ====== Edit modal ====== */
@@ -450,9 +420,6 @@
           <div class="thread-header-bar">
             <span id="thread-title-display" class="thread-title-main">Loading thread...</span>
             <div style="display:flex;align-items:center;gap:10px;">
-              <span class="thread-lock-badge" id="thread-lock-badge" style="display:none;">
-                <i class="fa fa-lock"></i> LOCKED
-              </span>
               <span class="thread-tag-pill" id="thread-tag-pill" style="display:none;">
                 <i class="fa fa-tag"></i><span id="thread-tag-text"></span>
               </span>
@@ -500,12 +467,6 @@
                   <button class="btn-edit" id="btn-edit-thread">
                     <i class="fa fa-edit"></i> Edit
                   </button>
-                  <button class="btn-lock" id="btn-lock-thread">
-                    <i class="fa fa-lock"></i> Lock
-                  </button>
-                  <button class="btn-unlock" id="btn-unlock-thread" style="display:none;">
-                    <i class="fa fa-unlock"></i> Unlock
-                  </button>
                 </div>
               </article>
 
@@ -526,9 +487,6 @@
                       </button>
                     </div>
                   </form>
-                </div>
-                <div id="reply-locked-message" style="display:none; color:#f87171; font-size:0.85rem; padding:8px 0;">
-                  <i class="fa fa-lock"></i> This thread is locked. No new replies allowed.
                 </div>
 
                 <div class="thread-like-area">
@@ -593,20 +551,6 @@
     const thread = e.detail.thread;
     initAvatarForThread(thread);
 
-    // Lock badge
-    if (thread.is_locked) {
-      const lockBadge = document.getElementById('thread-lock-badge');
-      if (lockBadge) lockBadge.style.display = 'inline-flex';
-    }
-
-    // Hide reply form if locked
-    if (thread.is_locked) {
-      const replyFormContainer = document.getElementById('reply-form-container');
-      const replyLockedMessage = document.getElementById('reply-locked-message');
-      if (replyFormContainer) replyFormContainer.style.display = 'none';
-      if (replyLockedMessage) replyLockedMessage.style.display = 'block';
-    }
-
     // Video embed
     if (thread.embed_url) {
       const embedUrl = getEmbedUrl(thread.embed_url);
@@ -640,23 +584,12 @@
 
       const actionsDiv = document.getElementById('thread-actions');
       const editBtn = document.getElementById('btn-edit-thread');
-      const lockBtn = document.getElementById('btn-lock-thread');
-      const unlockBtn = document.getElementById('btn-unlock-thread');
 
       if (!actionsDiv) return;
 
       // Edit button: author or admin/owner
       if (isAuthor || isAdminOrOwner) {
         if (editBtn) editBtn.style.display = 'inline-block';
-      }
-
-      // Lock/Unlock buttons: admin/owner only
-      if (isAdminOrOwner) {
-        if (thread.is_locked) {
-          if (unlockBtn) unlockBtn.style.display = 'inline-block';
-        } else {
-          if (lockBtn) lockBtn.style.display = 'inline-block';
-        }
       }
 
       if (actionsDiv.querySelectorAll('button[style*="display:inline-block"]').length > 0) {
@@ -672,8 +605,6 @@
   const cancelEditBtn = document.getElementById('btn-cancel-edit');
   const saveEditBtn = document.getElementById('btn-save-edit');
   const editBtn = document.getElementById('btn-edit-thread');
-  const lockBtn = document.getElementById('btn-lock-thread');
-  const unlockBtn = document.getElementById('btn-unlock-thread');
 
   let currentThreadId = null;
 
@@ -729,57 +660,6 @@
         window.location.reload();
       } catch (err) {
         alert('Failed to update thread: ' + err.message);
-      }
-    });
-  }
-
-  // Lock/Unlock logic
-  if (lockBtn) {
-    lockBtn.addEventListener('click', async () => {
-      const urlParams = new URLSearchParams(window.location.search);
-      const threadId = urlParams.get('id');
-      if (!threadId) return;
-      try {
-        const { data: sessionData } = await window.supabaseClient.auth.getSession();
-        const token = sessionData?.session?.access_token;
-        if (!token) { alert('No token, please re-login.'); return; }
-        const resp = await fetch('/api/toggle-thread-lock', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-          body: JSON.stringify({ id: threadId, is_locked: true }),
-        });
-        const json = await resp.json();
-        if (!resp.ok || !json.success) {
-          throw new Error(json.error || 'Failed to lock thread');
-        }
-        window.location.reload();
-      } catch (err) {
-        alert('Failed to lock thread: ' + err.message);
-      }
-    });
-  }
-
-  if (unlockBtn) {
-    unlockBtn.addEventListener('click', async () => {
-      const urlParams = new URLSearchParams(window.location.search);
-      const threadId = urlParams.get('id');
-      if (!threadId) return;
-      try {
-        const { data: sessionData } = await window.supabaseClient.auth.getSession();
-        const token = sessionData?.session?.access_token;
-        if (!token) { alert('No token, please re-login.'); return; }
-        const resp = await fetch('/api/toggle-thread-lock', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-          body: JSON.stringify({ id: threadId, is_locked: false }),
-        });
-        const json = await resp.json();
-        if (!resp.ok || !json.success) {
-          throw new Error(json.error || 'Failed to unlock thread');
-        }
-        window.location.reload();
-      } catch (err) {
-        alert('Failed to unlock thread: ' + err.message);
       }
     });
   }
