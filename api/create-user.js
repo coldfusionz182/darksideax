@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import { randomBytes } from 'crypto';
 
 const supabaseUrl = 'https://ffmkkwskvjvytdddevmm.supabase.co';
 const supabaseServiceKey =
@@ -86,12 +87,16 @@ export default async function handler(req, res) {
 
     const newUserId = newUser.user.id;
 
+    // Generate usertoken
+    const usertoken = randomBytes(16).toString('hex').toUpperCase();
+
     // Insert into public.users table
     const insertData = {
       id: newUserId,
       email: email.trim().toLowerCase(),
       role: 'user',
       credits: 0,
+      usertoken,
     };
     if (username && typeof username === 'string' && username.trim()) {
       insertData.username = username.trim();
@@ -115,6 +120,7 @@ export default async function handler(req, res) {
         id: newUserId,
         email: email.trim().toLowerCase(),
         username: insertData.username || null,
+        usertoken,
       },
     });
   } catch (err) {
