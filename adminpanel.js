@@ -789,6 +789,10 @@ async function handleDeclineThread(threadId) {
   }
 }
 
+// Make functions globally accessible for onclick handlers
+window.handleApproveThread = handleApproveThread;
+window.handleDeclineThread = handleDeclineThread;
+
 /* ===================== CREATE USER SECTION (OWNER ONLY) ===================== */
 
 function generatePassword() {
