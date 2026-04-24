@@ -2,6 +2,35 @@
 
 const threadListEl = document.getElementById('thread-list');
 const sortSelectEl = document.getElementById('sort-select');
+let _isOwner = false;
+
+(async () => {
+  const user = await window.getCurrentUserWithRole?.();
+  if (user && user.role === 'owner') _isOwner = true;
+})();
+
+async function deleteThread(threadId) {
+  const stored = localStorage.getItem('sb-ffmkkwskvjvytdddevmm-auth-token');
+  const parsed = stored ? JSON.parse(stored) : null;
+  const token = parsed?.access_token || null;
+  if (!token) return;
+  if (!confirm('Delete this thread?')) return;
+  try {
+    const resp = await fetch('/api/delete-thread', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+      body: JSON.stringify({ id: threadId }),
+    });
+    const json = await resp.json();
+    if (json.success) {
+      loadMarketplaceThreads();
+    } else {
+      alert(json.error || 'Failed to delete');
+    }
+  } catch (err) {
+    alert('Network error deleting thread');
+  }
+}
 
 function getYouTubeEmbedUrl(url) {
   if (!url) return null;
@@ -125,6 +154,13 @@ async function loadMarketplaceThreads() {
       tr.appendChild(priceTd);
       tr.appendChild(repliesTd);
       tr.appendChild(viewsTd);
+
+      if (_isOwner) {
+        const delTd = document.createElement('td');
+        delTd.className = 'col-stats';
+        delTd.innerHTML = `<button onclick="deleteThread('${row.id}')" style="background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.4);color:#f87171;padding:3px 8px;border-radius:4px;cursor:pointer;font-size:11px;"><i class=\"fa fa-trash\"></i></button>`;
+        tr.appendChild(delTd);
+      }
 
       threadListEl.appendChild(tr);
     });

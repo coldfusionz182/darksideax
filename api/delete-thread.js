@@ -50,7 +50,7 @@ export default async function handler(req, res) {
       .eq('id', userId)
       .maybeSingle();
 
-    if (profError || !profile || profile.role !== 'admin') {
+    if (profError || !profile || (profile.role !== 'admin' && profile.role !== 'owner')) {
       res
         .status(403)
         .json({ success: false, error: 'Not allowed' });
