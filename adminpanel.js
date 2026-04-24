@@ -454,8 +454,8 @@ async function initAdminPanel() {
 
   if (deniedSection) deniedSection.style.display = 'none';
 
-  // Show credits card only for owner
-  if (creditsCard && current.role === 'owner') {
+  // Show credits card to all admin panel users
+  if (creditsCard) {
     creditsCard.style.display = 'block';
   }
 
