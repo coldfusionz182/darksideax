@@ -9,26 +9,24 @@ let _isOwner = false;
   if (user && user.role === 'owner') _isOwner = true;
 })();
 
-async function deleteThread(threadId) {
-  const stored = localStorage.getItem('sb-ffmkkwskvjvytdddevmm-auth-token');
-  const parsed = stored ? JSON.parse(stored) : null;
-  const token = parsed?.access_token || null;
-  if (!token) return;
+async function handleDeleteThread(threadId) {
   if (!confirm('Delete this thread?')) return;
   try {
+    const { data: sessionData } = await window.supabaseClient.auth.getSession();
+    const token = sessionData?.session?.access_token;
+    if (!token) { alert('No token, please re-login.'); return; }
     const resp = await fetch('/api/delete-thread', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
       body: JSON.stringify({ id: threadId }),
     });
     const json = await resp.json();
-    if (json.success) {
-      loadSoftwareThreads();
-    } else {
-      alert(json.error || 'Failed to delete');
+    if (!resp.ok || !json.success) {
+      throw new Error(json.error || 'Failed to delete');
     }
+    loadSoftwareThreads();
   } catch (err) {
-    alert('Network error deleting thread');
+    alert('Failed to delete thread: ' + err.message);
   }
 }
 
@@ -131,7 +129,11 @@ async function loadSoftwareThreads() {
       if (_isOwner) {
         const delTd = document.createElement('td');
         delTd.className = 'col-stats';
-        delTd.innerHTML = `<button onclick="deleteThread('${row.id}')" style="background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.4);color:#f87171;padding:3px 8px;border-radius:4px;cursor:pointer;font-size:11px;"><i class=\"fa fa-trash\"></i></button>`;
+        const btn = document.createElement('button');
+        btn.style.cssText = 'background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.4);color:#f87171;padding:3px 8px;border-radius:4px;cursor:pointer;font-size:11px;';
+        btn.innerHTML = '<i class="fa fa-trash"></i>';
+        btn.addEventListener('click', () => handleDeleteThread(row.id));
+        delTd.appendChild(btn);
         tr.appendChild(delTd);
       }
 
