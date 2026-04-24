@@ -367,6 +367,68 @@ async function handleDeleteThread(threadId, title, currentUser) {
   }
 }
 
+/* ===================== CREDITS SECTION (OWNER ONLY) ===================== */
+
+async function handleGiveCredits(currentUser) {
+  const usernameInput = document.getElementById('credits-username');
+  const amountInput = document.getElementById('credits-amount');
+  const statusEl = document.getElementById('credits-status');
+
+  if (!usernameInput || !amountInput || !statusEl) return;
+
+  const username = usernameInput.value?.trim();
+  const amount = parseInt(amountInput.value, 10);
+
+  if (!username) {
+    statusEl.textContent = 'Enter a username.';
+    statusEl.style.color = '#f43f5e';
+    return;
+  }
+  if (isNaN(amount) || amount === 0) {
+    statusEl.textContent = 'Enter a non-zero amount (positive to give, negative to remove).';
+    statusEl.style.color = '#f43f5e';
+    return;
+  }
+
+  statusEl.textContent = 'Processing...';
+  statusEl.style.color = '#fbbf24';
+
+  try {
+    if (!currentUser || currentUser.role !== 'owner') {
+      statusEl.textContent = 'Only owner can give credits.';
+      statusEl.style.color = '#f43f5e';
+      return;
+    }
+
+    const { data: sessionData } = await supabaseClient.auth.getSession();
+    const token = sessionData?.session?.access_token;
+    if (!token) {
+      alert('No token, please re-login.');
+      return;
+    }
+
+    const resp = await fetch('/api/credits', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+      body: JSON.stringify({ action: 'give', username, amount }),
+    });
+    const json = await resp.json();
+    if (!resp.ok || !json.success) {
+      throw new Error(json.error || 'Failed to give credits');
+    }
+    statusEl.textContent = `Gave ${amount > 0 ? '+' : ''}${amount} credits to ${username}. New balance: ${json.credits}`;
+    statusEl.style.color = '#10b981';
+    usernameInput.value = '';
+    amountInput.value = '';
+
+    document.getElementById('stat-last-action').textContent =
+      `Credits: ${amount > 0 ? '+' : ''}${amount} to ${username}`;
+  } catch (err) {
+    statusEl.textContent = 'Error: ' + err.message;
+    statusEl.style.color = '#f43f5e';
+  }
+}
+
 /* ===================== INIT ===================== */
 
 async function initAdminPanel() {
@@ -378,6 +440,8 @@ async function initAdminPanel() {
   const btnCreateUser = document.getElementById('btn-create-user'); // unused
   const threadsSearchInput = document.getElementById('threads-search-input');
   const btnThreadsRefresh = document.getElementById('btn-threads-refresh');
+  const btnGiveCredits = document.getElementById('btn-give-credits');
+  const creditsCard = document.getElementById('admin-credits-card');
 
   const current = await getCurrentUserWithRole();
   console.log('current user for adminpanel', current);
@@ -389,6 +453,11 @@ async function initAdminPanel() {
   }
 
   if (deniedSection) deniedSection.style.display = 'none';
+
+  // Show credits card only for owner
+  if (creditsCard && current.role === 'owner') {
+    creditsCard.style.display = 'block';
+  }
 
   if (userInfo) {
     const roleLabel =
@@ -417,6 +486,9 @@ async function initAdminPanel() {
     btnThreadsRefresh.addEventListener('click', () =>
       loadNewestThreads(current)
     );
+
+  if (btnGiveCredits)
+    btnGiveCredits.addEventListener('click', () => handleGiveCredits(current));
 
   await refreshAdmins(current);
   await loadNewestThreads(current);
