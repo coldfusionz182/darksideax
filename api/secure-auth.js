@@ -119,7 +119,7 @@ export default async function handler(req, res) {
 
     if (userData && userData.country && countryName) {
       if (userData.country !== countryName) {
-        return res.status(403).json({ error: 'Security Error: Account locked. Location mismatch.', error_description: 'This account is locked to another location.' });
+        return res.status(403).json({ error: 'Security Error: Account locked', error_description: 'Security Verification Error.' });
       }
     } else if (userData && !userData.country && countryName) {
       const { error: updateError } = await _0x_sc
@@ -128,9 +128,8 @@ export default async function handler(req, res) {
         .eq('id', userData.id);
       
       if (updateError) {
-        console.error('Failed to update country:', updateError);
+       
       } else {
-        console.log(`Successfully updated country for user ${userData.id} to: ${countryName}`);
       }
     }
 
