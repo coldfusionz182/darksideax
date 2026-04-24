@@ -59,13 +59,13 @@ export default async function handler(req, res) {
 
     // --- GIVE: owner gives credits to a user ---
     if (action === 'give') {
-      const { data: profile, error: profError } = await supabaseAdmin
-        .from('profiles')
+      const { data: userRow, error: userErr } = await supabaseAdmin
+        .from('users')
         .select('role')
         .eq('id', userId)
         .maybeSingle();
 
-      if (profError || !profile || profile.role !== 'owner') {
+      if (userErr || !userRow || userRow.role !== 'owner') {
         res.status(403).json({ success: false, error: 'Only owner can give credits' });
         return;
       }
