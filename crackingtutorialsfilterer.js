@@ -4,10 +4,10 @@ const threadListEl = document.getElementById('thread-list');
 const sortSelectEl = document.getElementById('sort-select');
 let _isOwner = false;
 
-(async () => {
+async function checkRole() {
   const user = await window.getCurrentUserWithRole?.();
   if (user && (user.role === 'owner' || user.role === 'admin')) _isOwner = true;
-})();
+}
 
 async function handleDeleteThread(threadId) {
   try {
@@ -186,4 +186,7 @@ if (sortSelectEl) {
   sortSelectEl.addEventListener('change', loadCrackingTutorialsThreads);
 }
 
-loadCrackingTutorialsThreads();
+(async () => {
+  await checkRole();
+  loadCrackingTutorialsThreads();
+})();
