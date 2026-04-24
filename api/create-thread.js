@@ -8,58 +8,44 @@ const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
-    res
-      .status(405)
-      .json({ success: false, error: 'Method not allowed' });
+    res.status(405).json({ success: false, error: 'Method not allowed' });
     return;
   }
 
   try {
-    const { access_token, title, tag, author, content } = req.body || {};
+    const { access_token, title, tag, author, content, section, embed_url, marketplace_status, price } = req.body || {};
 
-    // require token
     if (!access_token) {
-      res
-        .status(401)
-        .json({ success: false, error: 'Missing access token' });
+      res.status(401).json({ success: false, error: 'Missing access token' });
       return;
     }
 
-    // validate fields
-    if (!title || !tag || !author || !content) {
-      res
-        .status(400)
-        .json({ success: false, error: 'Missing fields' });
+    if (!title || !tag || !author || !content || !section) {
+      res.status(400).json({ success: false, error: 'Missing fields' });
       return;
     }
+
+    const insertData = { title, tag, author, content, section };
+    
+    if (embed_url) insertData.embed_url = embed_url;
+    if (marketplace_status) insertData.marketplace_status = marketplace_status;
+    if (price !== undefined) insertData.price = price;
 
     const { data, error } = await supabase
       .from('threads')
-      .insert([
-        {
-          title,
-          tag,
-          author,
-          content,
-          section: 'accounts',
-        },
-      ])
+      .insert([insertData])
       .select()
       .single();
 
     if (error) {
-      console.error('Supabase insert error (accounts):', error);
-      res
-        .status(500)
-        .json({ success: false, error: error.message });
+      console.error('Supabase insert error:', error);
+      res.status(500).json({ success: false, error: error.message });
       return;
     }
 
     res.status(200).json({ success: true, thread: data });
   } catch (err) {
     console.error('create-thread handler error:', err);
-    res
-      .status(500)
-      .json({ success: false, error: 'Server error' });
+    res.status(500).json({ success: false, error: 'Server error' });
   }
 }

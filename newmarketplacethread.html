@@ -468,7 +468,7 @@ Highlight any sensitive part and click 'Hide text' to wrap it in [HIDDEN] tags."
     }
 
     try {
-      const resp = await fetch('/api/marketplacethreadcreation', {
+      const resp = await fetch('/api/create-thread', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -477,8 +477,10 @@ Highlight any sensitive part and click 'Hide text' to wrap it in [HIDDEN] tags."
           tag: 'Marketplace',
           author,
           content,
+          section: 'marketplace',
           price,
           embed_url,
+          marketplace_status: 'for_sale',
         }),
       });
 
