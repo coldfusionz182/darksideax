@@ -6,7 +6,7 @@ let _isOwner = false;
 
 (async () => {
   const user = await window.getCurrentUserWithRole?.();
-  if (user && user.role === 'owner') _isOwner = true;
+  if (user && (user.role === 'owner' || user.role === 'admin')) _isOwner = true;
 })();
 
 async function handleDeleteThread(threadId) {
@@ -26,6 +26,27 @@ async function handleDeleteThread(threadId) {
     loadAccountThreads();
   } catch (err) {
     alert('Failed to delete thread: ' + err.message);
+  }
+}
+
+async function handleToggleLock(threadId, currentStatus) {
+  const newStatus = !currentStatus;
+  try {
+    const { data: sessionData } = await window.supabaseClient.auth.getSession();
+    const token = sessionData?.session?.access_token;
+    if (!token) { alert('No token, please re-login.'); return; }
+    const resp = await fetch('/api/toggle-thread-lock', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+      body: JSON.stringify({ id: threadId, is_locked: newStatus }),
+    });
+    const json = await resp.json();
+    if (!resp.ok || !json.success) {
+      throw new Error(json.error || 'Failed to toggle lock');
+    }
+    loadAccountThreads();
+  } catch (err) {
+    alert('Failed to toggle lock: ' + err.message);
   }
 }
 
@@ -138,14 +159,31 @@ function renderThreads(list, sortMode) {
     tr.appendChild(viewsTd);
 
     if (_isOwner) {
-      const delTd = document.createElement('td');
-      delTd.className = 'col-stats';
-      const btn = document.createElement('button');
-      btn.style.cssText = 'background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.4);color:#f87171;padding:3px 8px;border-radius:4px;cursor:pointer;font-size:11px;';
-      btn.innerHTML = '<i class="fa fa-trash"></i>';
-      btn.addEventListener('click', () => handleDeleteThread(row.id));
-      delTd.appendChild(btn);
-      tr.appendChild(delTd);
+      const actionsTd = document.createElement('td');
+      actionsTd.className = 'col-stats';
+      actionsTd.style.display = 'flex';
+      actionsTd.style.gap = '4px';
+      actionsTd.style.alignItems = 'center';
+
+      // Lock/Unlock button
+      const lockBtn = document.createElement('button');
+      const isLocked = row.is_locked === true;
+      lockBtn.style.cssText = isLocked
+        ? 'background:rgba(34,197,94,0.15);border:1px solid rgba(34,197,94,0.4);color:#4ade80;padding:3px 8px;border-radius:4px;cursor:pointer;font-size:11px;'
+        : 'background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.4);color:#f87171;padding:3px 8px;border-radius:4px;cursor:pointer;font-size:11px;';
+      lockBtn.innerHTML = isLocked ? '<i class="fa fa-unlock"></i>' : '<i class="fa fa-lock"></i>';
+      lockBtn.title = isLocked ? 'Unlock thread' : 'Lock thread';
+      lockBtn.addEventListener('click', () => handleToggleLock(row.id, row.is_locked));
+      actionsTd.appendChild(lockBtn);
+
+      // Delete button
+      const delBtn = document.createElement('button');
+      delBtn.style.cssText = 'background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.4);color:#f87171;padding:3px 8px;border-radius:4px;cursor:pointer;font-size:11px;';
+      delBtn.innerHTML = '<i class="fa fa-trash"></i>';
+      delBtn.addEventListener('click', () => handleDeleteThread(row.id));
+      actionsTd.appendChild(delBtn);
+
+      tr.appendChild(actionsTd);
     }
 
     threadListEl.appendChild(tr);
