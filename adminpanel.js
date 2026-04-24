@@ -630,11 +630,22 @@ async function handleResetCredits(currentUser) {
 
 /* ===================== CREATE USER SECTION (OWNER ONLY) ===================== */
 
+function generatePassword() {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*';
+  let password = '';
+  for (let i = 0; i < 16; i++) {
+    password += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return password;
+}
+
 async function handleCreateUser(currentUser) {
   const emailInput = document.getElementById('create-user-email');
   const passwordInput = document.getElementById('create-user-password');
   const usernameInput = document.getElementById('create-user-username');
   const statusEl = document.getElementById('create-user-status');
+  const resultDiv = document.getElementById('create-user-result');
+  const credentialsDiv = document.getElementById('create-user-credentials');
 
   if (!emailInput || !passwordInput || !statusEl) return;
 
@@ -655,6 +666,7 @@ async function handleCreateUser(currentUser) {
 
   statusEl.textContent = 'Creating user...';
   statusEl.style.color = '#fbbf24';
+  if (resultDiv) resultDiv.style.display = 'none';
 
   try {
     if (!currentUser || currentUser.role !== 'owner') {
@@ -681,13 +693,82 @@ async function handleCreateUser(currentUser) {
       throw new Error(json.error || 'Failed to create user');
     }
 
-    statusEl.innerHTML = `User created: <strong>${json.user.email}</strong>${json.user.username ? ' (' + json.user.username + ')' : ''}<br>User Token: <strong style="color:#38bdf8;user-select:all;">${json.user.usertoken}</strong><br><small style="color:var(--admin-text-muted);">Give this token to the user — they need it to log in.</small>`;
+    statusEl.textContent = 'User created successfully.';
     statusEl.style.color = '#10b981';
+
+    // Show credentials
+    if (resultDiv && credentialsDiv) {
+      const creds = `Email: ${json.user.email}\nUsername: ${json.user.username || '(not set)'}\nPassword: ${json.user.password}\nUser Token: ${json.user.usertoken}`;
+      credentialsDiv.textContent = creds;
+      resultDiv.style.display = 'block';
+    }
+
     emailInput.value = '';
     passwordInput.value = '';
     if (usernameInput) usernameInput.value = '';
 
     document.getElementById('stat-last-action').textContent = `Created user: ${json.user.email}`;
+  } catch (err) {
+    statusEl.textContent = 'Error: ' + err.message;
+    statusEl.style.color = '#f43f5e';
+  }
+}
+
+async function handleResetPassword(currentUser) {
+  const emailInput = document.getElementById('reset-password-email');
+  const passwordInput = document.getElementById('reset-password-new');
+  const statusEl = document.getElementById('reset-password-status');
+
+  if (!emailInput || !passwordInput || !statusEl) return;
+
+  const email = emailInput.value?.trim();
+  const newPassword = passwordInput.value;
+
+  if (!email) {
+    statusEl.textContent = 'Email is required.';
+    statusEl.style.color = '#f43f5e';
+    return;
+  }
+  if (!newPassword || newPassword.length < 6) {
+    statusEl.textContent = 'New password must be at least 6 characters.';
+    statusEl.style.color = '#f43f5e';
+    return;
+  }
+
+  statusEl.textContent = 'Resetting password...';
+  statusEl.style.color = '#fbbf24';
+
+  try {
+    if (!currentUser || currentUser.role !== 'owner') {
+      statusEl.textContent = 'Only owner can reset passwords.';
+      statusEl.style.color = '#f43f5e';
+      return;
+    }
+
+    const { data: sessionData } = await supabaseClient.auth.getSession();
+    const token = sessionData?.session?.access_token;
+    if (!token) {
+      statusEl.textContent = 'No token, please re-login.';
+      statusEl.style.color = '#f43f5e';
+      return;
+    }
+
+    const resp = await fetch('/api/reset-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+      body: JSON.stringify({ email, newPassword }),
+    });
+    const json = await resp.json();
+    if (!resp.ok || !json.success) {
+      throw new Error(json.error || 'Failed to reset password');
+    }
+
+    statusEl.textContent = `Password reset for ${json.email}`;
+    statusEl.style.color = '#10b981';
+    emailInput.value = '';
+    passwordInput.value = '';
+
+    document.getElementById('stat-last-action').textContent = `Reset password for ${json.email}`;
   } catch (err) {
     statusEl.textContent = 'Error: ' + err.message;
     statusEl.style.color = '#f43f5e';
@@ -711,6 +792,10 @@ async function initAdminPanel() {
   const btnSearchUser = document.getElementById('btn-search-user');
   const btnBanUser = document.getElementById('btn-ban-user');
   const btnRefreshBans = document.getElementById('btn-refresh-bans');
+  const btnGeneratePassword = document.getElementById('btn-generate-password');
+  const btnCopyCredentials = document.getElementById('btn-copy-credentials');
+  const btnResetPassword = document.getElementById('btn-reset-password');
+  const btnGenerateResetPassword = document.getElementById('btn-generate-reset-password');
   const creditsCard = document.getElementById('admin-credits-card');
 
   const current = await getCurrentUserWithRole();
@@ -794,6 +879,48 @@ async function initAdminPanel() {
     });
   if (btnRefreshBans)
     btnRefreshBans.addEventListener('click', () => loadBannedUsers());
+
+  // Generate password for create user
+  if (btnGeneratePassword) {
+    btnGeneratePassword.addEventListener('click', () => {
+      const passwordInput = document.getElementById('create-user-password');
+      if (passwordInput) {
+        passwordInput.value = generatePassword();
+      }
+    });
+  }
+
+  // Copy credentials
+  if (btnCopyCredentials) {
+    btnCopyCredentials.addEventListener('click', () => {
+      const credentialsDiv = document.getElementById('create-user-credentials');
+      if (credentialsDiv) {
+        navigator.clipboard.writeText(credentialsDiv.textContent);
+        const originalText = btnCopyCredentials.innerHTML;
+        btnCopyCredentials.innerHTML = '<i class="fa fa-check"></i> Copied';
+        setTimeout(() => {
+          btnCopyCredentials.innerHTML = originalText;
+        }, 2000);
+      }
+    });
+  }
+
+  // Reset password
+  if (btnResetPassword)
+    btnResetPassword.addEventListener('click', async () => {
+      const freshUser = await getCurrentUserWithRole();
+      handleResetPassword(freshUser);
+    });
+
+  // Generate password for reset
+  if (btnGenerateResetPassword) {
+    btnGenerateResetPassword.addEventListener('click', () => {
+      const passwordInput = document.getElementById('reset-password-new');
+      if (passwordInput) {
+        passwordInput.value = generatePassword();
+      }
+    });
+  }
 
   // Ban username autocomplete
   const banUsernameInput = document.getElementById('ban-username');

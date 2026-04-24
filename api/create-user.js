@@ -121,6 +121,7 @@ export default async function handler(req, res) {
         email: email.trim().toLowerCase(),
         username: insertData.username || null,
         usertoken,
+        password,
       },
     });
   } catch (err) {

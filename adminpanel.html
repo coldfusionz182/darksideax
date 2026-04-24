@@ -895,12 +895,17 @@
         </div>
         <div style="display:flex; flex-direction:column; gap:6px; flex:1 1 200px; max-width:280px;">
           <label style="font-size:0.75rem; color:var(--admin-text-muted);">Password</label>
-          <input
-            type="text"
-            id="create-user-password"
-            placeholder="Min 6 characters"
-            style="background:rgba(0,0,0,0.2); border:1px solid var(--admin-border); border-radius:var(--admin-radius-pill); padding:8px 16px; font-size:0.85rem; color:var(--admin-text-main); font-family:inherit;"
-          >
+          <div style="display:flex; gap:4px;">
+            <input
+              type="text"
+              id="create-user-password"
+              placeholder="Min 6 characters"
+              style="flex:1; background:rgba(0,0,0,0.2); border:1px solid var(--admin-border); border-radius:var(--admin-radius-pill); padding:8px 16px; font-size:0.85rem; color:var(--admin-text-main); font-family:inherit;"
+            >
+            <button id="btn-generate-password" class="btn-owner-ghost" style="padding:8px 12px;" title="Generate random password">
+              <i class="fa fa-key"></i>
+            </button>
+          </div>
         </div>
         <div style="display:flex; flex-direction:column; gap:6px; flex:1 1 200px; max-width:280px;">
           <label style="font-size:0.75rem; color:var(--admin-text-muted);">Username (optional)</label>
@@ -919,6 +924,64 @@
       </div>
 
       <div id="create-user-status" style="margin-top:8px; font-size:0.8rem; color:var(--admin-text-muted);"></div>
+
+      <div id="create-user-result" style="margin-top:12px; padding:12px; background:rgba(0,0,0,0.15); border-radius:8px; display:none;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+          <strong style="color:var(--admin-text-main);">User Credentials</strong>
+          <button id="btn-copy-credentials" class="btn-owner-ghost" style="font-size:0.75rem; padding:4px 12px;">
+            <i class="fa fa-copy"></i> Copy
+          </button>
+        </div>
+        <div id="create-user-credentials" style="font-size:0.8rem; color:var(--admin-text-muted); white-space:pre-wrap; font-family:monospace;"></div>
+      </div>
+    </section>
+
+    <!-- Reset password card (owner only) -->
+    <section class="admin-card" id="admin-reset-password-card">
+      <div class="admin-card-header">
+        <div class="admin-card-title-wrap">
+          <div class="admin-card-title">
+            <i class="fa fa-key"></i>
+            Reset Password
+          </div>
+          <div class="admin-card-sub">
+            Reset a user's password by email. Owner only.
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex; flex-wrap:wrap; gap:12px; align-items:flex-start; margin-top:8px;">
+        <div style="display:flex; flex-direction:column; gap:6px; flex:1 1 200px; max-width:280px;">
+          <label style="font-size:0.75rem; color:var(--admin-text-muted);">Email</label>
+          <input
+            type="email"
+            id="reset-password-email"
+            placeholder="user@example.com"
+            style="background:rgba(0,0,0,0.2); border:1px solid var(--admin-border); border-radius:var(--admin-radius-pill); padding:8px 16px; font-size:0.85rem; color:var(--admin-text-main); font-family:inherit;"
+          >
+        </div>
+        <div style="display:flex; flex-direction:column; gap:6px; flex:1 1 200px; max-width:280px;">
+          <label style="font-size:0.75rem; color:var(--admin-text-muted);">New Password</label>
+          <div style="display:flex; gap:4px;">
+            <input
+              type="text"
+              id="reset-password-new"
+              placeholder="Min 6 characters"
+              style="flex:1; background:rgba(0,0,0,0.2); border:1px solid var(--admin-border); border-radius:var(--admin-radius-pill); padding:8px 16px; font-size:0.85rem; color:var(--admin-text-main); font-family:inherit;"
+            >
+            <button id="btn-generate-reset-password" class="btn-owner-ghost" style="padding:8px 12px;" title="Generate random password">
+              <i class="fa fa-key"></i>
+            </button>
+          </div>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:6px; padding-top:18px;">
+          <button id="btn-reset-password" class="btn-owner-primary">
+            <i class="fa fa-key"></i> Reset Password
+          </button>
+        </div>
+      </div>
+
+      <div id="reset-password-status" style="margin-top:8px; font-size:0.8rem; color:var(--admin-text-muted);"></div>
     </section>
 
     <!-- Newest threads card -->
