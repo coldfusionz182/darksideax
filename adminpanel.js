@@ -940,6 +940,31 @@ async function handleResetPassword(currentUser) {
 
 /* ===================== INIT ===================== */
 
+function switchTab(tab) {
+  const adminCardsContainer = document.getElementById('admin-cards-container');
+  const pendingTabContent = document.getElementById('pending-tab-content');
+  const menuItems = document.querySelectorAll('.admin-menu li[data-tab]');
+
+  // Update active menu item
+  menuItems.forEach(item => {
+    if (item.getAttribute('data-tab') === tab) {
+      item.classList.add('active');
+    } else {
+      item.classList.remove('active');
+    }
+  });
+
+  // Show/hide content
+  if (tab === 'admins') {
+    if (adminCardsContainer) adminCardsContainer.style.display = 'block';
+    if (pendingTabContent) pendingTabContent.style.display = 'none';
+  } else if (tab === 'pending') {
+    if (adminCardsContainer) adminCardsContainer.style.display = 'none';
+    if (pendingTabContent) pendingTabContent.style.display = 'block';
+    loadPendingThreads();
+  }
+}
+
 async function initAdminPanel() {
   const main = document.querySelector('.admin-main');
   const deniedSection = document.getElementById('admin-access-denied');
@@ -1120,6 +1145,16 @@ async function initAdminPanel() {
       creditsUsernameInput.setAttribute('list', 'credits-username-datalist');
     });
   }
+
+  // Tab switching
+  const menuItems = document.querySelectorAll('.admin-menu li[data-tab]');
+  menuItems.forEach(item => {
+    item.addEventListener('click', (e) => {
+      e.preventDefault();
+      const tab = item.getAttribute('data-tab');
+      switchTab(tab);
+    });
+  });
 
   await refreshAdmins(current);
   await loadNewestThreads(current);

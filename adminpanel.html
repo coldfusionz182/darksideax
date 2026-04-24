@@ -645,10 +645,16 @@
     </div>
 
     <ul class="admin-menu">
-      <li class="active">
+      <li class="active" data-tab="admins">
         <a href="#">
           <i class="fa fa-user-shield"></i>
           <span>Admins</span>
+        </a>
+      </li>
+      <li data-tab="pending">
+        <a href="#">
+          <i class="fa fa-clock"></i>
+          <span>Pending Threads</span>
         </a>
       </li>
       <li>
@@ -709,269 +715,272 @@
       </article>
     </section>
 
-    <!-- Admin roster card -->
-    <section class="admin-card" id="admin-card">
-      <div class="admin-card-header">
-        <div class="admin-card-title-wrap">
-          <div class="admin-card-title">
-            <i class="fa fa-user-shield"></i>
-            Admins
+    <!-- Admin cards container (shown on Admins tab) -->
+    <div id="admin-cards-container">
+      <!-- Admin roster card -->
+      <section class="admin-card" id="admin-card">
+        <div class="admin-card-header">
+          <div class="admin-card-title-wrap">
+            <div class="admin-card-title">
+              <i class="fa fa-user-shield"></i>
+              Admins
+            </div>
+            <div class="admin-card-sub">
+              Everyone with elevated powers. You can only promote or demote from this console.
+            </div>
           </div>
-          <div class="admin-card-sub">
-            Everyone with elevated powers. You can only promote or demote from this console.
-          </div>
-        </div>
-        <div class="admin-toolbar">
-          <div class="admin-search">
-            <input type="text" id="admin-search-input" placeholder="Filter by email or UID…">
-            <i class="fa fa-search"></i>
-          </div>
-          <button id="btn-add-admin" class="btn-owner-primary">
-            <i class="fa fa-user-plus"></i>
-            Add admin
-          </button>
-          <button id="btn-refresh" class="btn-owner-ghost">
-            <i class="fa fa-rotate-right"></i>
-            Refresh
-          </button>
-        </div>
-      </div>
-
-      <div class="admin-table-wrap">
-        <table class="admin-table">
-          <thead>
-          <tr>
-            <th>Email</th>
-            <th>Role</th>
-            <th>UID</th>
-            <th style="text-align:right;">Actions</th>
-          </tr>
-          </thead>
-          <tbody id="admins-tbody">
-          <tr>
-            <td colspan="4" class="admin-empty">
-              Loading admin list…
-            </td>
-          </tr>
-          </tbody>
-        </table>
-      </div>
-    </section>
-
-    <!-- Credits management card (owner only) -->
-    <section class="admin-card" id="admin-credits-card">
-      <div class="admin-card-header">
-        <div class="admin-card-title-wrap">
-          <div class="admin-card-title">
-            <i class="fa fa-coins"></i>
-            Credits Management
-          </div>
-          <div class="admin-card-sub">
-            Search users and manage their credits. Owner only.
-          </div>
-        </div>
-      </div>
-
-      <div style="display:flex; flex-wrap:wrap; gap:12px; align-items:center; margin-top:8px;">
-        <input
-          type="text"
-          id="credits-username"
-          placeholder="Search username..."
-          style="flex:1 1 200px; max-width:280px; background:rgba(0,0,0,0.2); border:1px solid var(--admin-border); border-radius:var(--admin-radius-pill); padding:8px 16px; font-size:0.85rem; color:var(--admin-text-main); font-family:inherit;"
-        >
-        <button id="btn-search-user" class="btn-owner-ghost">
-          <i class="fa fa-search"></i> Search
-        </button>
-      </div>
-
-      <div id="credits-user-info" style="margin-top:16px; padding:12px; background:rgba(0,0,0,0.15); border-radius:8px; display:none;">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-          <div>
-            <strong id="credits-username-display" style="font-size:0.95rem; color:var(--admin-text-main);"></strong>
-            <div style="font-size:0.8rem; color:var(--admin-text-muted); margin-top:2px;">Current Balance</div>
-          </div>
-          <div id="credits-balance-display" style="font-size:1.5rem; font-weight:700; color:var(--admin-accent);">0</div>
-        </div>
-
-        <div style="display:flex; flex-wrap:wrap; gap:8px; align-items:center;">
-          <input
-            type="number"
-            id="credits-amount"
-            placeholder="Amount"
-            style="flex:1 1 120px; max-width:150px; background:rgba(0,0,0,0.2); border:1px solid var(--admin-border); border-radius:var(--admin-radius-pill); padding:8px 16px; font-size:0.85rem; color:var(--admin-text-main); font-family:inherit;"
-          >
-          <button id="btn-give-credits" class="btn-owner-primary">
-            <i class="fa fa-plus"></i> Give
-          </button>
-          <button id="btn-remove-credits" class="btn-owner-ghost" style="border-color:var(--admin-danger); color:var(--admin-danger);">
-            <i class="fa fa-minus"></i> Remove
-          </button>
-          <button id="btn-reset-credits" class="btn-owner-ghost" style="border-color:#f59e0b; color:#f59e0b;">
-            <i class="fa fa-undo"></i> Reset
-          </button>
-        </div>
-      </div>
-
-      <div id="credits-status" style="margin-top:8px; font-size:0.8rem; color:var(--admin-text-muted);"></div>
-    </section>
-
-    <!-- Ban management card (owner only) -->
-    <section class="admin-card" id="admin-ban-card">
-      <div class="admin-card-header">
-        <div class="admin-card-title-wrap">
-          <div class="admin-card-title">
-            <i class="fa fa-ban"></i>
-            Ban User
-          </div>
-          <div class="admin-card-sub">
-            Ban a user permanently. Owner only.
-          </div>
-        </div>
-      </div>
-
-      <div style="display:flex; flex-wrap:wrap; gap:12px; align-items:center; margin-top:8px;">
-        <input
-          type="text"
-          id="ban-username"
-          placeholder="Username to ban..."
-          style="flex:1 1 200px; max-width:280px; background:rgba(0,0,0,0.2); border:1px solid var(--admin-border); border-radius:var(--admin-radius-pill); padding:8px 16px; font-size:0.85rem; color:var(--admin-text-main); font-family:inherit;"
-        >
-        <button id="btn-ban-user" class="btn-owner-ghost" style="border-color:var(--admin-danger); color:var(--admin-danger);">
-          <i class="fa fa-ban"></i> Ban User
-        </button>
-      </div>
-
-      <div id="ban-status" style="margin-top:8px; font-size:0.8rem; color:var(--admin-text-muted);"></div>
-    </section>
-
-    <!-- Create user card (owner only) -->
-    <section class="admin-card" id="admin-create-user-card">
-      <div class="admin-card-header">
-        <div class="admin-card-title-wrap">
-          <div class="admin-card-title">
-            <i class="fa fa-user-plus"></i>
-            Create User
-          </div>
-          <div class="admin-card-sub">
-            Create login credentials for new members. Owner only.
-          </div>
-        </div>
-      </div>
-
-      <div style="display:flex; flex-wrap:wrap; gap:12px; align-items:flex-start; margin-top:8px;">
-        <div style="display:flex; flex-direction:column; gap:6px; flex:1 1 200px; max-width:280px;">
-          <label style="font-size:0.75rem; color:var(--admin-text-muted);">Email</label>
-          <input
-            type="email"
-            id="create-user-email"
-            placeholder="user@example.com"
-            style="background:rgba(0,0,0,0.2); border:1px solid var(--admin-border); border-radius:var(--admin-radius-pill); padding:8px 16px; font-size:0.85rem; color:var(--admin-text-main); font-family:inherit;"
-          >
-        </div>
-        <div style="display:flex; flex-direction:column; gap:6px; flex:1 1 200px; max-width:280px;">
-          <label style="font-size:0.75rem; color:var(--admin-text-muted);">Password</label>
-          <div style="display:flex; gap:4px;">
-            <input
-              type="text"
-              id="create-user-password"
-              placeholder="Min 6 characters"
-              style="flex:1; background:rgba(0,0,0,0.2); border:1px solid var(--admin-border); border-radius:var(--admin-radius-pill); padding:8px 16px; font-size:0.85rem; color:var(--admin-text-main); font-family:inherit;"
-            >
-            <button id="btn-generate-password" class="btn-owner-ghost" style="padding:8px 12px;" title="Generate random password">
-              <i class="fa fa-key"></i>
+          <div class="admin-toolbar">
+            <div class="admin-search">
+              <input type="text" id="admin-search-input" placeholder="Filter by email or UID…">
+              <i class="fa fa-search"></i>
+            </div>
+            <button id="btn-add-admin" class="btn-owner-primary">
+              <i class="fa fa-user-plus"></i>
+              Add admin
+            </button>
+            <button id="btn-refresh" class="btn-owner-ghost">
+              <i class="fa fa-rotate-right"></i>
+              Refresh
             </button>
           </div>
         </div>
-        <div style="display:flex; flex-direction:column; gap:6px; flex:1 1 200px; max-width:280px;">
-          <label style="font-size:0.75rem; color:var(--admin-text-muted);">Username (optional)</label>
+
+        <div class="admin-table-wrap">
+          <table class="admin-table">
+            <thead>
+            <tr>
+              <th>Email</th>
+              <th>Role</th>
+              <th>UID</th>
+              <th style="text-align:right;">Actions</th>
+            </tr>
+            </thead>
+            <tbody id="admins-tbody">
+            <tr>
+              <td colspan="4" class="admin-empty">
+                Loading admin list…
+              </td>
+            </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Credits management card (owner only) -->
+      <section class="admin-card" id="admin-credits-card">
+        <div class="admin-card-header">
+          <div class="admin-card-title-wrap">
+            <div class="admin-card-title">
+              <i class="fa fa-coins"></i>
+              Credits Management
+            </div>
+            <div class="admin-card-sub">
+              Search users and manage their credits. Owner only.
+            </div>
+          </div>
+        </div>
+
+        <div style="display:flex; flex-wrap:wrap; gap:12px; align-items:center; margin-top:8px;">
           <input
             type="text"
-            id="create-user-username"
-            placeholder="Display name"
-            style="background:rgba(0,0,0,0.2); border:1px solid var(--admin-border); border-radius:var(--admin-radius-pill); padding:8px 16px; font-size:0.85rem; color:var(--admin-text-main); font-family:inherit;"
+            id="credits-username"
+            placeholder="Search username..."
+            style="flex:1 1 200px; max-width:280px; background:rgba(0,0,0,0.2); border:1px solid var(--admin-border); border-radius:var(--admin-radius-pill); padding:8px 16px; font-size:0.85rem; color:var(--admin-text-main); font-family:inherit;"
           >
-        </div>
-        <div style="display:flex; flex-direction:column; gap:6px; flex:1 1 200px; max-width:280px;">
-          <label style="font-size:0.75rem; color:var(--admin-text-muted);">Role</label>
-          <select
-            id="create-user-role"
-            style="background:rgba(0,0,0,0.2); border:1px solid var(--admin-border); border-radius:var(--admin-radius-pill); padding:8px 16px; font-size:0.85rem; color:var(--admin-text-main); font-family:inherit; cursor:pointer;"
-          >
-            <option value="member">Member</option>
-            <option value="admin">Admin</option>
-            <option value="owner">Owner</option>
-          </select>
-        </div>
-        <div style="display:flex; flex-direction:column; gap:6px; padding-top:18px;">
-          <button id="btn-create-user" class="btn-owner-primary">
-            <i class="fa fa-user-plus"></i> Create User
+          <button id="btn-search-user" class="btn-owner-ghost">
+            <i class="fa fa-search"></i> Search
           </button>
         </div>
-      </div>
 
-      <div id="create-user-status" style="margin-top:8px; font-size:0.8rem; color:var(--admin-text-muted);"></div>
-
-      <div id="create-user-result" style="margin-top:12px; padding:12px; background:rgba(0,0,0,0.15); border-radius:8px; display:none;">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-          <strong style="color:var(--admin-text-main);">User Credentials</strong>
-          <button id="btn-copy-credentials" class="btn-owner-ghost" style="font-size:0.75rem; padding:4px 12px;">
-            <i class="fa fa-copy"></i> Copy
-          </button>
-        </div>
-        <div id="create-user-credentials" style="font-size:0.8rem; color:var(--admin-text-muted); white-space:pre-wrap; font-family:monospace;"></div>
-      </div>
-    </section>
-
-    <!-- Reset password card (owner only) -->
-    <section class="admin-card" id="admin-reset-password-card">
-      <div class="admin-card-header">
-        <div class="admin-card-title-wrap">
-          <div class="admin-card-title">
-            <i class="fa fa-key"></i>
-            Reset Password
+        <div id="credits-user-info" style="margin-top:16px; padding:12px; background:rgba(0,0,0,0.15); border-radius:8px; display:none;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+            <div>
+              <strong id="credits-username-display" style="font-size:0.95rem; color:var(--admin-text-main);"></strong>
+              <div style="font-size:0.8rem; color:var(--admin-text-muted); margin-top:2px;">Current Balance</div>
+            </div>
+            <div id="credits-balance-display" style="font-size:1.5rem; font-weight:700; color:var(--admin-accent);">0</div>
           </div>
-          <div class="admin-card-sub">
-            Reset a user's password by email. Owner only.
-          </div>
-        </div>
-      </div>
 
-      <div style="display:flex; flex-wrap:wrap; gap:12px; align-items:flex-start; margin-top:8px;">
-        <div style="display:flex; flex-direction:column; gap:6px; flex:1 1 200px; max-width:280px;">
-          <label style="font-size:0.75rem; color:var(--admin-text-muted);">Email</label>
-          <input
-            type="email"
-            id="reset-password-email"
-            placeholder="user@example.com"
-            style="background:rgba(0,0,0,0.2); border:1px solid var(--admin-border); border-radius:var(--admin-radius-pill); padding:8px 16px; font-size:0.85rem; color:var(--admin-text-main); font-family:inherit;"
-          >
-        </div>
-        <div style="display:flex; flex-direction:column; gap:6px; flex:1 1 200px; max-width:280px;">
-          <label style="font-size:0.75rem; color:var(--admin-text-muted);">New Password</label>
-          <div style="display:flex; gap:4px;">
+          <div style="display:flex; flex-wrap:wrap; gap:8px; align-items:center;">
             <input
-              type="text"
-              id="reset-password-new"
-              placeholder="Min 6 characters"
-              style="flex:1; background:rgba(0,0,0,0.2); border:1px solid var(--admin-border); border-radius:var(--admin-radius-pill); padding:8px 16px; font-size:0.85rem; color:var(--admin-text-main); font-family:inherit;"
+              type="number"
+              id="credits-amount"
+              placeholder="Amount"
+              style="flex:1 1 120px; max-width:150px; background:rgba(0,0,0,0.2); border:1px solid var(--admin-border); border-radius:var(--admin-radius-pill); padding:8px 16px; font-size:0.85rem; color:var(--admin-text-main); font-family:inherit;"
             >
-            <button id="btn-generate-reset-password" class="btn-owner-ghost" style="padding:8px 12px;" title="Generate random password">
-              <i class="fa fa-key"></i>
+            <button id="btn-give-credits" class="btn-owner-primary">
+              <i class="fa fa-plus"></i> Give
+            </button>
+            <button id="btn-remove-credits" class="btn-owner-ghost" style="border-color:var(--admin-danger); color:var(--admin-danger);">
+              <i class="fa fa-minus"></i> Remove
+            </button>
+            <button id="btn-reset-credits" class="btn-owner-ghost" style="border-color:#f59e0b; color:#f59e0b;">
+              <i class="fa fa-undo"></i> Reset
             </button>
           </div>
         </div>
-        <div style="display:flex; flex-direction:column; gap:6px; padding-top:18px;">
-          <button id="btn-reset-password" class="btn-owner-primary">
-            <i class="fa fa-key"></i> Reset Password
+
+        <div id="credits-status" style="margin-top:8px; font-size:0.8rem; color:var(--admin-text-muted);"></div>
+      </section>
+
+      <!-- Ban management card (owner only) -->
+      <section class="admin-card" id="admin-ban-card">
+        <div class="admin-card-header">
+          <div class="admin-card-title-wrap">
+            <div class="admin-card-title">
+              <i class="fa fa-ban"></i>
+              Ban User
+            </div>
+            <div class="admin-card-sub">
+              Ban a user permanently. Owner only.
+            </div>
+          </div>
+        </div>
+
+        <div style="display:flex; flex-wrap:wrap; gap:12px; align-items:center; margin-top:8px;">
+          <input
+            type="text"
+            id="ban-username"
+            placeholder="Username to ban..."
+            style="flex:1 1 200px; max-width:280px; background:rgba(0,0,0,0.2); border:1px solid var(--admin-border); border-radius:var(--admin-radius-pill); padding:8px 16px; font-size:0.85rem; color:var(--admin-text-main); font-family:inherit;"
+          >
+          <button id="btn-ban-user" class="btn-owner-ghost" style="border-color:var(--admin-danger); color:var(--admin-danger);">
+            <i class="fa fa-ban"></i> Ban User
           </button>
         </div>
-      </div>
 
-      <div id="reset-password-status" style="margin-top:8px; font-size:0.8rem; color:var(--admin-text-muted);"></div>
-    </section>
+        <div id="ban-status" style="margin-top:8px; font-size:0.8rem; color:var(--admin-text-muted);"></div>
+      </section>
 
-    <!-- Pending threads card (owner/admin only) -->
-    <section class="admin-card" id="admin-pending-threads-card">
+      <!-- Create user card (owner only) -->
+      <section class="admin-card" id="admin-create-user-card">
+        <div class="admin-card-header">
+          <div class="admin-card-title-wrap">
+            <div class="admin-card-title">
+              <i class="fa fa-user-plus"></i>
+              Create User
+            </div>
+            <div class="admin-card-sub">
+              Create login credentials for new members. Owner only.
+            </div>
+          </div>
+        </div>
+
+        <div style="display:flex; flex-wrap:wrap; gap:12px; align-items:flex-start; margin-top:8px;">
+          <div style="display:flex; flex-direction:column; gap:6px; flex:1 1 200px; max-width:280px;">
+            <label style="font-size:0.75rem; color:var(--admin-text-muted);">Email</label>
+            <input
+              type="email"
+              id="create-user-email"
+              placeholder="user@example.com"
+              style="background:rgba(0,0,0,0.2); border:1px solid var(--admin-border); border-radius:var(--admin-radius-pill); padding:8px 16px; font-size:0.85rem; color:var(--admin-text-main); font-family:inherit;"
+            >
+          </div>
+          <div style="display:flex; flex-direction:column; gap:6px; flex:1 1 200px; max-width:280px;">
+            <label style="font-size:0.75rem; color:var(--admin-text-muted);">Password</label>
+            <div style="display:flex; gap:4px;">
+              <input
+                type="text"
+                id="create-user-password"
+                placeholder="Min 6 characters"
+                style="flex:1; background:rgba(0,0,0,0.2); border:1px solid var(--admin-border); border-radius:var(--admin-radius-pill); padding:8px 16px; font-size:0.85rem; color:var(--admin-text-main); font-family:inherit;"
+              >
+              <button id="btn-generate-password" class="btn-owner-ghost" style="padding:8px 12px;" title="Generate random password">
+                <i class="fa fa-key"></i>
+              </button>
+            </div>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:6px; flex:1 1 200px; max-width:280px;">
+            <label style="font-size:0.75rem; color:var(--admin-text-muted);">Username (optional)</label>
+            <input
+              type="text"
+              id="create-user-username"
+              placeholder="Display name"
+              style="background:rgba(0,0,0,0.2); border:1px solid var(--admin-border); border-radius:var(--admin-radius-pill); padding:8px 16px; font-size:0.85rem; color:var(--admin-text-main); font-family:inherit;"
+            >
+          </div>
+          <div style="display:flex; flex-direction:column; gap:6px; flex:1 1 200px; max-width:280px;">
+            <label style="font-size:0.75rem; color:var(--admin-text-muted);">Role</label>
+            <select
+              id="create-user-role"
+              style="background:rgba(0,0,0,0.2); border:1px solid var(--admin-border); border-radius:var(--admin-radius-pill); padding:8px 16px; font-size:0.85rem; color:var(--admin-text-main); font-family:inherit; cursor:pointer;"
+            >
+              <option value="member">Member</option>
+              <option value="admin">Admin</option>
+              <option value="owner">Owner</option>
+            </select>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:6px; padding-top:18px;">
+            <button id="btn-create-user" class="btn-owner-primary">
+              <i class="fa fa-user-plus"></i> Create User
+            </button>
+          </div>
+        </div>
+
+        <div id="create-user-status" style="margin-top:8px; font-size:0.8rem; color:var(--admin-text-muted);"></div>
+
+        <div id="create-user-result" style="margin-top:12px; padding:12px; background:rgba(0,0,0,0.15); border-radius:8px; display:none;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+            <strong style="color:var(--admin-text-main);">User Credentials</strong>
+            <button id="btn-copy-credentials" class="btn-owner-ghost" style="font-size:0.75rem; padding:4px 12px;">
+              <i class="fa fa-copy"></i> Copy
+            </button>
+          </div>
+          <div id="create-user-credentials" style="font-size:0.8rem; color:var(--admin-text-muted); white-space:pre-wrap; font-family:monospace;"></div>
+        </div>
+      </section>
+
+      <!-- Reset password card (owner only) -->
+      <section class="admin-card" id="admin-reset-password-card">
+        <div class="admin-card-header">
+          <div class="admin-card-title-wrap">
+            <div class="admin-card-title">
+              <i class="fa fa-key"></i>
+              Reset Password
+            </div>
+            <div class="admin-card-sub">
+              Reset a user's password by email. Owner only.
+            </div>
+          </div>
+        </div>
+
+        <div style="display:flex; flex-wrap:wrap; gap:12px; align-items:flex-start; margin-top:8px;">
+          <div style="display:flex; flex-direction:column; gap:6px; flex:1 1 200px; max-width:280px;">
+            <label style="font-size:0.75rem; color:var(--admin-text-muted);">Email</label>
+            <input
+              type="email"
+              id="reset-password-email"
+              placeholder="user@example.com"
+              style="background:rgba(0,0,0,0.2); border:1px solid var(--admin-border); border-radius:var(--admin-radius-pill); padding:8px 16px; font-size:0.85rem; color:var(--admin-text-main); font-family:inherit;"
+            >
+          </div>
+          <div style="display:flex; flex-direction:column; gap:6px; flex:1 1 200px; max-width:280px;">
+            <label style="font-size:0.75rem; color:var(--admin-text-muted);">New Password</label>
+            <div style="display:flex; gap:4px;">
+              <input
+                type="text"
+                id="reset-password-new"
+                placeholder="Min 6 characters"
+                style="flex:1; background:rgba(0,0,0,0.2); border:1px solid var(--admin-border); border-radius:var(--admin-radius-pill); padding:8px 16px; font-size:0.85rem; color:var(--admin-text-main); font-family:inherit;"
+              >
+              <button id="btn-generate-reset-password" class="btn-owner-ghost" style="padding:8px 12px;" title="Generate random password">
+                <i class="fa fa-key"></i>
+              </button>
+            </div>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:6px; padding-top:18px;">
+            <button id="btn-reset-password" class="btn-owner-primary">
+              <i class="fa fa-key"></i> Reset Password
+            </button>
+          </div>
+        </div>
+
+        <div id="reset-password-status" style="margin-top:8px; font-size:0.8rem; color:var(--admin-text-muted);"></div>
+      </section>
+    </div>
+
+    <!-- Pending Threads tab content (hidden by default) -->
+    <section class="admin-card" id="pending-tab-content" style="display:none;">
       <div class="admin-card-header">
         <div class="admin-card-title-wrap">
           <div class="admin-card-title">
