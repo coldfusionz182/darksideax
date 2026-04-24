@@ -10,7 +10,6 @@ let _isOwner = false;
 })();
 
 async function handleDeleteThread(threadId) {
-  if (!confirm('Delete this thread?')) return;
   try {
     const { data: sessionData } = await window.supabaseClient.auth.getSession();
     const token = sessionData?.session?.access_token;

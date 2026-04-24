@@ -10,7 +10,6 @@ let _isOwner = false;
 })();
 
 async function handleDeleteThread(threadId) {
-  if (!confirm('Delete this thread?')) return;
   try {
     const { data: sessionData } = await window.supabaseClient.auth.getSession();
     const token = sessionData?.session?.access_token;
@@ -32,7 +31,6 @@ async function handleDeleteThread(threadId) {
 
 async function handleToggleStatus(threadId, currentStatus) {
   const newStatus = currentStatus === 'for_sale' ? 'sold' : 'for_sale';
-  if (!confirm(`Mark as ${newStatus === 'sold' ? 'SOLD' : 'FOR SALE'}?`)) return;
   try {
     const { data: sessionData } = await window.supabaseClient.auth.getSession();
     const token = sessionData?.session?.access_token;
