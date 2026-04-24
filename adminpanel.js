@@ -414,8 +414,9 @@ async function handleGiveCredits(currentUser) {
   statusEl.style.color = '#fbbf24';
 
   try {
+    console.log('handleGiveCredits - current user role:', currentUser?.role);
     if (!currentUser || currentUser.role !== 'owner') {
-      statusEl.textContent = 'Only owner can give credits.';
+      statusEl.textContent = 'Only owner can give credits. Your role: ' + (currentUser?.role || 'unknown');
       statusEl.style.color = '#f43f5e';
       return;
     }
@@ -508,7 +509,10 @@ async function initAdminPanel() {
     );
 
   if (btnGiveCredits)
-    btnGiveCredits.addEventListener('click', () => handleGiveCredits(current));
+    btnGiveCredits.addEventListener('click', async () => {
+      const freshUser = await getCurrentUserWithRole();
+      handleGiveCredits(freshUser);
+    });
 
   // Username autocomplete for credits
   const creditsUsernameInput = document.getElementById('credits-username');
