@@ -815,6 +815,112 @@
       <div id="credits-status" style="margin-top:8px; font-size:0.8rem; color:var(--admin-text-muted);"></div>
     </section>
 
+    <!-- Ban management card (owner only) -->
+    <section class="admin-card" id="admin-ban-card">
+      <div class="admin-card-header">
+        <div class="admin-card-title-wrap">
+          <div class="admin-card-title">
+            <i class="fa fa-ban"></i>
+            Ban Management
+          </div>
+          <div class="admin-card-sub">
+            Ban users permanently. Banned users are removed and cannot re-register. Owner only.
+          </div>
+        </div>
+        <div class="admin-toolbar">
+          <button id="btn-refresh-bans" class="btn-owner-ghost">
+            <i class="fa fa-rotate-right"></i> Refresh
+          </button>
+        </div>
+      </div>
+
+      <div style="display:flex; flex-wrap:wrap; gap:12px; align-items:center; margin-top:8px;">
+        <input
+          type="text"
+          id="ban-username"
+          placeholder="Search username to ban..."
+          style="flex:1 1 200px; max-width:280px; background:rgba(0,0,0,0.2); border:1px solid var(--admin-border); border-radius:var(--admin-radius-pill); padding:8px 16px; font-size:0.85rem; color:var(--admin-text-main); font-family:inherit;"
+        >
+        <button id="btn-ban-user" class="btn-owner-ghost" style="border-color:var(--admin-danger); color:var(--admin-danger);">
+          <i class="fa fa-ban"></i> Ban User
+        </button>
+      </div>
+
+      <div id="ban-status" style="margin-top:8px; font-size:0.8rem; color:var(--admin-text-muted);"></div>
+
+      <div class="admin-table-wrap" style="margin-top:16px;">
+        <table class="admin-table">
+          <thead>
+          <tr>
+            <th>Email</th>
+            <th>Username</th>
+            <th>Banned At</th>
+            <th style="text-align:right;">Actions</th>
+          </tr>
+          </thead>
+          <tbody id="banned-tbody">
+          <tr>
+            <td colspan="4" class="admin-empty">
+              Loading banned list…
+            </td>
+          </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Create user card (owner only) -->
+    <section class="admin-card" id="admin-create-user-card">
+      <div class="admin-card-header">
+        <div class="admin-card-title-wrap">
+          <div class="admin-card-title">
+            <i class="fa fa-user-plus"></i>
+            Create User
+          </div>
+          <div class="admin-card-sub">
+            Create login credentials for new members. Owner only.
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex; flex-wrap:wrap; gap:12px; align-items:flex-start; margin-top:8px;">
+        <div style="display:flex; flex-direction:column; gap:6px; flex:1 1 200px; max-width:280px;">
+          <label style="font-size:0.75rem; color:var(--admin-text-muted);">Email</label>
+          <input
+            type="email"
+            id="create-user-email"
+            placeholder="user@example.com"
+            style="background:rgba(0,0,0,0.2); border:1px solid var(--admin-border); border-radius:var(--admin-radius-pill); padding:8px 16px; font-size:0.85rem; color:var(--admin-text-main); font-family:inherit;"
+          >
+        </div>
+        <div style="display:flex; flex-direction:column; gap:6px; flex:1 1 200px; max-width:280px;">
+          <label style="font-size:0.75rem; color:var(--admin-text-muted);">Password</label>
+          <input
+            type="text"
+            id="create-user-password"
+            placeholder="Min 6 characters"
+            style="background:rgba(0,0,0,0.2); border:1px solid var(--admin-border); border-radius:var(--admin-radius-pill); padding:8px 16px; font-size:0.85rem; color:var(--admin-text-main); font-family:inherit;"
+          >
+        </div>
+        <div style="display:flex; flex-direction:column; gap:6px; flex:1 1 200px; max-width:280px;">
+          <label style="font-size:0.75rem; color:var(--admin-text-muted);">Username (optional)</label>
+          <input
+            type="text"
+            id="create-user-username"
+            placeholder="Display name"
+            style="background:rgba(0,0,0,0.2); border:1px solid var(--admin-border); border-radius:var(--admin-radius-pill); padding:8px 16px; font-size:0.85rem; color:var(--admin-text-main); font-family:inherit;"
+          >
+        </div>
+        <div style="display:flex; flex-direction:column; gap:6px; padding-top:18px;">
+          <button id="btn-create-user" class="btn-owner-primary">
+            <i class="fa fa-user-plus"></i> Create User
+          </button>
+        </div>
+      </div>
+
+      <div id="create-user-status" style="margin-top:8px; font-size:0.8rem; color:var(--admin-text-muted);"></div>
+    </section>
+
     <!-- Newest threads card -->
     <section class="admin-card" id="admin-threads-card">
       <div class="admin-card-header">

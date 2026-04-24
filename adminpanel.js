@@ -628,6 +628,72 @@ async function handleResetCredits(currentUser) {
   }
 }
 
+/* ===================== CREATE USER SECTION (OWNER ONLY) ===================== */
+
+async function handleCreateUser(currentUser) {
+  const emailInput = document.getElementById('create-user-email');
+  const passwordInput = document.getElementById('create-user-password');
+  const usernameInput = document.getElementById('create-user-username');
+  const statusEl = document.getElementById('create-user-status');
+
+  if (!emailInput || !passwordInput || !statusEl) return;
+
+  const email = emailInput.value?.trim();
+  const password = passwordInput.value;
+  const username = usernameInput?.value?.trim() || '';
+
+  if (!email) {
+    statusEl.textContent = 'Email is required.';
+    statusEl.style.color = '#f43f5e';
+    return;
+  }
+  if (!password || password.length < 6) {
+    statusEl.textContent = 'Password must be at least 6 characters.';
+    statusEl.style.color = '#f43f5e';
+    return;
+  }
+
+  statusEl.textContent = 'Creating user...';
+  statusEl.style.color = '#fbbf24';
+
+  try {
+    if (!currentUser || currentUser.role !== 'owner') {
+      statusEl.textContent = 'Only owner can create users.';
+      statusEl.style.color = '#f43f5e';
+      return;
+    }
+
+    const { data: sessionData } = await supabaseClient.auth.getSession();
+    const token = sessionData?.session?.access_token;
+    if (!token) {
+      statusEl.textContent = 'No token, please re-login.';
+      statusEl.style.color = '#f43f5e';
+      return;
+    }
+
+    const resp = await fetch('/api/create-user', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+      body: JSON.stringify({ email, password, username }),
+    });
+    const json = await resp.json();
+    if (!resp.ok || !json.success) {
+      throw new Error(json.error || 'Failed to create user');
+    }
+
+    statusEl.innerHTML = `User created: <strong>${json.user.email}</strong>${json.user.username ? ' (' + json.user.username + ')' : ''}<br>User Token: <strong style="color:#38bdf8;user-select:all;">${json.user.usertoken}</strong><br><small style="color:var(--admin-text-muted);">Give this token to the user — they need it to log in.</small>`;
+    statusEl.style.color = '#10b981';
+    emailInput.value = '';
+    passwordInput.value = '';
+    if (usernameInput) usernameInput.value = '';
+
+    document.getElementById('stat-last-action').textContent = `Created user: ${json.user.email}`;
+  } catch (err) {
+    statusEl.textContent = 'Error: ' + err.message;
+    statusEl.style.color = '#f43f5e';
+  }
+}
+
 /* ===================== INIT ===================== */
 
 async function initAdminPanel() {
@@ -636,13 +702,15 @@ async function initAdminPanel() {
   const userInfo = document.getElementById('admin-user-info');
   const btnAddAdmin = document.getElementById('btn-add-admin');
   const btnRefresh = document.getElementById('btn-refresh');
-  const btnCreateUser = document.getElementById('btn-create-user'); // unused
+  const btnCreateUser = document.getElementById('btn-create-user');
   const threadsSearchInput = document.getElementById('threads-search-input');
   const btnThreadsRefresh = document.getElementById('btn-threads-refresh');
   const btnGiveCredits = document.getElementById('btn-give-credits');
   const btnRemoveCredits = document.getElementById('btn-remove-credits');
   const btnResetCredits = document.getElementById('btn-reset-credits');
   const btnSearchUser = document.getElementById('btn-search-user');
+  const btnBanUser = document.getElementById('btn-ban-user');
+  const btnRefreshBans = document.getElementById('btn-refresh-bans');
   const creditsCard = document.getElementById('admin-credits-card');
 
   const current = await getCurrentUserWithRole();
@@ -680,6 +748,12 @@ async function initAdminPanel() {
   if (btnRefresh)
     btnRefresh.addEventListener('click', () => refreshAdmins(current));
 
+  if (btnCreateUser)
+    btnCreateUser.addEventListener('click', async () => {
+      const freshUser = await getCurrentUserWithRole();
+      handleCreateUser(freshUser);
+    });
+
   if (threadsSearchInput)
     threadsSearchInput.addEventListener('input', () =>
       renderThreadsTable(current)
@@ -713,6 +787,31 @@ async function initAdminPanel() {
       handleSearchUser(freshUser);
     });
 
+  if (btnBanUser)
+    btnBanUser.addEventListener('click', async () => {
+      const freshUser = await getCurrentUserWithRole();
+      handleBanUser(freshUser);
+    });
+  if (btnRefreshBans)
+    btnRefreshBans.addEventListener('click', () => loadBannedUsers());
+
+  // Ban username autocomplete
+  const banUsernameInput = document.getElementById('ban-username');
+  if (banUsernameInput) {
+    loadUsernamesForAutocomplete().then(usernames => {
+      if (!usernames.length) return;
+      const datalist = document.createElement('datalist');
+      datalist.id = 'ban-username-datalist';
+      usernames.forEach(username => {
+        const option = document.createElement('option');
+        option.value = username;
+        datalist.appendChild(option);
+      });
+      document.body.appendChild(datalist);
+      banUsernameInput.setAttribute('list', 'ban-username-datalist');
+    });
+  }
+
   // Username autocomplete for credits
   const creditsUsernameInput = document.getElementById('credits-username');
   if (creditsUsernameInput) {
@@ -733,6 +832,7 @@ async function initAdminPanel() {
 
   await refreshAdmins(current);
   await loadNewestThreads(current);
+  await loadBannedUsers();
 
   const adminLogoutBtn = document.getElementById('admin-logout-btn');
   if (adminLogoutBtn) {

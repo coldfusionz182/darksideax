@@ -90,6 +90,53 @@ async function updateHeaderAuthState() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+  // --- Ban check on every page ---
+  async function checkIfBanned() {
+    try {
+      const { data: sessionData } = await supabaseClient.auth.getSession();
+      if (!sessionData?.session) return;
+
+      const token = sessionData.session.access_token;
+      const resp = await fetch('/api/ban', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ action: 'check' }),
+      });
+      const json = await resp.json();
+
+      if (json.success && json.banned) {
+        // Show ban overlay
+        const overlay = document.createElement('div');
+        overlay.id = 'ban-overlay';
+        overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.95);z-index:999999;display:flex;align-items:center;justify-content:center;flex-direction:column;color:#f43f5e;font-family:inherit;';
+        overlay.innerHTML = `
+          <i class="fa fa-ban" style="font-size:80px;margin-bottom:24px;"></i>
+          <h1 style="font-size:2rem;margin:0 0 8px 0;">YOU HAVE BEEN BANNED</h1>
+          <p style="font-size:1rem;color:#ccc;margin:0 0 8px 0;">This is a permanent ban. You are no longer welcome here.</p>
+          <p style="font-size:0.85rem;color:#999;margin:0 0 16px 0;">Reason: ${json.reason || 'No reason specified'}</p>
+          <p id="ban-countdown" style="font-size:1.2rem;color:#fbbf24;margin:0;">Logging out in 10 seconds...</p>
+        `;
+        document.body.appendChild(overlay);
+
+        let countdown = 10;
+        const countdownEl = document.getElementById('ban-countdown');
+        const interval = setInterval(() => {
+          countdown--;
+          if (countdownEl) countdownEl.textContent = `Logging out in ${countdown} seconds...`;
+          if (countdown <= 0) {
+            clearInterval(interval);
+            supabaseClient.auth.signOut();
+            localStorage.removeItem('ds_access_token');
+            window.location.href = 'login.html';
+          }
+        }, 1000);
+      }
+    } catch (err) {
+      console.error('ban check error', err);
+    }
+  }
+  checkIfBanned();
+
   updateHeaderAuthState();
 
   // --- show Admin Panel navbar link for admin/owner ---

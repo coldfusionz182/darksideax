@@ -642,6 +642,24 @@
             access_token: session.access_token,
             refresh_token: session.refresh_token
           });
+
+          // Check if banned
+          try {
+            const banResp = await fetch('/api/ban', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
+              body: JSON.stringify({ action: 'check' }),
+            });
+            const banJson = await banResp.json();
+            if (banJson.success && banJson.banned) {
+              await supabase.auth.signOut();
+              setStatus('Your account has been permanently banned. You are not allowed to log in.', 'error');
+              submitBtn.disabled = false;
+              return;
+            }
+          } catch (banErr) {
+            console.error('ban check on login error', banErr);
+          }
         }
 
         setStatus('Logged in, redirecting...', 'ok');
