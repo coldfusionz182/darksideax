@@ -25,6 +25,21 @@ export default async function handler(req, res) {
       return;
     }
 
+    // Check if author is owner for auto-approval
+    let isOwner = false;
+    try {
+      const { data: userRow } = await supabase
+        .from('users')
+        .select('role')
+        .eq('username', author)
+        .maybeSingle();
+      if (userRow && userRow.role === 'owner') {
+        isOwner = true;
+      }
+    } catch (err) {
+      console.error('Error checking user role:', err);
+    }
+
     // Rate limit for config requests: 10 per hour per user
     if (section === 'configrequests') {
       const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
@@ -47,7 +62,7 @@ export default async function handler(req, res) {
       }
     }
 
-    const insertData = { title, tag, author, content, section, approved: section === 'configrequests' };
+    const insertData = { title, tag, author, content, section, approved: section === 'configrequests' || (section === 'configs' && isOwner) };
     
     if (embed_url) insertData.embed_url = embed_url;
     if (marketplace_status) insertData.marketplace_status = marketplace_status;

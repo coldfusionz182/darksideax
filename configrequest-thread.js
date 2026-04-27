@@ -191,9 +191,14 @@ function renderThread(thread) {
           </div>
         </div>
         <div class="cr-info-item">
-          <div class="cr-info-label">Author</div>
+          <div class="cr-info-label">Requested by</div>
           <div class="cr-info-value">${thread.author}</div>
         </div>
+        ${isCompleted && thread.completed_by ? `
+        <div class="cr-info-item">
+          <div class="cr-info-label">Completed by</div>
+          <div class="cr-info-value">${thread.completed_by}</div>
+        </div>` : ''}
       </div>`;
 
   // Show the URL if the title is a URL

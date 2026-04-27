@@ -457,7 +457,7 @@ export default async function handler(req, res) {
     if (action === 'update_config_request_status') {
       const { data: requesterRow, error: requesterErr } = await supabaseAdmin
         .from('users')
-        .select('role')
+        .select('role, username')
         .eq('id', userId)
         .maybeSingle();
 
@@ -482,6 +482,7 @@ export default async function handler(req, res) {
       const updateData = { config_request_status: status };
       if (status === 'completed' && download_url) {
         updateData.download_url = download_url;
+        updateData.completed_by = requesterRow.username || requesterRow.role;
       }
 
       const { error: updateErr } = await supabaseAdmin
