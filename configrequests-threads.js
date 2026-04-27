@@ -65,7 +65,9 @@ async function fetchConfigRequests() {
     // Double check it's config requests (same pattern as accounts-threads.js)
     const configRequestsOnly = data.filter((row) => {
       const sectionOk = typeof row.section === 'string' && row.section.toLowerCase() === 'configrequests';
-      return sectionOk;
+      // Also ensure title doesn't contain 'config' to avoid conflicts with configs category
+      const title = (row.title || '').toString().toLowerCase();
+      return sectionOk && !title.includes('config');
     });
 
     return configRequestsOnly;
