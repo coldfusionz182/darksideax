@@ -88,6 +88,50 @@ async function handleUpdateStatus(threadId, currentStatus) {
 
 window.handleUpdateStatus = handleUpdateStatus;
 
+async function handleStatusDropdownChange(threadId, newStatus) {
+  let download_url = null;
+
+  if (newStatus === 'completed') {
+    download_url = prompt('Enter the download URL for this config file:');
+    if (download_url === null) {
+      loadPage(); // reset dropdown
+      return;
+    }
+    download_url = download_url.trim();
+    if (!download_url) {
+      alert('A download URL is required to mark a request as Completed.');
+      loadPage(); // reset dropdown
+      return;
+    }
+  }
+
+  try {
+    const { data: sessionData } = await window.supabaseClient.auth.getSession();
+    const token = sessionData?.session?.access_token;
+    if (!token) { alert('No token, please re-login.'); loadPage(); return; }
+
+    const body = { action: 'update_config_request_status', threadId, status: newStatus };
+    if (download_url) body.download_url = download_url;
+
+    const resp = await fetch('/api/credits', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+      body: JSON.stringify(body),
+    });
+    const json = await resp.json();
+    if (!resp.ok || !json.success) {
+      throw new Error(json.error || 'Failed to update status');
+    }
+
+    loadPage();
+  } catch (err) {
+    alert('Error: ' + err.message);
+    loadPage();
+  }
+}
+
+window.handleStatusDropdownChange = handleStatusDropdownChange;
+
 function renderThread(thread) {
   if (!crContent) return;
 
@@ -131,11 +175,19 @@ function renderThread(thread) {
         <div class="cr-info-item">
           <div class="cr-info-label">Status</div>
           <div class="cr-info-value">
-            <span class="status-badge status-${status}">
-              <i class="fa ${STATUS_ICONS[status]}"></i>
-              ${STATUS_LABELS[status]}
-            </span>
-            ${_isAdmin ? `<button class="status-toggle-btn" style="margin-left:8px;background:rgba(139,92,246,0.15);border:1px solid rgba(139,92,246,0.4);color:#a78bfa;padding:3px 8px;border-radius:4px;cursor:pointer;font-size:11px;" onclick="handleUpdateStatus(${thread.id}, '${status}')"><i class="fa fa-exchange-alt"></i> Change Status</button>` : ''}
+            ${_isAdmin ? `
+              <select id="cr-status-select" onchange="handleStatusDropdownChange(${thread.id}, this.value)" style="background:rgba(0,0,0,0.3);border:1px solid #2a2a2a;border-radius:6px;padding:6px 10px;font-size:0.85rem;color:#e0e0e0;font-family:inherit;cursor:pointer;">
+                <option value="in_queue" ${status === 'in_queue' ? 'selected' : ''}>🕐 In Queue</option>
+                <option value="in_progress" ${status === 'in_progress' ? 'selected' : ''}>🔄 In Progress</option>
+                <option value="completed" ${status === 'completed' ? 'selected' : ''}>✅ Completed</option>
+                <option value="cannot_fulfill" ${status === 'cannot_fulfill' ? 'selected' : ''}>⚠️ Cannot Be Fulfilled</option>
+              </select>
+            ` : `
+              <span class="status-badge status-${status}">
+                <i class="fa ${STATUS_ICONS[status]}"></i>
+                ${STATUS_LABELS[status]}
+              </span>
+            `}
           </div>
         </div>
         <div class="cr-info-item">
