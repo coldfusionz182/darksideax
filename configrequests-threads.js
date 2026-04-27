@@ -42,8 +42,11 @@ async function fetchConfigRequests() {
   if (!threadListEl) return null;
 
   try {
-    // Clear table immediately to prevent showing wrong data
-    threadListEl.innerHTML = '';
+    // Show loading message (same pattern as accounts-threads.js)
+    threadListEl.innerHTML = `
+      <tr class="thread-row">
+        <td colspan="5" style="text-align:center; color:#888; padding: 20px;">Fetching config requests...</td>
+      </tr>`;
 
     const resp = await fetch(
       `/api/list-threads?section=configrequests&limit=100&_=${Date.now()}`,
@@ -59,10 +62,10 @@ async function fetchConfigRequests() {
       return null;
     }
 
-    // Filter strictly to ensure only config requests are shown
+    // Double check it's config requests (same pattern as accounts-threads.js)
     const configRequestsOnly = data.filter((row) => {
-      const section = (row.section || '').toLowerCase();
-      return section === 'configrequests';
+      const sectionOk = typeof row.section === 'string' && row.section.toLowerCase() === 'configrequests';
+      return sectionOk;
     });
 
     return configRequestsOnly;
