@@ -466,22 +466,27 @@ export default async function handler(req, res) {
         return;
       }
 
-      const { threadId, status } = body;
+      const { threadId, status, download_url } = body;
 
       if (!threadId) {
         res.status(400).json({ success: false, error: 'Missing thread ID' });
         return;
       }
 
-      const validStatuses = ['in_queue', 'in_progress', 'completed'];
+      const validStatuses = ['in_queue', 'in_progress', 'completed', 'cannot_fulfill'];
       if (!status || !validStatuses.includes(status)) {
-        res.status(400).json({ success: false, error: 'Invalid status. Use: in_queue, in_progress, completed' });
+        res.status(400).json({ success: false, error: 'Invalid status. Use: in_queue, in_progress, completed, cannot_fulfill' });
         return;
+      }
+
+      const updateData = { config_request_status: status };
+      if (status === 'completed' && download_url) {
+        updateData.download_url = download_url;
       }
 
       const { error: updateErr } = await supabaseAdmin
         .from('threads')
-        .update({ config_request_status: status })
+        .update(updateData)
         .eq('id', threadId);
 
       if (updateErr) {

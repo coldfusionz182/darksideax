@@ -25,6 +25,28 @@ export default async function handler(req, res) {
       return;
     }
 
+    // Rate limit for config requests: 10 per hour per user
+    if (section === 'configrequests') {
+      const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+      const { count, error: countErr } = await supabase
+        .from('threads')
+        .select('id', { count: 'exact', head: true })
+        .eq('author', author)
+        .eq('section', 'configrequests')
+        .gte('created_at', oneHourAgo);
+
+      if (countErr) {
+        console.error('Rate limit check error:', countErr);
+        res.status(500).json({ success: false, error: 'Rate limit check failed' });
+        return;
+      }
+
+      if (count >= 10) {
+        res.status(429).json({ success: false, error: 'Rate limit: max 10 config requests per hour' });
+        return;
+      }
+    }
+
     const insertData = { title, tag, author, content, section, approved: section === 'configrequests' };
     
     if (embed_url) insertData.embed_url = embed_url;

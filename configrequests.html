@@ -158,6 +158,12 @@
       color: #10b981;
     }
 
+    .status-cannot_fulfill {
+      background: rgba(251, 191, 36, 0.15);
+      border: 1px solid rgba(251, 191, 36, 0.4);
+      color: #fbbf24;
+    }
+
     .status-toggle-btn {
       background: rgba(139, 92, 246, 0.15);
       border: 1px solid rgba(139, 92, 246, 0.4);
@@ -283,10 +289,8 @@
       <section class="thread-controls card-panel" id="cr-new-section">
         <div class="cr-form-wrap">
           <input type="text" id="cr-title-input" placeholder="Enter the URL or target name for the config request...">
-          <select id="cr-tag-select">
-            <option value="Request">Request</option>
-            <option value="Urgent">Urgent</option>
-            <option value="Premium">Premium</option>
+          <select id="cr-tag-select" style="display:none;">
+            <option value="Request" selected>Request</option>
           </select>
           <button id="cr-submit-btn" class="btn btn-small btn-primary">
             <i class="fa fa-paper-plane"></i> Submit Request

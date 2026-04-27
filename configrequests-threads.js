@@ -11,21 +11,24 @@ const crRefreshBtn = document.getElementById('cr-refresh-btn');
 let _isAdmin = false;
 let _currentUser = null;
 
-const STATUS_ORDER = { in_queue: 0, in_progress: 1, completed: 2 };
+const STATUS_ORDER = { in_queue: 0, in_progress: 1, cannot_fulfill: 2, completed: 3 };
 const STATUS_LABELS = {
   in_queue: 'In Queue',
   in_progress: 'In Progress',
+  cannot_fulfill: 'Cannot Be Fulfilled',
   completed: 'Completed'
 };
 const STATUS_ICONS = {
   in_queue: 'fa-clock',
   in_progress: 'fa-spinner fa-spin',
+  cannot_fulfill: 'fa-exclamation-triangle',
   completed: 'fa-check-circle'
 };
 const NEXT_STATUS = {
   in_queue: 'in_progress',
   in_progress: 'completed',
-  completed: 'in_queue'
+  completed: 'cannot_fulfill',
+  cannot_fulfill: 'in_queue'
 };
 
 async function checkRole() {
@@ -73,15 +76,31 @@ async function handleUpdateStatus(threadId, currentStatus) {
   const nextStatus = NEXT_STATUS[currentStatus] || 'in_queue';
   const label = STATUS_LABELS[nextStatus];
 
+  let download_url = null;
+
+  // If changing to completed, prompt for download URL
+  if (nextStatus === 'completed') {
+    download_url = prompt('Enter the download URL for this config file:');
+    if (download_url === null) return; // cancelled
+    download_url = download_url.trim();
+    if (!download_url) {
+      alert('A download URL is required to mark a request as Completed.');
+      return;
+    }
+  }
+
   try {
     const { data: sessionData } = await window.supabaseClient.auth.getSession();
     const token = sessionData?.session?.access_token;
     if (!token) { alert('No token, please re-login.'); return; }
 
+    const body = { action: 'update_config_request_status', threadId, status: nextStatus };
+    if (download_url) body.download_url = download_url;
+
     const resp = await fetch('/api/credits', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-      body: JSON.stringify({ action: 'update_config_request_status', threadId, status: nextStatus }),
+      body: JSON.stringify(body),
     });
     const json = await resp.json();
     if (!resp.ok || !json.success) {
@@ -167,7 +186,7 @@ function renderThreads(list, sortMode) {
     mainTd.className = 'col-thread-main';
     mainTd.innerHTML = `
       <div class="thread-title">
-        <a href="thread.html?id=${row.id}">${row.title}</a>
+        <a href="configrequest-thread.html?id=${row.id}">${row.title}</a>
       </div>
       <div class="thread-meta">
         by <span class="rank-member">${row.author}</span>
