@@ -899,7 +899,8 @@ if (!rawUser) {
         combo: 0,
         software: 0,
         softwareauth: 0,
-        accounts: 0
+        accounts: 0,
+        configrequests: 0
       };
 
       if (data) {
@@ -917,7 +918,8 @@ if (!rawUser) {
         { id: 'index-combo-threads', val: counts.combo },
         { id: 'index-software-threads', val: counts.software },
         { id: 'index-softwareauth-threads', val: counts.softwareauth },
-        { id: 'index-accounts-threads', val: counts.accounts }
+        { id: 'index-accounts-threads', val: counts.accounts },
+        { id: 'index-configrequests-threads', val: counts.configrequests }
       ];
 
       maps.forEach(m => {

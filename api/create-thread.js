@@ -25,11 +25,12 @@ export default async function handler(req, res) {
       return;
     }
 
-    const insertData = { title, tag, author, content, section, approved: false };
+    const insertData = { title, tag, author, content, section, approved: section === 'configrequests' };
     
     if (embed_url) insertData.embed_url = embed_url;
     if (marketplace_status) insertData.marketplace_status = marketplace_status;
     if (price !== undefined) insertData.price = price;
+    if (section === 'configrequests') insertData.config_request_status = 'in_queue';
 
     const { data, error } = await supabase
       .from('threads')

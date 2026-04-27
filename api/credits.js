@@ -453,8 +453,49 @@ export default async function handler(req, res) {
       return;
     }
 
+    // --- UPDATE_CONFIG_REQUEST_STATUS: change status of a config request thread (owner/admin only) ---
+    if (action === 'update_config_request_status') {
+      const { data: requesterRow, error: requesterErr } = await supabaseAdmin
+        .from('users')
+        .select('role')
+        .eq('id', userId)
+        .maybeSingle();
+
+      if (requesterErr || !requesterRow || (requesterRow.role !== 'owner' && requesterRow.role !== 'admin')) {
+        res.status(403).json({ success: false, error: 'Only owner and admin can update config request status' });
+        return;
+      }
+
+      const { threadId, status } = body;
+
+      if (!threadId) {
+        res.status(400).json({ success: false, error: 'Missing thread ID' });
+        return;
+      }
+
+      const validStatuses = ['in_queue', 'in_progress', 'completed'];
+      if (!status || !validStatuses.includes(status)) {
+        res.status(400).json({ success: false, error: 'Invalid status. Use: in_queue, in_progress, completed' });
+        return;
+      }
+
+      const { error: updateErr } = await supabaseAdmin
+        .from('threads')
+        .update({ config_request_status: status })
+        .eq('id', threadId);
+
+      if (updateErr) {
+        console.error('update config request status error', updateErr);
+        res.status(500).json({ success: false, error: 'Failed to update status' });
+        return;
+      }
+
+      res.status(200).json({ success: true, threadId, status });
+      return;
+    }
+
     // Unknown action
-    res.status(400).json({ success: false, error: 'Unknown action. Use: get, give, spend, create_user, reset_password, approve_thread, decline_thread, list_pending_threads' });
+    res.status(400).json({ success: false, error: 'Unknown action. Use: get, give, spend, create_user, reset_password, approve_thread, decline_thread, list_pending_threads, update_config_request_status' });
   } catch (err) {
     console.error('credits handler error:', err);
     res.status(500).json({ success: false, error: 'Server error' });

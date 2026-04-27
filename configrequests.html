@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Config Requests • Darkside</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+  <link href="styles.css" rel="stylesheet">
+
+  <style>
+    .user-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      background: #111827;
+      border: 1px solid #1f2937;
+      color: #e5e7eb;
+      cursor: pointer;
+      font-size: 0.8rem;
+    }
+    .user-pill img.user-avatar-header {
+      width: 22px;
+      height: 22px;
+      border-radius: 999px;
+      object-fit: cover;
+      border: 1px solid #1f2937;
+      display: block;
+    }
+
+    .cr-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 3px 8px;
+      border-radius: 999px;
+      background: rgba(139, 92, 246, 0.18);
+      border: 1px solid rgba(139, 92, 246, 0.55);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #c4b5fd;
+    }
+    .cr-badge i {
+      color: #8b5cf6;
+      font-size: 11px;
+    }
+
+    .thread-table {
+      width: 100%;
+      border-collapse: collapse;
+      background-color: #111;
+      border-radius: 0 0 6px 6px;
+      overflow: hidden;
+    }
+
+    .thread-table thead th {
+      background-color: #1b1b1b;
+      color: #aaa;
+      text-transform: uppercase;
+      font-size: 11px;
+      padding: 6px 8px;
+      border-bottom: 1px solid #222;
+    }
+
+    .thread-table tbody td {
+      padding: 8px 8px;
+      vertical-align: top;
+      border-bottom: 1px solid #191919;
+      font-size: 13px;
+    }
+
+    .thread-row:hover {
+      background-color: #161616;
+    }
+
+    .thread-row.alt {
+      background-color: #121212;
+    }
+
+    .thread-icon {
+      width: 26px;
+      height: 26px;
+      border-radius: 4px;
+      background: linear-gradient(135deg, #7c3aed, #5b21b6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-size: 13px;
+    }
+
+    .thread-title a {
+      font-weight: 700;
+      color: #e0e0e0;
+    }
+
+    .thread-title a:hover {
+      color: #ffffff;
+    }
+
+    .thread-meta {
+      font-size: 11px;
+      color: #888;
+      margin-top: 2px;
+    }
+
+    .thread-table .col-icon {
+      width: 40px;
+      text-align: center;
+    }
+
+    .thread-table .col-thread-main {
+      width: auto;
+    }
+
+    .thread-table .col-stats {
+      width: 90px;
+      text-align: center;
+      white-space: nowrap;
+    }
+
+    .thread-table .col-status {
+      width: 120px;
+      text-align: center;
+      white-space: nowrap;
+    }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 8px;
+      border-radius: 999px;
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .status-in_queue {
+      background: rgba(251, 191, 36, 0.15);
+      border: 1px solid rgba(251, 191, 36, 0.4);
+      color: #fbbf24;
+    }
+
+    .status-in_progress {
+      background: rgba(59, 130, 246, 0.15);
+      border: 1px solid rgba(59, 130, 246, 0.4);
+      color: #3b82f6;
+    }
+
+    .status-completed {
+      background: rgba(16, 185, 129, 0.15);
+      border: 1px solid rgba(16, 185, 129, 0.4);
+      color: #10b981;
+    }
+
+    .status-toggle-btn {
+      background: rgba(139, 92, 246, 0.15);
+      border: 1px solid rgba(139, 92, 246, 0.4);
+      color: #a78bfa;
+      padding: 3px 8px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 11px;
+      margin-left: 4px;
+    }
+
+    .status-toggle-btn:hover {
+      background: rgba(139, 92, 246, 0.3);
+    }
+
+    /* New request form */
+    .cr-form-wrap {
+      margin-top: 12px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .cr-form-wrap input[type="text"] {
+      flex: 1 1 280px;
+      max-width: 500px;
+      background: rgba(0,0,0,0.3);
+      border: 1px solid #2a2a2a;
+      border-radius: 6px;
+      padding: 8px 14px;
+      font-size: 0.85rem;
+      color: #e0e0e0;
+      font-family: inherit;
+    }
+
+    .cr-form-wrap input[type="text"]:focus {
+      outline: none;
+      border-color: #7c3aed;
+    }
+
+    .cr-form-wrap select {
+      background: rgba(0,0,0,0.3);
+      border: 1px solid #2a2a2a;
+      border-radius: 6px;
+      padding: 8px 14px;
+      font-size: 0.85rem;
+      color: #e0e0e0;
+      font-family: inherit;
+      cursor: pointer;
+    }
+
+    .cr-form-wrap select:focus {
+      outline: none;
+      border-color: #7c3aed;
+    }
+  </style>
+  <link href="notifications.css" rel="stylesheet">
+</head>
+<body>
+
+<div id="page">
+  <!-- HEADER -->
+  <header id="header">
+    <div class="wrapper header-inner">
+      <div class="header-left">
+        <div class="header-logo">
+          <span class="logo-text">Darkside</span>
+          <span class="logo-slogan">Beyond the Limits</span>
+        </div>
+      </div>
+      <div class="header-right">
+<div class="auth-area">
+          <div class="notif-wrapper">
+            <button class="notif-bell-btn" id="notif-bell-btn" type="button" aria-label="Notifications">
+              <i class="fa fa-bell" id="n-bell-icon"></i>
+              <span class="notif-count" id="notif-count">0</span>
+            </button>
+            <div class="notif-dropdown" id="notif-dropdown">
+              <div class="notif-dropdown-header">
+                <span><i class="fa fa-bell"></i> Notifications</span>
+                <span class="badge" id="notif-badge-count">0</span>
+              </div>
+              <button type="button" class="notif-clear-btn" id="notif-clear-btn">
+                <i class="fa fa-check-double"></i> Mark all as read
+              </button>
+              <div class="notif-list" id="notif-list"></div>
+            </div>
+          </div>
+          <div class="auth-links"></div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- NAVBAR -->
+  <nav id="navbar">
+    <div class="wrapper navbar-inner">
+      <ul class="nav-main">
+        <li><a href="index.html"><i class="fa fa-home"></i> Home</a></li>
+        <li><a href="configrequests.html" class="active"><i class="fa fa-question-circle"></i> Config Requests</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <!-- CONTENT -->
+  <main id="container">
+    <div class="wrapper">
+
+      <!-- Section header -->
+      <section class="index-top">
+        <div class="welcome card-panel">
+          <h1>Config Requests</h1>
+          <p>Request configs for specific targets. Post the URL and our team will build it.</p>
+          <div class="cr-badge">
+            <i class="fa fa-question-circle"></i>
+            Request &amp; track • All members can post
+          </div>
+        </div>
+      </section>
+
+      <!-- New request form -->
+      <section class="thread-controls card-panel" id="cr-new-section">
+        <div class="cr-form-wrap">
+          <input type="text" id="cr-title-input" placeholder="Enter the URL or target name for the config request...">
+          <select id="cr-tag-select">
+            <option value="Request">Request</option>
+            <option value="Urgent">Urgent</option>
+            <option value="Premium">Premium</option>
+          </select>
+          <button id="cr-submit-btn" class="btn btn-small btn-primary">
+            <i class="fa fa-paper-plane"></i> Submit Request
+          </button>
+        </div>
+        <div id="cr-submit-status" style="margin-top:6px; font-size:0.8rem;"></div>
+      </section>
+
+      <!-- Controls -->
+      <section class="thread-controls card-panel">
+        <div class="thread-controls-left">
+          <button id="cr-refresh-btn" class="btn btn-small btn-primary">
+            <i class="fa fa-rotate-right"></i> Refresh
+          </button>
+        </div>
+        <div class="thread-controls-right">
+          <label class="control-label" for="sort-select">Sort by:</label>
+          <select id="sort-select" class="control-select">
+            <option value="newest">Creation date (newest)</option>
+            <option value="oldest">Creation date (oldest)</option>
+            <option value="status">Status</option>
+          </select>
+        </div>
+      </section>
+
+      <!-- THREAD LIST -->
+      <section class="category">
+        <header class="cat-header">
+          <span>Config Requests</span>
+          <span class="cat-link">Track the status of your config requests.</span>
+        </header>
+        <div class="cat-body card-panel card-table">
+          <table class="forum-table thread-table">
+            <thead>
+              <tr>
+                <th class="col-icon"></th>
+                <th class="col-thread-main">Request / Author</th>
+                <th class="col-status">Status</th>
+                <th class="col-stats">Replies</th>
+                <th class="col-stats">Views</th>
+              </tr>
+            </thead>
+            <tbody id="thread-list">
+              <!-- Filled via configrequests-threads.js -->
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- FOOTER -->
+      <footer class="index-bottom">
+        <div class="index-links">
+          <a href="#">Mark all threads read</a> ·
+          <a href="#">Forum Team</a> ·
+          <a href="#">Contact</a>
+        </div>
+        <div class="copyright">
+          &copy; 2026 Darkside. Theme inspired by dark community forums.
+        </div>
+      </footer>
+    </div>
+  </main>
+</div>
+
+<script type="module" src="scripts.js"></script>
+<script type="module" src="configrequests-threads.js"></script>
+<script type="module" src="notifications.js"></script>
+</body>
+</html>
