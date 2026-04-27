@@ -116,6 +116,50 @@ async function handleUpdateStatus(threadId, currentStatus) {
 // Make globally accessible for onclick
 window.handleUpdateStatus = handleUpdateStatus;
 
+async function handleStatusDropdownChange(threadId, newStatus) {
+  let download_url = null;
+
+  if (newStatus === 'completed') {
+    download_url = prompt('Enter the download URL for this config file:');
+    if (download_url === null) {
+      loadConfigRequests(); // reset dropdown
+      return;
+    }
+    download_url = download_url.trim();
+    if (!download_url) {
+      alert('A download URL is required to mark a request as Completed.');
+      loadConfigRequests(); // reset dropdown
+      return;
+    }
+  }
+
+  try {
+    const { data: sessionData } = await window.supabaseClient.auth.getSession();
+    const token = sessionData?.session?.access_token;
+    if (!token) { alert('No token, please re-login.'); loadConfigRequests(); return; }
+
+    const body = { action: 'update_config_request_status', threadId, status: newStatus };
+    if (download_url) body.download_url = download_url;
+
+    const resp = await fetch('/api/credits', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+      body: JSON.stringify(body),
+    });
+    const json = await resp.json();
+    if (!resp.ok || !json.success) {
+      throw new Error(json.error || 'Failed to update status');
+    }
+
+    loadConfigRequests();
+  } catch (err) {
+    alert('Error: ' + err.message);
+    loadConfigRequests();
+  }
+}
+
+window.handleStatusDropdownChange = handleStatusDropdownChange;
+
 async function handleDeleteThread(threadId) {
   if (!confirm('Delete this config request?')) return;
   try {
@@ -197,9 +241,17 @@ function renderThreads(list, sortMode) {
 
     const statusTd = document.createElement('td');
     statusTd.className = 'col-status';
-    let statusHtml = `<span class="status-badge status-${status}"><i class="fa ${STATUS_ICONS[status]}"></i> ${STATUS_LABELS[status]}</span>`;
+    let statusHtml = '';
     if (_isAdmin) {
-      statusHtml += `<button class="status-toggle-btn" onclick="handleUpdateStatus(${row.id}, '${status}')"><i class="fa fa-exchange-alt"></i></button>`;
+      statusHtml = `
+        <select onchange="handleStatusDropdownChange(${row.id}, this.value)" style="background:rgba(0,0,0,0.3);border:1px solid #2a2a2a;border-radius:4px;padding:4px 8px;font-size:0.75rem;color:#e0e0e0;font-family:inherit;cursor:pointer;">
+          <option value="in_queue" ${status === 'in_queue' ? 'selected' : ''}>🕐 In Queue</option>
+          <option value="in_progress" ${status === 'in_progress' ? 'selected' : ''}>🔄 In Progress</option>
+          <option value="completed" ${status === 'completed' ? 'selected' : ''}>✅ Completed</option>
+          <option value="cannot_fulfill" ${status === 'cannot_fulfill' ? 'selected' : ''}>⚠️ Cannot Be Fulfilled</option>
+        </select>`;
+    } else {
+      statusHtml = `<span class="status-badge status-${status}"><i class="fa ${STATUS_ICONS[status]}"></i> ${STATUS_LABELS[status]}</span>`;
     }
     statusTd.innerHTML = statusHtml;
 
