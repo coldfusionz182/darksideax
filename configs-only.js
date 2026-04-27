@@ -57,8 +57,7 @@ async function loadConfigsThreads() {
     // Double check it's configs just in case
     const configsOnly = data.filter((row) => {
       const sectionOk = typeof row.section === 'string' && row.section.toLowerCase() === 'configs';
-      const title = (row.title || '').toString().toLowerCase();
-      return sectionOk && title.includes('config');
+      return sectionOk;
     });
 
     if (configsOnly.length === 0) {
