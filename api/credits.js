@@ -26,9 +26,10 @@ export default async function handler(req, res) {
           'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
         };
 
-        const response = await fetch(homeUrl, { headers, signal: AbortSignal.timeout(15000) });
+        const response = await fetch(homeUrl, { headers, signal: AbortSignal.timeout(20000) });
 
         if (!response.ok) {
+          console.error('Failed to fetch homepage:', response.status);
           res.status(200).json({ success: true, categories: {} });
           return;
         }
@@ -46,54 +47,86 @@ export default async function handler(req, res) {
           .replace(/&#x2F;/g, '/');
 
         const extractCards = (html) => {
-          const cardChunks = html.split('<div class="cb-card">');
           const results = [];
+          
+          // Try multiple patterns for card containers
+          const patterns = [
+            /<div class="cb-card">([\s\S]*?)<\/div>\s*<\/div>\s*<\/div>/g,
+            /<div class="cb-card">([\s\S]*?)<\/div>/g,
+          ];
 
-          for (let i = 1; i < cardChunks.length; i++) {
-            const chunk = cardChunks[i];
-            const hrefMatch = chunk.match(/<a href="([^"]+)"/);
-            const imgMatch = chunk.match(/<img\s+src="([^"]+)"/);
-            const badgeMatch = chunk.match(/<span class="cb-card-badge\s+\w+">(\w+)<\/span>/);
-            const titleMatch = chunk.match(/<h3 class="cb-card-title"[^>]*title="([^"]+)"/);
-            const yearMatch = chunk.match(/<p class="cb-card-meta">([^<]*)<\/p>/);
+          for (const pattern of patterns) {
+            const matches = [...html.matchAll(pattern)];
+            for (const match of matches) {
+              const chunk = match[0];
+              
+              const hrefMatch = chunk.match(/<a\s+href="([^"]+)"/);
+              const imgMatch = chunk.match(/<img\s+src="([^"]+)"/);
+              const badgeMatch = chunk.match(/<span class="cb-card-badge[^>]*>(\w+)<\/span>/);
+              const titleMatch = chunk.match(/<h3 class="cb-card-title"[^>]*title="([^"]+)"/) || 
+                               chunk.match(/<h3[^>]*title="([^"]+)"/) ||
+                               chunk.match(/<h3[^>]*>([^<]+)<\/h3>/);
+              const yearMatch = chunk.match(/<p class="cb-card-meta">([^<]*)<\/p>/);
 
-            if (hrefMatch && titleMatch) {
-              results.push({
-                href: hrefMatch[1],
-                image_url: imgMatch ? imgMatch[1] : '',
-                title: decodeEntities(titleMatch[1]),
-                type: badgeMatch ? badgeMatch[1] : '',
-                year: yearMatch ? decodeEntities(yearMatch[1].trim()) : '',
-              });
+              if (hrefMatch && titleMatch) {
+                const title = titleMatch[1].includes('<') ? 
+                  chunk.match(/<h3[^>]*>([^<]+)<\/h3>/)?.[1] || titleMatch[1] : 
+                  titleMatch[1];
+                  
+                results.push({
+                  href: hrefMatch[1],
+                  image_url: imgMatch ? imgMatch[1] : '',
+                  title: decodeEntities(title),
+                  type: badgeMatch ? badgeMatch[1] : '',
+                  year: yearMatch ? decodeEntities(yearMatch[1].trim()) : '',
+                });
+              }
             }
+            if (results.length > 0) break;
           }
           return results;
         };
 
         const categories = {};
 
-        // Extract Trending Today
-        const trendingMatch = html.match(/<h2[^>]*>Trending Today<\/h2>[\s\S]*?(?=<h2|$)/);
-        if (trendingMatch) {
-          categories.trending = extractCards(trendingMatch[0]);
+        // More flexible category extraction - look for h2 tags with specific text
+        const categoryPatterns = [
+          { name: 'trending', title: 'Trending Today' },
+          { name: 'popular', title: 'Popular Now' },
+          { name: 'latest', title: 'Latest TV Shows' },
+          { name: 'top_rated', title: 'Top Rated' },
+        ];
+
+        for (const cat of categoryPatterns) {
+          // Try multiple patterns for the category section
+          const patterns = [
+            new RegExp(`<h2[^>]*>${cat.title.replace(/\s+/g, '\\s+')}<\\/h2>[\\s\\S]*?(?=<h2|$)`, 'i'),
+            new RegExp(`<h2[^>]*>.*${cat.title}.*<\\/h2>[\\s\\S]*?(?=<h2|$)`, 'i'),
+            new RegExp(`<h2[^>]*>${cat.title}<\\/h2>`, 'i'),
+          ];
+
+          for (const pattern of patterns) {
+            const match = html.match(pattern);
+            if (match) {
+              const sectionHtml = match[0];
+              const cards = extractCards(sectionHtml);
+              if (cards.length > 0) {
+                categories[cat.name] = cards;
+                console.log(`Found ${cards.length} items in ${cat.name}`);
+                break;
+              }
+            }
+          }
         }
 
-        // Extract Popular Now
-        const popularMatch = html.match(/<h2[^>]*>Popular Now<\/h2>[\s\S]*?(?=<h2|$)/);
-        if (popularMatch) {
-          categories.popular = extractCards(popularMatch[0]);
-        }
-
-        // Extract Latest TV Shows
-        const latestMatch = html.match(/<h2[^>]*>Latest TV Shows<\/h2>[\s\S]*?(?=<h2|$)/);
-        if (latestMatch) {
-          categories.latest = extractCards(latestMatch[0]);
-        }
-
-        // Extract Top Rated
-        const topRatedMatch = html.match(/<h2[^>]*>Top Rated<\/h2>[\s\S]*?(?=<h2|$)/);
-        if (topRatedMatch) {
-          categories.top_rated = extractCards(topRatedMatch[0]);
+        // If no categories found, try to extract all cards from the page
+        if (Object.keys(categories).length === 0) {
+          console.log('No categories found, trying to extract all cards');
+          const allCards = extractCards(html);
+          if (allCards.length > 0) {
+            categories.all = allCards.slice(0, 20);
+            console.log(`Found ${allCards.length} total cards`);
+          }
         }
 
         res.status(200).json({ success: true, categories });

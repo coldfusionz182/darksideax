@@ -642,12 +642,17 @@ function displayCategories(categories) {
     trending: 'Trending Today',
     popular: 'Popular Now',
     latest: 'Latest TV Shows',
-    top_rated: 'Top Rated'
+    top_rated: 'Top Rated',
+    all: 'Popular Movies & Series'
   };
+
+  console.log('Categories received:', categories);
 
   Object.keys(categories).forEach(key => {
     const items = categories[key];
     if (!items || items.length === 0) return;
+
+    console.log(`Displaying ${key} with ${items.length} items`);
 
     const row = document.createElement('div');
     row.className = 'netflix-row fade-in';
