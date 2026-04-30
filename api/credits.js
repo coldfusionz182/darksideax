@@ -32,6 +32,16 @@ export default async function handler(req, res) {
           return r.text();
         };
 
+        // Helper: shuffle array randomly (Fisher-Yates)
+        const shuffle = (array) => {
+          const arr = [...array];
+          for (let i = arr.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [arr[i], arr[j]] = [arr[j], arr[i]];
+          }
+          return arr;
+        };
+
         // Helper: extract cards from a cheerio doc
         const extractCards = ($, container) => {
           const items = [];
@@ -172,10 +182,10 @@ export default async function handler(req, res) {
         const homeAllCards = extractCards($, $('body'));
         const uncategorized = homeAllCards.filter(item => !existingHrefs.has(item.href));
         if (uncategorized.length > 0) {
-          categories.more = uncategorized.slice(0, 20);
+          categories.more = shuffle(uncategorized).slice(0, 20);
         }
 
-        // Fetch /movies page for more popular movies
+        // Fetch /movies page for more popular movies (movies only)
         let totalMovieCount = '';
         try {
           const moviesHtml = await fetchPage('https://streamimdb.ru/movies');
@@ -183,9 +193,11 @@ export default async function handler(req, res) {
             const $m = cheerio.load(moviesHtml);
             const movieCards = extractCards($m, $m('body'));
             const newMovies = movieCards.filter(item => !existingHrefs.has(item.href));
-            if (newMovies.length > 0) {
-              categories.popular_movies = newMovies.slice(0, 30);
-              newMovies.forEach(item => existingHrefs.add(item.href));
+            // Filter to only movies (exclude series)
+          const moviesOnly = newMovies.filter(item => item.type !== 'Series');
+            if (moviesOnly.length > 0) {
+              categories.popular_movies = shuffle(moviesOnly).slice(0, 30);
+              moviesOnly.forEach(item => existingHrefs.add(item.href));
             }
             // Extract total count
             const $subtitle = $m('.cb-list-subtitle');
@@ -203,7 +215,7 @@ export default async function handler(req, res) {
             const tvCards = extractCards($t, $t('body'));
             const newTv = tvCards.filter(item => !existingHrefs.has(item.href));
             if (newTv.length > 0) {
-              categories.popular_series = newTv.slice(0, 30);
+              categories.popular_series = shuffle(newTv).slice(0, 30);
             }
           }
         } catch (e) { console.error('Failed to fetch /tv-shows:', e.message); }
