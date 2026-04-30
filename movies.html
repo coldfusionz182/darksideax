@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Movies & Series • Darkside</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+  <link href="styles.css" rel="stylesheet">
+
+  <style>
+    body {
+      background: radial-gradient(circle at top, #151826 0, #05060a 55%);
+    }
+
+    .user-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      background: #111827;
+      border: 1px solid #1f2937;
+      color: #e5e7eb;
+      cursor: pointer;
+      font-size: 0.8rem;
+    }
+    .user-pill img.user-avatar-header {
+      width: 22px;
+      height: 22px;
+      border-radius: 999px;
+      object-fit: cover;
+      border: 1px solid #1f2937;
+      display: block;
+    }
+
+    /* Page header */
+    .movies-header {
+      background: linear-gradient(135deg, #e94560 0%, #0f3460 100%);
+      border-radius: 8px;
+      padding: 30px 24px;
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .movies-header-icon {
+      font-size: 36px;
+      color: #fff;
+    }
+    .movies-header h1 {
+      font-size: 24px;
+      color: #fff;
+      margin: 0;
+      font-family: inherit;
+    }
+    .movies-header p {
+      color: rgba(255,255,255,0.7);
+      margin: 4px 0 0;
+      font-size: 13px;
+    }
+
+    /* Search bar */
+    .search-section {
+      margin-bottom: 24px;
+    }
+    .search-bar {
+      display: flex;
+      gap: 0;
+      border-radius: 8px;
+      overflow: hidden;
+      border: 1px solid #2a2a2a;
+    }
+    .search-bar input {
+      flex: 1;
+      background: #111;
+      border: none;
+      color: #e0e0e0;
+      padding: 14px 18px;
+      font-size: 15px;
+      font-family: inherit;
+      outline: none;
+    }
+    .search-bar input::placeholder {
+      color: #555;
+    }
+    .search-bar button {
+      background: #e94560;
+      border: none;
+      color: #fff;
+      padding: 14px 28px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: inherit;
+      transition: background 0.2s;
+    }
+    .search-bar button:hover {
+      background: #c93654;
+    }
+    .search-bar button:disabled {
+      background: #555;
+      cursor: not-allowed;
+    }
+
+    /* Results count */
+    .results-count {
+      color: #888;
+      font-size: 13px;
+      margin-bottom: 16px;
+      min-height: 20px;
+    }
+
+    /* Movie cards grid */
+    .movies-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+      gap: 16px;
+    }
+
+    /* Individual card */
+    .movie-card {
+      background: #0f3460;
+      border-radius: 8px;
+      overflow: hidden;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+      position: relative;
+    }
+    .movie-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 24px rgba(233, 69, 96, 0.2);
+    }
+
+    .movie-card-poster {
+      width: 100%;
+      aspect-ratio: 2/3;
+      background: #0a0a1a;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      position: relative;
+    }
+    .movie-card-poster img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .movie-card-poster .poster-placeholder {
+      color: #333;
+      font-size: 32px;
+    }
+
+    /* Badge (Movie / Series) */
+    .movie-card-badge {
+      position: absolute;
+      top: 8px;
+      left: 8px;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .badge-movie {
+      background: rgba(233, 69, 96, 0.85);
+      color: #fff;
+    }
+    .badge-series {
+      background: rgba(79, 70, 229, 0.85);
+      color: #fff;
+    }
+    .badge-other {
+      background: rgba(100, 100, 100, 0.85);
+      color: #fff;
+    }
+
+    /* Play overlay on hover */
+    .movie-card-poster .play-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+    .movie-card:hover .play-overlay {
+      opacity: 1;
+    }
+    .play-overlay i {
+      font-size: 40px;
+      color: #e94560;
+    }
+
+    .movie-card-info {
+      padding: 10px 12px;
+    }
+    .movie-card-title {
+      color: #f1f1f1;
+      font-size: 13px;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-bottom: 4px;
+    }
+    .movie-card-meta {
+      color: #888;
+      font-size: 11px;
+    }
+
+    .movie-card-play {
+      display: block;
+      width: calc(100% - 24px);
+      margin: 0 12px 12px;
+      padding: 6px 0;
+      background: #e94560;
+      border: none;
+      border-radius: 4px;
+      color: #fff;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      text-align: center;
+      font-family: inherit;
+      transition: background 0.2s;
+    }
+    .movie-card-play:hover {
+      background: #c93654;
+    }
+
+    /* Loading spinner */
+    .movies-loading {
+      text-align: center;
+      padding: 40px 0;
+      color: #888;
+    }
+    .movies-loading i {
+      font-size: 24px;
+      margin-bottom: 8px;
+      display: block;
+    }
+
+    /* No results */
+    .movies-empty {
+      text-align: center;
+      padding: 60px 0;
+      color: #666;
+    }
+    .movies-empty i {
+      font-size: 48px;
+      margin-bottom: 12px;
+      display: block;
+      color: #444;
+    }
+    .movies-empty p {
+      font-size: 14px;
+    }
+
+    /* Card appear animation */
+    @keyframes cardFadeIn {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .movie-card-anim {
+      animation: cardFadeIn 0.3s ease-out forwards;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- TOP NAV -->
+  <header class="index-top">
+    <div class="wrapper">
+      <div class="top-left">
+        <a href="index.html" class="logo-link">
+          <span class="logo-text">Dark<span class="logo-accent">side</span></span>
+        </a>
+      </div>
+      <div class="top-right">
+        <div id="user-pill-container"></div>
+      </div>
+    </div>
+  </header>
+
+  <!-- CONTENT -->
+  <main id="container">
+    <div class="wrapper">
+
+      <div class="movies-header">
+        <div class="movies-header-icon"><i class="fa fa-film"></i></div>
+        <div>
+          <h1>Movies & Series</h1>
+          <p>Search and stream movies and TV series instantly</p>
+        </div>
+      </div>
+
+      <div class="search-section">
+        <div class="search-bar">
+          <input type="text" id="movie-search-input" placeholder="Search for a movie or series..." autocomplete="off">
+          <button id="movie-search-btn"><i class="fa fa-search"></i> Search</button>
+        </div>
+      </div>
+
+      <div class="results-count" id="results-count"></div>
+
+      <div id="movies-results">
+        <!-- Results will be injected here -->
+        <div class="movies-empty">
+          <i class="fa fa-popcorn"></i>
+          <p>Search for a movie or series to get started</p>
+        </div>
+      </div>
+
+      <!-- FOOTER -->
+      <footer class="index-bottom" style="margin-top: 40px;">
+        <div class="index-links">
+          <a href="#">Mark all threads read</a> ·
+          <a href="#">Forum Team</a> ·
+          <a href="#">Contact</a>
+        </div>
+        <div class="copyright">
+          &copy; 2026 Darkside. Theme inspired by dark community forums.
+        </div>
+      </footer>
+
+    </div>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase-config.js"></script>
+  <script src="auth.js"></script>
+  <script>
+// movies.js — inlined
+
+const searchInput = document.getElementById('movie-search-input');
+const searchBtn = document.getElementById('movie-search-btn');
+const resultsContainer = document.getElementById('movies-results');
+const resultsCount = document.getElementById('results-count');
+
+let isSearching = false;
+
+searchBtn.addEventListener('click', performSearch);
+searchInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') performSearch();
+});
+
+async function performSearch() {
+  const query = searchInput.value.trim();
+  if (!query || isSearching) return;
+
+  isSearching = true;
+  searchBtn.disabled = true;
+  searchBtn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Searching...';
+
+  resultsContainer.innerHTML = `
+    <div class="movies-loading">
+      <i class="fa fa-spinner fa-spin"></i>
+      Searching for "${escapeHtml(query)}"...
+    </div>`;
+  resultsCount.textContent = '';
+
+  try {
+    const resp = await fetch('/api/credits', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'movie_search', query }),
+    });
+    const data = await resp.json();
+    if (!resp.ok || !data.success) throw new Error(data.error || 'Search failed');
+    displayResults(data);
+  } catch (err) {
+    resultsContainer.innerHTML = `
+      <div class="movies-empty">
+        <i class="fa fa-exclamation-triangle"></i>
+        <p>Search failed: ${escapeHtml(err.message)}</p>
+      </div>`;
+  } finally {
+    isSearching = false;
+    searchBtn.disabled = false;
+    searchBtn.innerHTML = '<i class="fa fa-search"></i> Search';
+  }
+}
+
+function displayResults(data) {
+  const countText = data.count_text || '';
+  const results = data.results || [];
+
+  if (countText) {
+    resultsCount.textContent = countText;
+  } else if (results.length > 0) {
+    resultsCount.textContent = `Found ${results.length} results`;
+  } else {
+    resultsCount.textContent = '';
+  }
+
+  if (results.length === 0) {
+    resultsContainer.innerHTML = `
+      <div class="movies-empty">
+        <i class="fa fa-search"></i>
+        <p>${countText || 'No results found. Try a different search term.'}</p>
+      </div>`;
+    return;
+  }
+
+  const grid = document.createElement('div');
+  grid.className = 'movies-grid';
+
+  results.forEach((item, idx) => {
+    const card = document.createElement('div');
+    card.className = 'movie-card movie-card-anim';
+    card.style.animationDelay = `${idx * 0.05}s`;
+
+    let badgeClass = 'badge-other';
+    let badgeText = item.type || '';
+    if (item.type && item.type.toLowerCase() === 'movie') badgeClass = 'badge-movie';
+    else if (item.type && item.type.toLowerCase() === 'series') badgeClass = 'badge-series';
+
+    const metaParts = [];
+    if (item.year) metaParts.push(item.year);
+    if (item.type) metaParts.push(item.type);
+    const metaText = metaParts.join(' · ');
+
+    card.innerHTML = `
+      <div class="movie-card-poster">
+        ${item.image_url
+          ? `<img src="${escapeHtml(item.image_url)}" alt="${escapeHtml(item.title)}" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+             <div class="poster-placeholder" style="display:none;"><i class="fa fa-film"></i></div>`
+          : `<div class="poster-placeholder"><i class="fa fa-film"></i></div>`
+        }
+        ${badgeText ? `<span class="movie-card-badge ${badgeClass}">${escapeHtml(badgeText)}</span>` : ''}
+        <div class="play-overlay"><i class="fa fa-play-circle"></i></div>
+      </div>
+      <div class="movie-card-info">
+        <div class="movie-card-title" title="${escapeHtml(item.title)}">${escapeHtml(item.title)}</div>
+        ${metaText ? `<div class="movie-card-meta">${escapeHtml(metaText)}</div>` : ''}
+      </div>
+      <button class="movie-card-play" data-href="${escapeHtml(item.href)}" data-title="${escapeHtml(item.title)}">
+        <i class="fa fa-play"></i> Play
+      </button>
+    `;
+
+    const playBtn = card.querySelector('.movie-card-play');
+    const openStream = () => {
+      const url = `https://streamimdb.ru${playBtn.dataset.href}`;
+      window.open(url, '_blank');
+    };
+
+    playBtn.addEventListener('click', (e) => { e.stopPropagation(); openStream(); });
+    card.addEventListener('click', openStream);
+
+    grid.appendChild(card);
+  });
+
+  resultsContainer.innerHTML = '';
+  resultsContainer.appendChild(grid);
+}
+
+function escapeHtml(str) {
+  if (!str) return '';
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+  </script>
+</body>
+</html>
