@@ -138,6 +138,28 @@ export default async function handler(req, res) {
           dataSrcMatch = html.match(/\/embed\/(tv|movie)\/[^"'\s]+/);  // URL pattern in HTML
         }
 
+        // For TV series, the main page doesn't have the player - need to fetch first episode
+        if (!dataSrcMatch && href.startsWith('/tv/')) {
+          const firstEpisodeMatch = html.match(/href="([^"]*\/season\/1\/episode\/1)"/);
+          if (firstEpisodeMatch) {
+            const episodeUrl = `https://streamimdb.ru${firstEpisodeMatch[1]}`;
+            const episodeResp = await fetch(episodeUrl, { headers, signal: AbortSignal.timeout(15000) });
+            if (episodeResp.ok) {
+              const episodeHtml = await episodeResp.text();
+              dataSrcMatch = episodeHtml.match(/data-src="([^"]*embed[^"]*)"/);
+              if (!dataSrcMatch) {
+                dataSrcMatch = episodeHtml.match(/src="([^"]*embed\/[^"]*)"/);
+              }
+              if (!dataSrcMatch) {
+                dataSrcMatch = episodeHtml.match(/iframe[^>]*src="([^"]+)"/);
+              }
+              if (!dataSrcMatch) {
+                dataSrcMatch = episodeHtml.match(/\/embed\/(tv|movie)\/[^"'\s]+/);
+              }
+            }
+          }
+        }
+
         if (!dataSrcMatch) {
           res.status(200).json({ success: false, error: 'No embed URL found' });
           return;
