@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>All Movies & Series • Darkside</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+  <link href="styles.css" rel="stylesheet">
+  <link href="notifications.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      background: #141414;
+      margin: 0;
+      padding: 0;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    /* Netflix-style header */
+    #header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 1000;
+      background: #141414;
+      transition: background 0.3s;
+    }
+
+    .header-inner {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 4%;
+      height: 68px;
+      gap: 20px;
+    }
+
+    .header-logo .logo-text {
+      color: #e50914;
+      font-size: 26px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 3px;
+      animation: rainbowText 6s linear infinite;
+    }
+    .header-logo .logo-slogan {
+      display: none;
+    }
+
+    @keyframes rainbowText {
+      0% { color: #ff0000; }
+      16.66% { color: #ff8000; }
+      33.33% { color: #ffff00; }
+      50% { color: #00ff00; }
+      66.66% { color: #0080ff; }
+      83.33% { color: #8000ff; }
+      100% { color: #ff0000; }
+    }
+
+    .header-search {
+      display: flex;
+      background: #1a1a1a;
+      border: 1px solid #333;
+      border-radius: 4px;
+      overflow: hidden;
+      transition: border-color 0.3s;
+    }
+
+    .header-search:focus-within {
+      border-color: #e50914;
+    }
+
+    .header-search input {
+      background: transparent;
+      border: none;
+      color: #fff;
+      padding: 8px 12px;
+      font-size: 14px;
+      width: 200px;
+      outline: none;
+    }
+    .header-search input::placeholder {
+      color: #666;
+    }
+
+    .header-search button {
+      background: transparent;
+      border: none;
+      color: #888;
+      padding: 8px 12px;
+      cursor: pointer;
+      transition: color 0.2s;
+    }
+    .header-search button:hover {
+      color: #e50914;
+    }
+
+    .auth-area {
+      display: flex;
+      align-items: center;
+    }
+    .auth-links {
+      display: flex;
+      align-items: center;
+    }
+
+    /* Main container */
+    #container {
+      padding-top: 68px;
+    }
+
+    /* Page title */
+    .page-title-section {
+      padding: 32px 4% 0;
+    }
+    .page-title {
+      font-size: 32px;
+      font-weight: 800;
+      color: #e5e5e5;
+      letter-spacing: 0.5px;
+      margin: 0 0 4px;
+    }
+    .page-subtitle {
+      font-size: 14px;
+      color: #888;
+      font-weight: 400;
+    }
+    .page-subtitle span {
+      color: #e50914;
+      font-weight: 600;
+    }
+
+    /* Browse grid */
+    .browse-section {
+      margin-top: 24px;
+      padding: 0 4%;
+    }
+    .browse-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 16px;
+    }
+    .browse-card {
+      cursor: pointer;
+      transition: transform 0.3s;
+      border-radius: 6px;
+      overflow: hidden;
+      position: relative;
+    }
+    .browse-card:hover {
+      transform: scale(1.05);
+      z-index: 10;
+    }
+    .browse-card-poster {
+      width: 100%;
+      aspect-ratio: 2/3;
+      background: #1a1a1a;
+      position: relative;
+      overflow: hidden;
+      border-radius: 6px;
+    }
+    .browse-card-poster img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .browse-card-poster .poster-placeholder {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      color: #333;
+      font-size: 36px;
+      background: #141414;
+    }
+    .browse-card-overlay {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, transparent 100%);
+      padding: 40px 10px 10px;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    .browse-card:hover .browse-card-overlay {
+      opacity: 1;
+    }
+    .browse-card-title {
+      color: #fff;
+      font-size: 13px;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .browse-card-meta {
+      color: #aaa;
+      font-size: 11px;
+      margin-top: 2px;
+    }
+    .browse-card-badge {
+      position: absolute;
+      top: 6px;
+      left: 6px;
+      padding: 2px 6px;
+      border-radius: 2px;
+      font-size: 9px;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+    .badge-movie {
+      background: #e50914;
+      color: #fff;
+    }
+    .badge-series {
+      background: #0071eb;
+      color: #fff;
+    }
+    .badge-other {
+      background: #666;
+      color: #fff;
+    }
+
+    /* Loading */
+    .movies-loading {
+      text-align: center;
+      padding: 60px 0;
+      color: #888;
+    }
+    .movies-loading i {
+      font-size: 32px;
+      margin-bottom: 12px;
+    }
+
+    /* Empty state */
+    .movies-empty {
+      text-align: center;
+      padding: 80px 0;
+      color: #666;
+    }
+    .movies-empty i {
+      font-size: 64px;
+      margin-bottom: 16px;
+      color: #444;
+    }
+    .movies-empty p {
+      font-size: 16px;
+      font-weight: 400;
+      color: #666;
+    }
+
+    /* Pagination */
+    .browse-pagination {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin-top: 30px;
+      padding-bottom: 20px;
+    }
+    .page-btn {
+      padding: 8px 14px;
+      border-radius: 6px;
+      border: 1px solid #333;
+      background: #1a1a1a;
+      color: #ccc;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: inherit;
+    }
+    .page-btn:hover {
+      border-color: #e50914;
+      color: #fff;
+      background: rgba(229,9,20,0.1);
+    }
+    .page-btn.active {
+      background: #e50914;
+      border-color: #e50914;
+      color: #fff;
+    }
+    .page-btn:disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+    }
+    .page-info {
+      color: #888;
+      font-size: 13px;
+      margin: 0 8px;
+    }
+
+    /* Back button */
+    .back-to-movies {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: #888;
+      font-size: 14px;
+      font-weight: 500;
+      text-decoration: none;
+      transition: color 0.2s;
+      margin-top: 16px;
+      padding: 0 4%;
+    }
+    .back-to-movies:hover {
+      color: #e50914;
+    }
+    .back-to-movies i {
+      font-size: 13px;
+    }
+
+    /* Footer */
+    .index-bottom {
+      padding: 40px 4%;
+      text-align: center;
+      color: #888;
+      font-size: 14px;
+      font-weight: 400;
+      margin-top: 40px;
+    }
+    .index-links a {
+      color: #888;
+      text-decoration: none;
+      margin: 0 8px;
+    }
+    .index-links a:hover {
+      color: #fff;
+    }
+    .copyright {
+      margin-top: 16px;
+    }
+
+    /* Notification dropdown */
+    .notif-dropdown {
+      background: #141414;
+      border: 1px solid #333;
+    }
+    .notif-dropdown-header {
+      background: #1a1a1a;
+      border-bottom: 1px solid #333;
+    }
+    .notif-item {
+      border-bottom: 1px solid #333;
+    }
+    .notif-item:hover {
+      background: #1a1a1a;
+    }
+    .notif-bell-btn {
+      background: transparent;
+      border: none;
+      color: #fff;
+    }
+    .notif-bell-btn:hover {
+      color: #e50914;
+    }
+
+    /* Animations */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .fade-in {
+      animation: fadeIn 0.4s ease-out;
+    }
+  </style>
+</head>
+<body>
+
+<div id="page">
+  <!-- HEADER -->
+  <header id="header">
+    <div class="wrapper header-inner">
+      <div class="header-left">
+        <div class="header-logo">
+          <span class="logo-text">Darkside</span>
+          <span class="logo-slogan">Beyond the Limits</span>
+        </div>
+      </div>
+      <div class="header-right">
+        <div class="header-search">
+          <input type="text" id="header-search-input" placeholder="Search movies..." autocomplete="off">
+          <button id="header-search-btn"><i class="fa fa-search"></i></button>
+        </div>
+        <div class="auth-area">
+          <div class="auth-links"></div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- CONTENT -->
+  <main id="container">
+    <div class="wrapper content-column">
+      <a href="movies.html" class="back-to-movies">
+        <i class="fa fa-arrow-left"></i> Back to Movies
+      </a>
+
+      <div class="page-title-section fade-in">
+        <h1 class="page-title">All Movies & Series</h1>
+        <p class="page-subtitle">Browse the full library — <span id="totalCount">loading...</span> titles</p>
+      </div>
+
+      <div class="browse-section">
+        <div class="browse-grid" id="browseGrid">
+          <div class="movies-loading">
+            <i class="fa fa-spinner fa-spin"></i>
+            <p>Loading movies...</p>
+          </div>
+        </div>
+        <div class="browse-pagination" id="browsePagination"></div>
+      </div>
+
+      <!-- FOOTER -->
+      <footer class="index-bottom">
+        <div class="index-links">
+          <a href="#">Mark all threads read</a> ·
+          <a href="#">Forum Team</a> ·
+          <a href="#">Contact</a>
+        </div>
+        <div class="copyright">
+          &copy; 2026 Darkside. Theme inspired by dark community forums.
+        </div>
+      </footer>
+
+    </div>
+  </main>
+</div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase-config.js"></script>
+  <script src="auth.js"></script>
+  <script src="notifications.js"></script>
+  <script>
+// allmovies.js — inlined
+
+const resultsContainer = document.getElementById('browseGrid');
+const paginationContainer = document.getElementById('browsePagination');
+const totalCountEl = document.getElementById('totalCount');
+const headerSearchInput = document.getElementById('header-search-input');
+const headerSearchBtn = document.getElementById('header-search-btn');
+
+let currentPage = 1;
+let totalCount = '';
+let hasNext = true;
+let isLoading = false;
+
+// Continue Watching - localStorage tracking
+function getContinueWatching() {
+  try {
+    return JSON.parse(localStorage.getItem('continueWatching') || '[]');
+  } catch(e) { return []; }
+}
+
+function saveContinueWatching(item) {
+  if (!item.href) return;
+  let list = getContinueWatching();
+  list = list.filter(i => i.href !== item.href);
+  list.unshift({
+    href: item.href,
+    title: item.title || '',
+    image_url: item.image_url || '',
+    bg_url: item.bg_url || '',
+    type: item.type || '',
+    year: item.year || '',
+    embed: item.embed || '',
+    description: item.description || '',
+    timestamp: Date.now(),
+  });
+  list = list.slice(0, 20);
+  localStorage.setItem('continueWatching', JSON.stringify(list));
+}
+
+// Load page on start
+loadPage(1);
+
+// Search
+headerSearchBtn.addEventListener('click', () => {
+  const q = headerSearchInput.value.trim();
+  if (q) window.location.href = `movies.html?search=${encodeURIComponent(q)}`;
+});
+headerSearchInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') {
+    const q = headerSearchInput.value.trim();
+    if (q) window.location.href = `movies.html?search=${encodeURIComponent(q)}`;
+  }
+});
+
+async function loadPage(page) {
+  if (isLoading) return;
+  isLoading = true;
+  currentPage = page;
+
+  resultsContainer.innerHTML = `<div class="movies-loading"><i class="fa fa-spinner fa-spin"></i><p>Loading page ${page}...</p></div>`;
+
+  try {
+    const resp = await fetch('/api/credits', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'movie_fetch_movies_page', page }),
+    });
+    const data = await resp.json();
+    if (!data.success) throw new Error(data.error || 'Failed to load movies');
+
+    totalCount = data.total_count || '';
+    hasNext = data.has_next || false;
+
+    if (totalCount) {
+      totalCountEl.textContent = totalCount;
+    }
+
+    const movies = data.movies || [];
+    if (movies.length === 0) {
+      resultsContainer.innerHTML = `<div class="movies-empty"><i class="fa fa-film"></i><p>No movies found.</p></div>`;
+      paginationContainer.innerHTML = '';
+      return;
+    }
+
+    resultsContainer.innerHTML = '';
+    movies.forEach(item => {
+      const card = document.createElement('div');
+      card.className = 'browse-card fade-in';
+
+      let badgeClass = 'badge-other';
+      let badgeText = item.type || '';
+      if (item.type && item.type.toLowerCase() === 'movie') badgeClass = 'badge-movie';
+      else if (item.type && item.type.toLowerCase() === 'series') badgeClass = 'badge-series';
+
+      const metaParts = [];
+      if (item.year) metaParts.push(item.year);
+      if (item.type) metaParts.push(item.type);
+      const metaText = metaParts.join(' · ');
+
+      card.innerHTML = `
+        <div class="browse-card-poster">
+          ${item.image_url
+            ? `<img src="${escapeHtml(item.image_url)}" alt="${escapeHtml(item.title)}" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+               <div class="poster-placeholder" style="display:none;"><i class="fa fa-film"></i></div>`
+            : `<div class="poster-placeholder"><i class="fa fa-film"></i></div>`
+          }
+          ${badgeText ? `<span class="browse-card-badge ${badgeClass}">${escapeHtml(badgeText)}</span>` : ''}
+          <div class="browse-card-overlay">
+            <div class="browse-card-title" title="${escapeHtml(item.title)}">${escapeHtml(item.title)}</div>
+            ${metaText ? `<div class="browse-card-meta">${escapeHtml(metaText)}</div>` : ''}
+          </div>
+        </div>
+      `;
+
+      const openStream = () => {
+        const p = new URLSearchParams();
+        p.set('href', item.href);
+        p.set('title', item.title);
+        if (item.year) p.set('year', item.year);
+        if (item.type) p.set('type', item.type);
+        if (item.image_url) p.set('poster', item.image_url);
+        if (item.embed) p.set('embed', item.embed);
+        if (item.bg_url) p.set('bg_url', item.bg_url);
+        if (item.description) p.set('description', item.description);
+        saveContinueWatching(item);
+        window.location.href = `watch.html?${p.toString()}`;
+      };
+
+      card.addEventListener('click', openStream);
+      resultsContainer.appendChild(card);
+    });
+
+    renderPagination(page, hasNext);
+
+  } catch (err) {
+    resultsContainer.innerHTML = `<div class="movies-empty"><i class="fa fa-exclamation-triangle"></i><p>${escapeHtml(err.message)}</p></div>`;
+  } finally {
+    isLoading = false;
+  }
+}
+
+function renderPagination(currentPage, hasNext) {
+  paginationContainer.innerHTML = '';
+
+  const prevBtn = document.createElement('button');
+  prevBtn.className = 'page-btn';
+  prevBtn.innerHTML = '<i class="fa fa-chevron-left"></i> Prev';
+  prevBtn.disabled = currentPage <= 1;
+  prevBtn.addEventListener('click', () => loadPage(currentPage - 1));
+  paginationContainer.appendChild(prevBtn);
+
+  const startPage = Math.max(1, currentPage - 3);
+  const endPage = currentPage + 3;
+
+  if (startPage > 1) {
+    paginationContainer.appendChild(createPageBtn(1, currentPage));
+    if (startPage > 2) {
+      const dots = document.createElement('span');
+      dots.className = 'page-info';
+      dots.textContent = '...';
+      paginationContainer.appendChild(dots);
+    }
+  }
+
+  for (let i = startPage; i <= endPage; i++) {
+    paginationContainer.appendChild(createPageBtn(i, currentPage));
+  }
+
+  if (hasNext) {
+    const dots = document.createElement('span');
+    dots.className = 'page-info';
+    dots.textContent = '...';
+    paginationContainer.appendChild(dots);
+  }
+
+  const nextBtn = document.createElement('button');
+  nextBtn.className = 'page-btn';
+  nextBtn.innerHTML = 'Next <i class="fa fa-chevron-right"></i>';
+  nextBtn.disabled = !hasNext;
+  nextBtn.addEventListener('click', () => loadPage(currentPage + 1));
+  paginationContainer.appendChild(nextBtn);
+
+  const info = document.createElement('span');
+  info.className = 'page-info';
+  info.textContent = `Page ${currentPage}`;
+  paginationContainer.appendChild(info);
+}
+
+function createPageBtn(pageNum, currentPage) {
+  const btn = document.createElement('button');
+  btn.className = 'page-btn' + (pageNum === currentPage ? ' active' : '');
+  btn.textContent = pageNum;
+  btn.addEventListener('click', () => loadPage(pageNum));
+  return btn;
+}
+
+function escapeHtml(str) {
+  if (!str) return '';
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+  </script>
+</body>
+</html>
