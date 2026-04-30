@@ -127,16 +127,16 @@
       margin: 0 0 8px;
       line-height: 1.2;
       letter-spacing: -0.01em;
-      background: linear-gradient(90deg, #e94560, #ff6b6b, #e94560, #ff6b6b);
-      background-size: 300% 100%;
+      background: linear-gradient(90deg, #ff0000, #ff8800, #ffff00, #00ff00, #0088ff, #8800ff, #ff0088, #ff0000);
+      background-size: 400% 100%;
       -webkit-background-clip: text;
       background-clip: text;
       -webkit-text-fill-color: transparent;
-      animation: titleColorShift 5s ease-in-out infinite;
+      animation: titleColorShift 6s linear infinite;
     }
     @keyframes titleColorShift {
-      0%, 100% { background-position: 0% 50%; }
-      50% { background-position: 100% 50%; }
+      0% { background-position: 0% 50%; }
+      100% { background-position: 100% 50%; }
     }
     .watch-meta {
       display: flex;
@@ -330,6 +330,99 @@
     }
     .watch-episode-item:hover .watch-episode-play {
       opacity: 1;
+    }
+    .watch-episode-item.watched .watch-episode-num {
+      background: rgba(76,175,80,0.2);
+      color: #4caf50;
+    }
+    .watch-episode-watched {
+      color: #4caf50;
+      font-size: 12px;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+    .watch-episode-item.watched .watch-episode-watched {
+      opacity: 1;
+    }
+
+    /* ── Season tabs ── */
+    .watch-season-tabs {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 10px;
+      flex-wrap: wrap;
+    }
+    .watch-season-tab {
+      padding: 4px 10px;
+      border-radius: 4px;
+      border: 1px solid rgba(255,255,255,0.1);
+      background: rgba(255,255,255,0.03);
+      color: #888;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: inherit;
+    }
+    .watch-season-tab:hover {
+      background: rgba(255,255,255,0.08);
+      color: #ccc;
+    }
+    .watch-season-tab.active {
+      background: rgba(233,69,96,0.2);
+      border-color: rgba(233,69,96,0.4);
+      color: #e94560;
+    }
+
+    /* ── Share button ── */
+    .watch-share-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 16px;
+      border-radius: 6px;
+      border: 1px solid rgba(255,255,255,0.1);
+      background: rgba(255,255,255,0.05);
+      color: #ccc;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: inherit;
+    }
+    .watch-share-btn:hover {
+      background: rgba(79,70,229,0.15);
+      border-color: rgba(79,70,229,0.4);
+      color: #fff;
+    }
+
+    /* ── Toast notification ── */
+    .watch-toast {
+      position: fixed;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: #111;
+      border: 1px solid #333;
+      border-radius: 8px;
+      padding: 12px 20px;
+      color: #fff;
+      font-size: 13px;
+      font-weight: 600;
+      z-index: 10000;
+      opacity: 0;
+      transition: all 0.3s ease;
+      pointer-events: none;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .watch-toast.active {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+    .watch-toast i {
+      color: #4caf50;
     }
 
     /* ── Movie/Series Info Section ── */
@@ -605,6 +698,9 @@
             <button class="watch-ctrl-btn" id="fullscreenBtn" type="button">
               <i class="fa fa-expand"></i> Fullscreen
             </button>
+            <button class="watch-share-btn" id="shareBtn" type="button">
+              <i class="fa fa-share-alt"></i> Share
+            </button>
           </div>
         </div>
         <div class="watch-player-right">
@@ -615,6 +711,7 @@
                 <i class="fa fa-step-forward"></i> Next
               </button>
             </div>
+            <div class="watch-season-tabs" id="watchSeasonTabs"></div>
             <div class="watch-episodes-list" id="watchEpisodesList"></div>
           </div>
         </div>
@@ -637,6 +734,12 @@
         </div>
       </div>
     </div>
+  </div>
+
+  <!-- Toast notification -->
+  <div class="watch-toast" id="watchToast">
+    <i class="fa fa-check-circle"></i>
+    <span id="watchToastText">Link copied!</span>
   </div>
 
   <!-- Next episode notification -->
@@ -783,9 +886,33 @@
   let currentEpisodeIndex = -1;
   let nextEpisodeTimer = null;
   let nextEpisodeCountdown = 60;
+  let currentSeason = 1;
+  let watchedEpisodes = {};
+
+  // Load watch progress from localStorage
+  function loadWatchProgress() {
+    try {
+      const stored = localStorage.getItem('watchProgress');
+      if (stored) watchedEpisodes = JSON.parse(stored);
+    } catch(e) {}
+  }
+  function saveWatchProgress() {
+    try {
+      localStorage.setItem('watchProgress', JSON.stringify(watchedEpisodes));
+    } catch(e) {}
+  }
+  function markWatched(epHref) {
+    watchedEpisodes[epHref] = true;
+    saveWatchProgress();
+  }
+  function isWatched(epHref) {
+    return !!watchedEpisodes[epHref];
+  }
 
   async function loadEpisodes() {
     if (!href || !href.startsWith('/tv/')) return;
+
+    loadWatchProgress();
 
     try {
       const resp = await fetch('/api/credits', {
@@ -796,23 +923,57 @@
       const data = await resp.json();
       if (data.success && data.episodes.length > 0) {
         episodes = data.episodes;
+        renderSeasonTabs();
         renderEpisodes();
 
         // Find current episode from href
         const currentMatch = href.match(/\/season\/(\d+)\/episode\/(\d+)/);
         if (currentMatch) {
-          const currentSeason = parseInt(currentMatch[1]);
+          const currentSeasonNum = parseInt(currentMatch[1]);
           const currentEp = parseInt(currentMatch[2]);
-          currentEpisodeIndex = episodes.findIndex(e => e.season === currentSeason && e.episode === currentEp);
+          currentEpisodeIndex = episodes.findIndex(e => e.season === currentSeasonNum && e.episode === currentEp);
           if (currentEpisodeIndex === -1) currentEpisodeIndex = 0;
+          currentSeason = currentSeasonNum;
         } else {
-          currentEpisodeIndex = 0;
+          // Resume from last watched episode
+          const lastWatched = episodes.find(ep => isWatched(ep.href));
+          if (lastWatched) {
+            currentEpisodeIndex = episodes.indexOf(lastWatched);
+            currentSeason = lastWatched.season;
+          } else {
+            currentEpisodeIndex = 0;
+            currentSeason = episodes[0].season;
+          }
         }
+        renderSeasonTabs();
+        renderEpisodes();
         updateEpisodeActiveState();
       }
     } catch (err) {
       console.warn('Failed to load episodes:', err);
     }
+  }
+
+  function renderSeasonTabs() {
+    const tabsEl = document.getElementById('watchSeasonTabs');
+    if (episodes.length === 0) { tabsEl.innerHTML = ''; return; }
+
+    const seasons = [...new Set(episodes.map(e => e.season))];
+    tabsEl.innerHTML = '';
+
+    seasons.forEach(s => {
+      const tab = document.createElement('button');
+      tab.className = 'watch-season-tab' + (s === currentSeason ? ' active' : '');
+      tab.textContent = `Season ${s}`;
+      tab.type = 'button';
+      tab.addEventListener('click', () => {
+        currentSeason = s;
+        renderSeasonTabs();
+        renderEpisodes();
+        updateEpisodeActiveState();
+      });
+      tabsEl.appendChild(tab);
+    });
   }
 
   function renderEpisodes() {
@@ -827,15 +988,19 @@
     episodesEl.style.display = 'block';
     listEl.innerHTML = '';
 
-    episodes.forEach((ep, idx) => {
+    const filtered = episodes.filter(e => e.season === currentSeason);
+
+    filtered.forEach((ep) => {
+      const idx = episodes.indexOf(ep);
       const item = document.createElement('div');
-      item.className = 'watch-episode-item';
+      item.className = 'watch-episode-item' + (isWatched(ep.href) ? ' watched' : '');
       item.dataset.index = idx;
       item.innerHTML = `
-        <div class="watch-episode-num">S${ep.season} E${ep.episode}</div>
+        <div class="watch-episode-num">E${ep.episode}</div>
         <div class="watch-episode-info">
           <div class="watch-episode-title">${esc(ep.title || `Episode ${ep.episode}`)}</div>
         </div>
+        <div class="watch-episode-watched"><i class="fa fa-check-circle"></i></div>
         <div class="watch-episode-play"><i class="fa fa-play"></i></div>
       `;
       item.addEventListener('click', () => playEpisode(idx));
@@ -847,7 +1012,8 @@
 
   function updateEpisodeActiveState() {
     const items = document.querySelectorAll('.watch-episode-item');
-    items.forEach((item, idx) => {
+    items.forEach((item) => {
+      const idx = parseInt(item.dataset.index);
       if (idx === currentEpisodeIndex) {
         item.classList.add('active');
       } else {
@@ -860,9 +1026,14 @@
     if (idx < 0 || idx >= episodes.length) return;
     const ep = episodes[idx];
     currentEpisodeIndex = idx;
+    currentSeason = ep.season;
+
+    // Mark as watched
+    markWatched(ep.href);
 
     // Load the episode (only refresh iframe, not whole page)
     loadPlayerForHref(ep.href);
+    renderEpisodes();
     updateEpisodeActiveState();
 
     // Start next episode timer (assume 45 min episodes)
@@ -1003,6 +1174,32 @@
     if (wrap.requestFullscreen) wrap.requestFullscreen();
     else if (wrap.webkitRequestFullscreen) wrap.webkitRequestFullscreen();
   });
+
+  // ── Share button ──
+  const shareBtn = document.getElementById('shareBtn');
+  shareBtn.addEventListener('click', function() {
+    const url = window.location.href;
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(url).then(() => showToast('Link copied to clipboard!'));
+    } else {
+      // Fallback
+      const input = document.createElement('input');
+      input.value = url;
+      document.body.appendChild(input);
+      input.select();
+      document.execCommand('copy');
+      document.body.removeChild(input);
+      showToast('Link copied to clipboard!');
+    }
+  });
+
+  function showToast(msg) {
+    const toast = document.getElementById('watchToast');
+    const text = document.getElementById('watchToastText');
+    text.textContent = msg;
+    toast.classList.add('active');
+    setTimeout(() => toast.classList.remove('active'), 2500);
+  }
 
   function esc(str) {
     if (!str) return '';
