@@ -92,6 +92,56 @@ export default async function handler(req, res) {
       }
     }
 
+    // movie_play does not require auth
+    if (body.action === 'movie_play') {
+      const href = (body.href || '').trim();
+      if (!href) {
+        res.status(400).json({ success: false, error: 'Missing movie href' });
+        return;
+      }
+
+      try {
+        const movieUrl = `https://streamimdb.ru${href}`;
+        const headers = {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        };
+
+        const response = await fetch(movieUrl, { headers, signal: AbortSignal.timeout(15000) });
+
+        if (!response.ok) {
+          res.status(200).json({ success: false, error: 'Could not load movie page' });
+          return;
+        }
+
+        const html = await response.text();
+
+        // Extract data-src from the player iframe (e.g. /embed/movie/27205)
+        const dataSrcMatch = html.match(/data-src="([^"]*embed[^"]*)"/);
+        if (!dataSrcMatch) {
+          res.status(200).json({ success: false, error: 'No embed URL found' });
+          return;
+        }
+
+        const embedPath = dataSrcMatch[1];
+        const embedUrl = `https://streamimdb.ru${embedPath}`;
+
+        // Extract __cbCwMeta for title/poster info
+        let meta = {};
+        const metaMatch = html.match(/window\.__cbCwMeta\s*=\s*(\{[^}]+\})/);
+        if (metaMatch) {
+          try { meta = JSON.parse(metaMatch[1]); } catch (e) {}
+        }
+
+        res.status(200).json({ success: true, embed_url: embedUrl, meta });
+        return;
+      } catch (err) {
+        console.error('movie_play error:', err);
+        res.status(500).json({ success: false, error: 'Failed to load movie' });
+        return;
+      }
+    }
+
     const authHeader = req.headers.authorization || req.headers.Authorization;
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       res.status(401).json({ success: false, error: 'No token' });
@@ -577,7 +627,7 @@ export default async function handler(req, res) {
     }
 
     // Unknown action
-    res.status(400).json({ success: false, error: 'Unknown action. Use: get, give, spend, create_user, reset_password, approve_thread, decline_thread, list_pending_threads, update_config_request_status, movie_search' });
+    res.status(400).json({ success: false, error: 'Unknown action. Use: get, give, spend, create_user, reset_password, approve_thread, decline_thread, list_pending_threads, update_config_request_status, movie_search, movie_play' });
   } catch (err) {
     console.error('credits handler error:', err);
     res.status(500).json({ success: false, error: 'Server error' });

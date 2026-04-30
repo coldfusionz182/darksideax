@@ -271,6 +271,83 @@
     .movie-card-anim {
       animation: cardFadeIn 0.3s ease-out forwards;
     }
+
+    /* Player modal */
+    .player-modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      background: rgba(0,0,0,0.92);
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    .player-modal.active {
+      display: flex;
+    }
+    .player-modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      max-width: 960px;
+      padding: 12px 0;
+      color: #fff;
+    }
+    .player-modal-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: #f1f1f1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      max-width: 80%;
+    }
+    .player-modal-close {
+      background: rgba(255,255,255,0.1);
+      border: none;
+      color: #fff;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.2s;
+    }
+    .player-modal-close:hover {
+      background: rgba(233,69,96,0.6);
+    }
+    .player-modal-body {
+      width: 100%;
+      max-width: 960px;
+      aspect-ratio: 16/9;
+      background: #000;
+      border-radius: 8px;
+      overflow: hidden;
+      position: relative;
+    }
+    .player-modal-body iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+    .player-modal-loading {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #888;
+      font-size: 14px;
+      gap: 8px;
+    }
+    .player-modal-loading i {
+      font-size: 20px;
+    }
   </style>
 </head>
 <body>
@@ -345,6 +422,18 @@
         <div class="movies-empty">
           <i class="fa fa-popcorn"></i>
           <p>Search for a movie or series to get started</p>
+        </div>
+      </div>
+
+      <!-- Player Modal -->
+      <div class="player-modal" id="playerModal">
+        <div class="player-modal-header">
+          <div class="player-modal-title" id="playerModalTitle"></div>
+          <button class="player-modal-close" id="playerModalClose" type="button"><i class="fa fa-times"></i></button>
+        </div>
+        <div class="player-modal-body">
+          <div class="player-modal-loading" id="playerModalLoading"><i class="fa fa-spinner fa-spin"></i> Loading player...</div>
+          <iframe id="playerModalIframe" allow="autoplay; fullscreen; picture-in-picture; encrypted-media" referrerpolicy="no-referrer" style="display:none;"></iframe>
         </div>
       </div>
 
@@ -479,10 +568,7 @@ function displayResults(data) {
     `;
 
     const playBtn = card.querySelector('.movie-card-play');
-    const openStream = () => {
-      const url = `https://streamimdb.ru${playBtn.dataset.href}`;
-      window.open(url, '_blank');
-    };
+    const openStream = () => playMovie(playBtn.dataset.href, playBtn.dataset.title);
 
     playBtn.addEventListener('click', (e) => { e.stopPropagation(); openStream(); });
     card.addEventListener('click', openStream);
@@ -499,6 +585,54 @@ function escapeHtml(str) {
   const div = document.createElement('div');
   div.textContent = str;
   return div.innerHTML;
+}
+
+// --- Player modal logic ---
+const playerModal = document.getElementById('playerModal');
+const playerModalTitle = document.getElementById('playerModalTitle');
+const playerModalClose = document.getElementById('playerModalClose');
+const playerModalIframe = document.getElementById('playerModalIframe');
+const playerModalLoading = document.getElementById('playerModalLoading');
+
+playerModalClose.addEventListener('click', closePlayerModal);
+playerModal.addEventListener('click', (e) => {
+  if (e.target === playerModal) closePlayerModal();
+});
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && playerModal.classList.contains('active')) closePlayerModal();
+});
+
+function closePlayerModal() {
+  playerModal.classList.remove('active');
+  playerModalIframe.src = '';
+  playerModalIframe.style.display = 'none';
+  playerModalLoading.style.display = 'flex';
+  document.body.style.overflow = '';
+}
+
+async function playMovie(href, title) {
+  playerModalTitle.textContent = title;
+  playerModalIframe.style.display = 'none';
+  playerModalLoading.style.display = 'flex';
+  playerModalLoading.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Loading player...';
+  playerModal.classList.add('active');
+  document.body.style.overflow = 'hidden';
+
+  try {
+    const resp = await fetch('/api/credits', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'movie_play', href }),
+    });
+    const data = await resp.json();
+    if (!data.success) throw new Error(data.error || 'Failed to load movie');
+
+    playerModalIframe.src = data.embed_url;
+    playerModalIframe.style.display = 'block';
+    playerModalLoading.style.display = 'none';
+  } catch (err) {
+    playerModalLoading.innerHTML = `<i class="fa fa-exclamation-triangle"></i> ${escapeHtml(err.message)}`;
+  }
 }
   </script>
 </body>
