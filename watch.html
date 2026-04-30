@@ -234,6 +234,43 @@
       font-size: 32px;
     }
 
+    /* ── Player controls bar ── */
+    .watch-controls {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 12px;
+    }
+    .watch-ctrl-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 16px;
+      border-radius: 6px;
+      border: 1px solid rgba(255,255,255,0.1);
+      background: rgba(255,255,255,0.05);
+      color: #ccc;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: inherit;
+    }
+    .watch-ctrl-btn:hover {
+      background: rgba(233,69,96,0.15);
+      border-color: rgba(233,69,96,0.4);
+      color: #fff;
+    }
+    .watch-ctrl-btn i {
+      font-size: 14px;
+    }
+    .watch-ctrl-btn.cast-active {
+      background: rgba(233,69,96,0.25);
+      border-color: #e94560;
+      color: #e94560;
+    }
+
     /* ── Responsive ── */
     @media (max-width: 700px) {
       .watch-hero-content {
@@ -344,10 +381,17 @@
           <span class="loading-text">Loading player...</span>
         </div>
         <iframe id="watchPlayerIframe"
-                sandbox="allow-scripts allow-same-origin allow-forms allow-presentation"
                 allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
                 referrerpolicy="no-referrer"
                 style="display:none;"></iframe>
+      </div>
+      <div class="watch-controls" id="watchControls" style="display:none;">
+        <button class="watch-ctrl-btn" id="castBtn" type="button">
+          <i class="fa fa-chromecast"></i> Cast to TV
+        </button>
+        <button class="watch-ctrl-btn" id="fullscreenBtn" type="button">
+          <i class="fa fa-expand"></i> Fullscreen
+        </button>
       </div>
     </div>
   </div>
@@ -424,12 +468,21 @@
     document.getElementById('watchHeroBg').style.backgroundImage = `url('${poster}')`;
   }
 
+  // ── Block popups from iframe ──
+  window.open = function() { return null; };
+  window.addEventListener('beforeunload', function(e) {
+    // only allow navigation back to movies
+    if (e.target === window) return;
+  });
+
   // ── Load embed URL via API ──
+  let embedUrl = '';
   loadPlayer();
 
   async function loadPlayer() {
     const loadingEl = document.getElementById('watchPlayerLoading');
     const iframeEl = document.getElementById('watchPlayerIframe');
+    const controlsEl = document.getElementById('watchControls');
 
     try {
       const resp = await fetch('/api/credits', {
@@ -440,14 +493,83 @@
       const data = await resp.json();
       if (!data.success) throw new Error(data.error || 'Failed to load movie');
 
-      iframeEl.src = data.embed_url;
+      embedUrl = data.embed_url;
+      iframeEl.src = embedUrl;
       iframeEl.style.display = 'block';
       loadingEl.style.display = 'none';
+      controlsEl.style.display = 'flex';
     } catch (err) {
       loadingEl.className = 'watch-player-error';
       loadingEl.innerHTML = `<i class="fa fa-exclamation-triangle"></i><span>${esc(err.message)}</span>`;
     }
   }
+
+  // ── Cast to TV (Presentation API) ──
+  const castBtn = document.getElementById('castBtn');
+  let castConnection = null;
+
+  castBtn.addEventListener('click', function() {
+    if (!embedUrl) return;
+
+    if (castConnection) {
+      castConnection.terminate();
+      castConnection = null;
+      castBtn.classList.remove('cast-active');
+      castBtn.innerHTML = '<i class="fa fa-chromecast"></i> Cast to TV';
+      return;
+    }
+
+    if (!navigator.presentation || !navigator.presentation.defaultRequest) {
+      // Fallback: try opening the embed URL for the browser's built-in cast menu
+      try {
+        const pr = new PresentationRequest([embedUrl]);
+        navigator.presentation.defaultRequest = pr;
+        pr.start().then(function(conn) {
+          castConnection = conn;
+          castBtn.classList.add('cast-active');
+          castBtn.innerHTML = '<i class="fa fa-chromecast"></i> Casting...';
+          conn.addEventListener('connect', function() {
+            castBtn.classList.add('cast-active');
+            castBtn.innerHTML = '<i class="fa fa-chromecast"></i> Casting...';
+          });
+          conn.addEventListener('close', function() {
+            castConnection = null;
+            castBtn.classList.remove('cast-active');
+            castBtn.innerHTML = '<i class="fa fa-chromecast"></i> Cast to TV';
+          });
+          conn.addEventListener('terminate', function() {
+            castConnection = null;
+            castBtn.classList.remove('cast-active');
+            castBtn.innerHTML = '<i class="fa fa-chromecast"></i> Cast to TV';
+          });
+        }).catch(function(err) {
+          console.warn('Cast failed:', err);
+        });
+      } catch(e) {
+        console.warn('Presentation API not available:', e);
+      }
+      return;
+    }
+
+    navigator.presentation.defaultRequest.start().then(function(conn) {
+      castConnection = conn;
+      castBtn.classList.add('cast-active');
+      castBtn.innerHTML = '<i class="fa fa-chromecast"></i> Casting...';
+      conn.addEventListener('terminate', function() {
+        castConnection = null;
+        castBtn.classList.remove('cast-active');
+        castBtn.innerHTML = '<i class="fa fa-chromecast"></i> Cast to TV';
+      });
+    }).catch(function() {});
+  });
+
+  // ── Fullscreen ──
+  const fullscreenBtn = document.getElementById('fullscreenBtn');
+  fullscreenBtn.addEventListener('click', function() {
+    const wrap = document.getElementById('watchPlayerWrap');
+    if (wrap.requestFullscreen) wrap.requestFullscreen();
+    else if (wrap.webkitRequestFullscreen) wrap.webkitRequestFullscreen();
+  });
 
   function esc(str) {
     if (!str) return '';
