@@ -9,9 +9,6 @@
   <link href="styles.css" rel="stylesheet">
   <link href="notifications.css" rel="stylesheet">
 
-  <!-- Google Cast SDK for Chromecast/TV device detection -->
-  <script src="https://www.gstatic.com/cv/js/sender/v1/cast_sender.js?loadCastFramework=1"></script>
-
   <style>
     body {
       background: #05060a;
@@ -187,6 +184,19 @@
       margin: 0 auto;
       padding: 0 0 40px;
     }
+    .watch-player-content {
+      display: flex;
+      gap: 20px;
+      align-items: flex-start;
+    }
+    .watch-player-left {
+      flex: 1;
+      min-width: 0;
+    }
+    .watch-player-right {
+      width: 320px;
+      flex-shrink: 0;
+    }
     .watch-player-wrap {
       position: relative;
       width: 100%;
@@ -268,40 +278,35 @@
     .watch-ctrl-btn i {
       font-size: 14px;
     }
-    .watch-ctrl-btn.cast-active {
-      background: rgba(233,69,96,0.25);
-      border-color: #e94560;
-      color: #e94560;
-    }
-
     /* ── Episode list ── */
     .watch-episodes {
-      margin-top: 20px;
       background: rgba(255,255,255,0.02);
       border: 1px solid rgba(255,255,255,0.05);
       border-radius: 8px;
-      padding: 16px;
+      padding: 12px;
     }
     .watch-episodes-header {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-bottom: 12px;
+      margin-bottom: 10px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
     }
     .watch-episodes-title {
       color: #fff;
-      font-size: 14px;
+      font-size: 13px;
       font-weight: 600;
     }
     .watch-episodes-list {
-      max-height: 300px;
+      max-height: 500px;
       overflow-y: auto;
     }
     .watch-episode-item {
       display: flex;
       align-items: center;
-      gap: 10px;
-      padding: 10px 12px;
+      gap: 8px;
+      padding: 8px 10px;
       border-radius: 6px;
       cursor: pointer;
       transition: background 0.2s;
@@ -317,11 +322,11 @@
     .watch-episode-num {
       background: rgba(233,69,96,0.2);
       color: #e94560;
-      padding: 4px 8px;
+      padding: 3px 6px;
       border-radius: 4px;
-      font-size: 11px;
+      font-size: 10px;
       font-weight: 700;
-      min-width: 60px;
+      min-width: 50px;
       text-align: center;
     }
     .watch-episode-info {
@@ -330,20 +335,15 @@
     }
     .watch-episode-title {
       color: #ddd;
-      font-size: 13px;
+      font-size: 12px;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
     }
-    .watch-episode-meta {
-      color: #666;
-      font-size: 11px;
-      margin-top: 2px;
-    }
     .watch-episode-play {
       opacity: 0;
       color: #e94560;
-      font-size: 14px;
+      font-size: 12px;
       transition: opacity 0.2s;
     }
     .watch-episode-item:hover .watch-episode-play {
@@ -414,61 +414,18 @@
       background: rgba(255,255,255,0.15);
     }
 
-    /* ── Cast fallback modal ── */
-    .cast-fallback-modal {
-      display: none;
-      position: fixed;
-      inset: 0;
-      z-index: 10000;
-      background: rgba(0,0,0,0.8);
-      align-items: center;
-      justify-content: center;
-    }
-    .cast-fallback-modal.active {
-      display: flex;
-    }
-    .cast-fallback-content {
-      background: #111;
-      border: 1px solid #333;
-      border-radius: 12px;
-      padding: 24px;
-      max-width: 400px;
-      text-align: center;
-    }
-    .cast-fallback-content h3 {
-      color: #fff;
-      margin: 0 0 12px;
-      font-size: 18px;
-    }
-    .cast-fallback-content p {
-      color: #888;
-      font-size: 13px;
-      line-height: 1.5;
-      margin: 0 0 16px;
-    }
-    .cast-fallback-content ul {
-      color: #aaa;
-      font-size: 12px;
-      text-align: left;
-      margin: 0 0 20px 20px;
-      line-height: 1.6;
-    }
-    .cast-fallback-close {
-      background: #e94560;
-      border: none;
-      color: #fff;
-      padding: 10px 24px;
-      border-radius: 6px;
-      font-size: 13px;
-      font-weight: 600;
-      cursor: pointer;
-      font-family: inherit;
-    }
-    .cast-fallback-close:hover {
-      background: #c93654;
-    }
-
     /* ── Responsive ── */
+    @media (max-width: 900px) {
+      .watch-player-content {
+        flex-direction: column;
+      }
+      .watch-player-right {
+        width: 100%;
+      }
+      .watch-episodes-list {
+        max-height: 300px;
+      }
+    }
     @media (max-width: 700px) {
       .watch-hero-content {
         flex-direction: column;
@@ -572,38 +529,36 @@
   <!-- Player -->
   <div class="watch-player-section">
     <div class="wrapper">
-      <div class="watch-player-wrap watch-anim-delay" id="watchPlayerWrap">
-        <div class="watch-player-loading" id="watchPlayerLoading">
-          <i class="fa fa-spinner fa-spin"></i>
-          <span class="loading-text">Loading player...</span>
-        </div>
-        <iframe id="watchPlayerIframe"
+      <div class="watch-player-content">
+        <div class="watch-player-left">
+          <div class="watch-player-wrap watch-anim-delay" id="watchPlayerWrap">
+            <div class="watch-player-loading" id="watchPlayerLoading">
+              <i class="fa fa-spinner fa-spin"></i>
+              <span class="loading-text">Loading player...</span>
+            </div>
+            <iframe id="watchPlayerIframe"
                 allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
                 referrerpolicy="no-referrer"
+                sandbox="allow-scripts allow-same-origin allow-forms allow-presentation"
                 style="display:none;"></iframe>
-      </div>
-      <div class="watch-controls" id="watchControls" style="display:none;">
-        <button class="watch-ctrl-btn" id="castBtn" type="button">
-          <i class="fa fa-chromecast"></i> Cast to TV
-        </button>
-        <button class="watch-ctrl-btn" id="fullscreenBtn" type="button">
-          <i class="fa fa-expand"></i> Fullscreen
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Episodes section (for TV series) -->
-  <div class="watch-player-section">
-    <div class="wrapper">
-      <div class="watch-episodes" id="watchEpisodes" style="display:none;">
-        <div class="watch-episodes-header">
-          <span class="watch-episodes-title">Episodes</span>
-          <button class="watch-ctrl-btn" id="nextEpisodeBtn" style="padding:6px 12px; font-size:11px;" type="button">
-            <i class="fa fa-step-forward"></i> Next Episode
-          </button>
+          </div>
+          <div class="watch-controls" id="watchControls" style="display:none;">
+            <button class="watch-ctrl-btn" id="fullscreenBtn" type="button">
+              <i class="fa fa-expand"></i> Fullscreen
+            </button>
+          </div>
         </div>
-        <div class="watch-episodes-list" id="watchEpisodesList"></div>
+        <div class="watch-player-right">
+          <div class="watch-episodes" id="watchEpisodes" style="display:none;">
+            <div class="watch-episodes-header">
+              <span class="watch-episodes-title">Episodes</span>
+              <button class="watch-ctrl-btn" id="nextEpisodeBtn" style="padding:6px 12px; font-size:11px;" type="button">
+                <i class="fa fa-step-forward"></i> Next
+              </button>
+            </div>
+            <div class="watch-episodes-list" id="watchEpisodesList"></div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -617,20 +572,6 @@
     <div class="watch-next-notify-actions">
       <button class="watch-next-notify-btn watch-next-notify-play" id="watchNextNotifyPlay" type="button">Play Now</button>
       <button class="watch-next-notify-btn watch-next-notify-dismiss" id="watchNextNotifyDismiss" type="button">Cancel</button>
-    </div>
-  </div>
-
-  <!-- Cast fallback modal -->
-  <div class="cast-fallback-modal" id="castFallbackModal">
-    <div class="cast-fallback-content">
-      <h3><i class="fa fa-chromecast"></i> Cast to TV</h3>
-      <p>Use your browser's built-in cast feature to send this video to your TV:</p>
-      <ul>
-        <li><strong>Chrome:</strong> Click the three dots menu → Cast</li>
-        <li><strong>Edge:</strong> Click the three dots menu → Cast to device</li>
-        <li>Make sure your TV is on the same Wi-Fi network</li>
-      </ul>
-      <button class="cast-fallback-close" id="castFallbackClose" type="button">Got it</button>
     </div>
   </div>
 
@@ -707,7 +648,31 @@
   }
 
   // ── Block popups from iframe ──
-  window.open = function() { return null; };
+  const originalOpen = window.open;
+  window.open = function(url, target, features) {
+    // Block all popup attempts from the iframe
+    console.warn('Blocked popup:', url);
+    return null;
+  };
+
+  // Prevent click hijacking
+  document.addEventListener('click', function(e) {
+    // Check if click originated from iframe
+    if (e.target.tagName === 'IFRAME' || e.target.closest('iframe')) {
+      e.stopPropagation();
+      e.preventDefault();
+    }
+  }, true);
+
+  // Block window.location changes from iframe
+  let currentLocation = window.location.href;
+  setInterval(function() {
+    if (window.location.href !== currentLocation && window.location.href !== currentLocation) {
+      // If location changed unexpectedly, revert it
+      window.location.href = currentLocation;
+    }
+  }, 1000);
+
   window.addEventListener('beforeunload', function(e) {
     // only allow navigation back to movies
     if (e.target === window) return;
@@ -935,157 +900,6 @@
       loadingEl.innerHTML = `<i class="fa fa-exclamation-triangle"></i><span>${esc(err.message)}</span>`;
     }
   }
-
-  // ── Cast to TV (Multi-API: Cast SDK → Presentation API → Fallback) ──
-  const castBtn = document.getElementById('castBtn');
-  const castFallbackModal = document.getElementById('castFallbackModal');
-  const castFallbackClose = document.getElementById('castFallbackClose');
-  let castConnection = null;
-  let castSession = null;
-  let castAvailable = false;
-
-  // Google Cast SDK callback
-  window.__onGCastApiAvailable = function(isAvailable) {
-    if (isAvailable) {
-      initializeCastApi();
-    }
-  };
-
-  function initializeCastApi() {
-    try {
-      const castContext = cast.framework.CastContext.getInstance();
-      castContext.setOptions({
-        receiverApplicationId: chrome.cast.media.DEFAULT_MEDIA_RECEIVER_APP_ID,
-        autoJoinPolicy: chrome.cast.AutoJoinPolicy.ORIGIN_SCOPED
-      });
-      castAvailable = true;
-
-      castContext.addEventListener(cast.framework.CastContextEventType.SESSION_STATE_CHANGED, function() {
-        const sessionState = castContext.getSessionState();
-        const session = castContext.getCurrentSession();
-        castSession = session;
-
-        if (sessionState === cast.framework.SessionState.SESSION_STARTED ||
-            sessionState === cast.framework.SessionState.SESSION_RESUMED) {
-          castBtn.classList.add('cast-active');
-          castBtn.innerHTML = '<i class="fa fa-chromecast"></i> Casting...';
-          loadMediaOnCast(session);
-        } else {
-          castBtn.classList.remove('cast-active');
-          castBtn.innerHTML = '<i class="fa fa-chromecast"></i> Cast to TV';
-          castSession = null;
-        }
-      });
-    } catch(e) {
-      console.warn('Cast SDK init failed:', e);
-    }
-  }
-
-  function loadMediaOnCast(session) {
-    if (!session || !embedUrl) return;
-
-    const mediaInfo = new chrome.cast.media.MediaInfo(embedUrl, 'video/mp4');
-    mediaInfo.metadata = new chrome.cast.media.GenericMediaMetadata();
-    mediaInfo.metadata.title = title || 'Movie';
-    if (poster) mediaInfo.metadata.images = [new chrome.cast.Image(poster)];
-
-    const request = new chrome.cast.media.LoadRequest(mediaInfo);
-    request.autoplay = true;
-
-    session.loadMedia(request).then(function() {
-      // Media loaded successfully
-    }).catch(function(error) {
-      console.warn('Cast loadMedia failed:', error);
-      // Default receiver can't play HTML, try Presentation API
-      session.endSession(true);
-      tryPresentationApi();
-    });
-  }
-
-  function tryCastSdk() {
-    if (!castAvailable) return false;
-
-    const castContext = cast.framework.CastContext.getInstance();
-    const session = castContext.getCurrentSession();
-
-    if (session) {
-      session.endSession(true);
-      return true;
-    }
-
-    castContext.requestSession().catch(function() {
-      // Cast SDK failed, try Presentation API
-      tryPresentationApi();
-    });
-    return true;
-  }
-
-  function tryPresentationApi() {
-    if (!window.PresentationRequest) {
-      showCastFallback();
-      return;
-    }
-
-    const pr = new PresentationRequest([embedUrl]);
-    navigator.presentation.defaultRequest = pr;
-
-    pr.start().then(function(conn) {
-      castConnection = conn;
-      castBtn.classList.add('cast-active');
-      castBtn.innerHTML = '<i class="fa fa-chromecast"></i> Casting...';
-
-      conn.addEventListener('connect', function() {
-        castBtn.classList.add('cast-active');
-        castBtn.innerHTML = '<i class="fa fa-chromecast"></i> Casting...';
-      });
-
-      conn.addEventListener('close', function() {
-        castConnection = null;
-        castBtn.classList.remove('cast-active');
-        castBtn.innerHTML = '<i class="fa fa-chromecast"></i> Cast to TV';
-      });
-
-      conn.addEventListener('terminate', function() {
-        castConnection = null;
-        castBtn.classList.remove('cast-active');
-        castBtn.innerHTML = '<i class="fa fa-chromecast"></i> Cast to TV';
-      });
-    }).catch(function() {
-      showCastFallback();
-    });
-  }
-
-  function showCastFallback() {
-    castFallbackModal.classList.add('active');
-  }
-
-  function hideCastFallback() {
-    castFallbackModal.classList.remove('active');
-  }
-
-  castFallbackClose.addEventListener('click', hideCastFallback);
-  castFallbackModal.addEventListener('click', function(e) {
-    if (e.target === castFallbackModal) hideCastFallback();
-  });
-
-  castBtn.addEventListener('click', function() {
-    if (!embedUrl) return;
-
-    // If already casting via Presentation API, stop
-    if (castConnection) {
-      castConnection.terminate();
-      castConnection = null;
-      castBtn.classList.remove('cast-active');
-      castBtn.innerHTML = '<i class="fa fa-chromecast"></i> Cast to TV';
-      return;
-    }
-
-    // Try Cast SDK first (detects Chromecast/TV like YouTube)
-    if (tryCastSdk()) return;
-
-    // Fall back to Presentation API
-    tryPresentationApi();
-  });
 
   // ── Fullscreen ──
   const fullscreenBtn = document.getElementById('fullscreenBtn');
