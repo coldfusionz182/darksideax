@@ -93,39 +93,11 @@
       position: relative;
       z-index: 2;
       display: flex;
-      gap: 28px;
       align-items: flex-end;
       padding: 0 0 32px;
       width: 100%;
       max-width: 1180px;
       margin: 0 auto;
-    }
-
-    /* Poster */
-    .watch-poster {
-      flex-shrink: 0;
-      width: 180px;
-      border-radius: 10px;
-      overflow: hidden;
-      box-shadow: 0 8px 32px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.05);
-      background: #111;
-      aspect-ratio: 2/3;
-    }
-    .watch-poster img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      display: block;
-    }
-    .watch-poster-placeholder {
-      width: 100%;
-      height: 100%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: #333;
-      font-size: 48px;
-      background: #0a0a1a;
     }
 
     /* Info */
@@ -190,7 +162,7 @@
 
     /* ── Player section ── */
     .watch-player-section {
-      max-width: 1400px;
+      max-width: 1180px;
       margin: 0 auto;
       padding: 0 0 40px;
     }
@@ -199,10 +171,6 @@
       gap: 20px;
       align-items: flex-start;
     }
-    .watch-player-poster-col {
-      width: 200px;
-      flex-shrink: 0;
-    }
     .watch-player-center {
       flex: 1;
       min-width: 0;
@@ -210,19 +178,6 @@
     .watch-player-right {
       width: 320px;
       flex-shrink: 0;
-    }
-    .watch-poster-sidebar {
-      border-radius: 8px;
-      overflow: hidden;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.05);
-      background: #111;
-      aspect-ratio: 2/3;
-    }
-    .watch-poster-sidebar img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      display: block;
     }
     .watch-player-wrap {
       position: relative;
@@ -377,6 +332,70 @@
       opacity: 1;
     }
 
+    /* ── Movie/Series Info Section ── */
+    .watch-info-section {
+      max-width: 1180px;
+      margin: 0 auto 40px;
+    }
+    .watch-info-content {
+      display: flex;
+      gap: 24px;
+      align-items: flex-start;
+      background: rgba(255,255,255,0.02);
+      border: 1px solid rgba(255,255,255,0.05);
+      border-radius: 12px;
+      padding: 24px;
+    }
+    .watch-info-poster {
+      flex-shrink: 0;
+      width: 180px;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+      background: #111;
+      aspect-ratio: 2/3;
+    }
+    .watch-info-poster img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    .watch-info-details {
+      flex: 1;
+      min-width: 0;
+    }
+    .watch-info-title {
+      font-size: 24px;
+      font-weight: 700;
+      color: #fff;
+      margin: 0 0 12px;
+      line-height: 1.3;
+    }
+    .watch-info-meta {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      color: #888;
+      font-size: 13px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+    .watch-info-meta span {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .watch-info-meta i {
+      font-size: 12px;
+      color: #666;
+    }
+    .watch-info-description {
+      color: #aaa;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
     /* ── Next episode notification ── */
     .watch-next-notify {
       display: none;
@@ -442,25 +461,31 @@
     }
 
     /* ── Responsive ── */
-    @media (max-width: 1100px) {
-      .watch-player-poster-col {
-        width: 150px;
-      }
-    }
     @media (max-width: 900px) {
       .watch-player-content {
         flex-direction: column;
-      }
-      .watch-player-poster-col {
-        width: 100%;
-        max-width: 200px;
-        margin: 0 auto;
       }
       .watch-player-right {
         width: 100%;
       }
       .watch-episodes-list {
         max-height: 300px;
+      }
+    }
+    @media (max-width: 700px) {
+      .watch-info-content {
+        flex-direction: column;
+      }
+      .watch-info-poster {
+        width: 100%;
+        max-width: 200px;
+        margin: 0 auto;
+      }
+      .watch-info-details {
+        text-align: center;
+      }
+      .watch-info-meta {
+        justify-content: center;
       }
     }
     @media (max-width: 700px) {
@@ -552,9 +577,6 @@
     <div class="watch-hero-bg" id="watchHeroBg"></div>
     <div class="watch-hero-gradient"></div>
     <div class="watch-hero-content watch-anim">
-      <div class="watch-poster" id="watchPoster">
-        <div class="watch-poster-placeholder"><i class="fa fa-film"></i></div>
-      </div>
       <div class="watch-info">
         <div class="watch-badge watch-badge-other" id="watchBadge" style="display:none;"></div>
         <h1 class="watch-title" id="watchTitle">Loading...</h1>
@@ -567,11 +589,6 @@
   <div class="watch-player-section">
     <div class="wrapper">
       <div class="watch-player-content">
-        <div class="watch-player-poster-col">
-          <div class="watch-poster-sidebar" id="watchPosterSidebar">
-            <div class="watch-poster-placeholder"><i class="fa fa-film"></i></div>
-          </div>
-        </div>
         <div class="watch-player-center">
           <div class="watch-player-wrap watch-anim-delay" id="watchPlayerWrap">
             <div class="watch-player-loading" id="watchPlayerLoading">
@@ -600,6 +617,23 @@
             </div>
             <div class="watch-episodes-list" id="watchEpisodesList"></div>
           </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Movie/Series Info Section -->
+  <div class="watch-info-section">
+    <div class="wrapper">
+      <div class="watch-info-content">
+        <div class="watch-info-poster" id="watchInfoPoster">
+          <div class="watch-poster-placeholder"><i class="fa fa-film"></i></div>
+        </div>
+        <div class="watch-info-details">
+          <div class="watch-badge watch-badge-other" id="watchInfoBadge" style="display:none;"></div>
+          <h2 class="watch-info-title" id="watchInfoTitle"></h2>
+          <div class="watch-info-meta" id="watchInfoMeta"></div>
+          <div class="watch-info-description" id="watchInfoDescription"></div>
         </div>
       </div>
     </div>
@@ -679,12 +713,34 @@
   metaEl.innerHTML = metaParts.join('<span class="meta-dot">&bull;</span>');
 
   // Poster
-  const posterEl = document.getElementById('watchPoster');
-  const posterSidebarEl = document.getElementById('watchPosterSidebar');
+  const infoPosterEl = document.getElementById('watchInfoPoster');
   if (poster) {
-    posterEl.innerHTML = `<img src="${esc(poster)}" alt="${esc(title)}" onerror="this.parentElement.innerHTML='<div class=\\'watch-poster-placeholder\\'><i class=\\'fa fa-film\\'></i></div>';">`;
-    posterSidebarEl.innerHTML = `<img src="${esc(poster)}" alt="${esc(title)}" onerror="this.parentElement.innerHTML='<div class=\\'watch-poster-placeholder\\'><i class=\\'fa fa-film\\'></i></div>';">`;
+    infoPosterEl.innerHTML = `<img src="${esc(poster)}" alt="${esc(title)}" onerror="this.parentElement.innerHTML='<div class=\\'watch-poster-placeholder\\'><i class=\\'fa fa-film\\'></i></div>';">`;
   }
+
+  // Populate info section
+  const infoTitleEl = document.getElementById('watchInfoTitle');
+  const infoMetaEl = document.getElementById('watchInfoMeta');
+  const infoBadgeEl = document.getElementById('watchInfoBadge');
+  const infoDescEl = document.getElementById('watchInfoDescription');
+
+  infoTitleEl.textContent = title || '';
+  if (type) {
+    infoBadgeEl.textContent = type;
+    infoBadgeEl.style.display = '';
+    infoBadgeEl.className = 'watch-badge';
+    const t = type.toLowerCase();
+    if (t === 'movie') infoBadgeEl.classList.add('watch-badge-movie');
+    else if (t === 'series') infoBadgeEl.classList.add('watch-badge-series');
+    else infoBadgeEl.classList.add('watch-badge-other');
+  }
+
+  const infoMetaParts = [];
+  if (year) infoMetaParts.push(`<span><i class="fa fa-calendar"></i> ${esc(year)}</span>`);
+  if (type) infoMetaParts.push(`<span><i class="fa fa-${type.toLowerCase() === 'series' ? 'tv' : 'film'}"></i> ${esc(type)}</span>`);
+  infoMetaEl.innerHTML = infoMetaParts.join('<span class="meta-dot">&bull;</span>');
+
+  infoDescEl.textContent = '';
 
   // Hero background
   if (poster) {
