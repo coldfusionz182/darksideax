@@ -15,6 +15,83 @@ export default async function handler(req, res) {
   }
 
   try {
+    const body = req.body || {};
+
+    // movie_search does not require auth
+    if (body.action === 'movie_search') {
+      const query = (body.query || '').trim();
+      if (!query) {
+        res.status(400).json({ success: false, error: 'Missing search query' });
+        return;
+      }
+
+      try {
+        const queryParam = query.replace(/\s+/g, '+');
+        const searchUrl = `https://streamimdb.ru/search?q=${queryParam}`;
+        const headers = {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        };
+
+        const response = await fetch(searchUrl, { headers, signal: AbortSignal.timeout(15000) });
+
+        if (!response.ok) {
+          res.status(200).json({ success: true, count_text: '', results: [] });
+          return;
+        }
+
+        const html = await response.text();
+
+        if (html.includes('<h3>No Results Found</h3>')) {
+          res.status(200).json({ success: true, count_text: 'No Results Found', results: [] });
+          return;
+        }
+
+        let countText = '';
+        const countMatch = html.match(/<p class="cb-search-results-title">\s*([\s\S]*?)\s*<\/p>/);
+        if (countMatch) {
+          const raw = countMatch[1];
+          const mainText = raw.replace(/<[^>]+>/g, '').trim();
+          const spanMatch = raw.match(/<span[^>]*>([\s\S]*?)<\/span>/);
+          if (spanMatch) {
+            const spanText = spanMatch[1].replace(/<[^>]+>/g, '').trim();
+            countText = `${mainText} ${spanText}`;
+          } else {
+            countText = mainText;
+          }
+        }
+
+        const cardChunks = html.split('<div class="cb-card">');
+        const results = [];
+
+        for (let i = 1; i < cardChunks.length; i++) {
+          const chunk = cardChunks[i];
+          const hrefMatch = chunk.match(/<a href="([^"]+)"/);
+          const imgMatch = chunk.match(/<img\s+src="([^"]+)"/);
+          const badgeMatch = chunk.match(/<span class="cb-card-badge\s+\w+">(\w+)<\/span>/);
+          const titleMatch = chunk.match(/<h3 class="cb-card-title"[^>]*title="([^"]+)"/);
+          const yearMatch = chunk.match(/<p class="cb-card-meta">([^<]*)<\/p>/);
+
+          if (hrefMatch && titleMatch) {
+            results.push({
+              href: hrefMatch[1],
+              image_url: imgMatch ? imgMatch[1] : '',
+              title: titleMatch[1],
+              type: badgeMatch ? badgeMatch[1] : '',
+              year: yearMatch ? yearMatch[1].trim() : '',
+            });
+          }
+        }
+
+        res.status(200).json({ success: true, count_text: countText, results });
+        return;
+      } catch (err) {
+        console.error('movie_search error:', err);
+        res.status(500).json({ success: false, error: 'Search failed', count_text: '', results: [] });
+        return;
+      }
+    }
+
     const authHeader = req.headers.authorization || req.headers.Authorization;
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       res.status(401).json({ success: false, error: 'No token' });
@@ -38,7 +115,6 @@ export default async function handler(req, res) {
     }
 
     const userId = userData.user.id;
-    const body = req.body || {};
     const { action } = body;
 
     // --- GET: fetch own credits ---
@@ -302,7 +378,7 @@ export default async function handler(req, res) {
       return;
     }
 
-    // --- RESET_PASSWORD: owner resets a user's password ---
+    
     if (action === 'reset_password') {
       const { data: requesterRow, error: requesterErr } = await supabaseAdmin
         .from('users')
@@ -498,81 +574,6 @@ export default async function handler(req, res) {
 
       res.status(200).json({ success: true, threadId, status });
       return;
-    }
-
-    // --- MOVIE_SEARCH: search streamimdb.ru and return results ---
-    if (action === 'movie_search') {
-      const query = (body.query || '').trim();
-      if (!query) {
-        res.status(400).json({ success: false, error: 'Missing search query' });
-        return;
-      }
-
-      try {
-        const queryParam = query.replace(/\s+/g, '+');
-        const searchUrl = `https://streamimdb.ru/search?q=${queryParam}`;
-        const headers = {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-        };
-
-        const response = await fetch(searchUrl, { headers, signal: AbortSignal.timeout(15000) });
-
-        if (!response.ok) {
-          res.status(200).json({ success: true, count_text: '', results: [] });
-          return;
-        }
-
-        const html = await response.text();
-
-        if (html.includes('<h3>No Results Found</h3>')) {
-          res.status(200).json({ success: true, count_text: 'No Results Found', results: [] });
-          return;
-        }
-
-        let countText = '';
-        const countMatch = html.match(/<p class="cb-search-results-title">\s*([\s\S]*?)\s*<\/p>/);
-        if (countMatch) {
-          const raw = countMatch[1];
-          const mainText = raw.replace(/<[^>]+>/g, '').trim();
-          const spanMatch = raw.match(/<span[^>]*>([\s\S]*?)<\/span>/);
-          if (spanMatch) {
-            const spanText = spanMatch[1].replace(/<[^>]+>/g, '').trim();
-            countText = `${mainText} ${spanText}`;
-          } else {
-            countText = mainText;
-          }
-        }
-
-        const cardChunks = html.split('<div class="cb-card">');
-        const results = [];
-
-        for (let i = 1; i < cardChunks.length; i++) {
-          const chunk = cardChunks[i];
-          const hrefMatch = chunk.match(/<a href="([^"]+)"/);
-          const imgMatch = chunk.match(/<img\s+src="([^"]+)"/);
-          const badgeMatch = chunk.match(/<span class="cb-card-badge\s+\w+">(\w+)<\/span>/);
-          const titleMatch = chunk.match(/<h3 class="cb-card-title"[^>]*title="([^"]+)"/);
-          const yearMatch = chunk.match(/<p class="cb-card-meta">([^<]*)<\/p>/);
-
-          if (hrefMatch && titleMatch) {
-            results.push({
-              href: hrefMatch[1],
-              image_url: imgMatch ? imgMatch[1] : '',
-              title: titleMatch[1],
-              type: badgeMatch ? badgeMatch[1] : '',
-              year: yearMatch ? yearMatch[1].trim() : '',
-            });
-          }
-        }
-
-        res.status(200).json({ success: true, count_text: countText, results });
-        return;
-      } catch (err) {
-        console.error('movie_search error:', err);
-        res.status(500).json({ success: false, error: 'Search failed', count_text: '', results: [] });
-        return;
-      }
     }
 
     // Unknown action

@@ -7,12 +7,14 @@
 
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
   <link href="styles.css" rel="stylesheet">
+  <link href="notifications.css" rel="stylesheet">
 
   <style>
     body {
       background: radial-gradient(circle at top, #151826 0, #05060a 55%);
     }
 
+    /* user pill + avatar (top right) – same as other pages */
     .user-pill {
       display: inline-flex;
       align-items: center;
@@ -273,23 +275,53 @@
 </head>
 <body>
 
-  <!-- TOP NAV -->
-  <header class="index-top">
-    <div class="wrapper">
-      <div class="top-left">
-        <a href="index.html" class="logo-link">
-          <span class="logo-text">Dark<span class="logo-accent">side</span></span>
-        </a>
+<div id="page">
+  <!-- HEADER -->
+  <header id="header">
+    <div class="wrapper header-inner">
+      <div class="header-left">
+        <div class="header-logo">
+          <span class="logo-text">Darkside</span>
+          <span class="logo-slogan">Beyond the Limits</span>
+        </div>
       </div>
-      <div class="top-right">
-        <div id="user-pill-container"></div>
+      <div class="header-right">
+        <div class="auth-area">
+          <div class="notif-wrapper">
+            <button class="notif-bell-btn" id="notif-bell-btn" type="button" aria-label="Notifications">
+              <i class="fa fa-bell" id="n-bell-icon"></i>
+              <span class="notif-count" id="notif-count">0</span>
+            </button>
+            <div class="notif-dropdown" id="notif-dropdown">
+              <div class="notif-dropdown-header">
+                <span><i class="fa fa-bell"></i> Notifications</span>
+                <span class="badge" id="notif-badge-count">0</span>
+              </div>
+              <button type="button" class="notif-clear-btn" id="notif-clear-btn">
+                <i class="fa fa-check-double"></i> Mark all as read
+              </button>
+              <div class="notif-list" id="notif-list"></div>
+            </div>
+          </div>
+          <div class="auth-links"></div>
+        </div>
       </div>
     </div>
   </header>
 
+  <!-- NAVBAR -->
+  <nav id="navbar">
+    <div class="wrapper navbar-inner">
+      <ul class="nav-main">
+        <li><a href="index.html"><i class="fa fa-home"></i> Home</a></li>
+        <li><a href="movies.html"><i class="fa fa-film"></i> Movies</a></li>
+      </ul>
+    </div>
+  </nav>
+
   <!-- CONTENT -->
   <main id="container">
-    <div class="wrapper">
+    <div class="wrapper content-column">
 
       <div class="movies-header">
         <div class="movies-header-icon"><i class="fa fa-film"></i></div>
@@ -330,10 +362,12 @@
 
     </div>
   </main>
+</div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="supabase-config.js"></script>
   <script src="auth.js"></script>
+  <script src="notifications.js"></script>
   <script>
 // movies.js — inlined
 
