@@ -556,18 +556,21 @@ async function loadPage(page) {
         </div>
       `;
 
-      const openStream = () => {
-        const p = new URLSearchParams();
-        p.set('href', item.href);
-        p.set('title', item.title);
-        if (item.year) p.set('year', item.year);
-        if (item.type) p.set('type', item.type);
-        if (item.image_url) p.set('poster', item.image_url);
-        if (item.embed) p.set('embed', item.embed);
-        if (item.bg_url) p.set('bg_url', item.bg_url);
-        if (item.description) p.set('description', item.description);
+      const openStream = async () => {
         saveContinueWatching(item);
-        window.location.href = `watch.html?${p.toString()}`;
+        try {
+          const resp = await fetch('/api/credits', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'movie_play', href: item.href }),
+          });
+          const data = await resp.json();
+          if (data.success && data.embed_url) {
+            window.location.href = data.embed_url;
+            return;
+          }
+        } catch (e) {}
+        window.location.href = `https://streamimdb.ru${item.href}`;
       };
 
       card.addEventListener('click', openStream);
