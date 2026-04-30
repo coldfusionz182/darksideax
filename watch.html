@@ -155,6 +155,16 @@
       margin: 0 0 8px;
       line-height: 1.2;
       letter-spacing: -0.01em;
+      background: linear-gradient(90deg, #e94560, #ff6b6b, #e94560, #ff6b6b);
+      background-size: 300% 100%;
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      animation: titleColorShift 5s ease-in-out infinite;
+    }
+    @keyframes titleColorShift {
+      0%, 100% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
     }
     .watch-meta {
       display: flex;
@@ -180,7 +190,7 @@
 
     /* ── Player section ── */
     .watch-player-section {
-      max-width: 1180px;
+      max-width: 1400px;
       margin: 0 auto;
       padding: 0 0 40px;
     }
@@ -189,13 +199,30 @@
       gap: 20px;
       align-items: flex-start;
     }
-    .watch-player-left {
+    .watch-player-poster-col {
+      width: 200px;
+      flex-shrink: 0;
+    }
+    .watch-player-center {
       flex: 1;
       min-width: 0;
     }
     .watch-player-right {
       width: 320px;
       flex-shrink: 0;
+    }
+    .watch-poster-sidebar {
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.05);
+      background: #111;
+      aspect-ratio: 2/3;
+    }
+    .watch-poster-sidebar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
     }
     .watch-player-wrap {
       position: relative;
@@ -415,9 +442,19 @@
     }
 
     /* ── Responsive ── */
+    @media (max-width: 1100px) {
+      .watch-player-poster-col {
+        width: 150px;
+      }
+    }
     @media (max-width: 900px) {
       .watch-player-content {
         flex-direction: column;
+      }
+      .watch-player-poster-col {
+        width: 100%;
+        max-width: 200px;
+        margin: 0 auto;
       }
       .watch-player-right {
         width: 100%;
@@ -530,17 +567,22 @@
   <div class="watch-player-section">
     <div class="wrapper">
       <div class="watch-player-content">
-        <div class="watch-player-left">
+        <div class="watch-player-poster-col">
+          <div class="watch-poster-sidebar" id="watchPosterSidebar">
+            <div class="watch-poster-placeholder"><i class="fa fa-film"></i></div>
+          </div>
+        </div>
+        <div class="watch-player-center">
           <div class="watch-player-wrap watch-anim-delay" id="watchPlayerWrap">
             <div class="watch-player-loading" id="watchPlayerLoading">
               <i class="fa fa-spinner fa-spin"></i>
               <span class="loading-text">Loading player...</span>
             </div>
             <iframe id="watchPlayerIframe"
-                allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
-                referrerpolicy="no-referrer"
-                sandbox="allow-scripts allow-same-origin allow-forms allow-presentation"
-                style="display:none;"></iframe>
+                    allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
+                    referrerpolicy="no-referrer"
+                    sandbox="allow-scripts allow-same-origin allow-forms allow-presentation"
+                    style="display:none;"></iframe>
           </div>
           <div class="watch-controls" id="watchControls" style="display:none;">
             <button class="watch-ctrl-btn" id="fullscreenBtn" type="button">
@@ -638,8 +680,10 @@
 
   // Poster
   const posterEl = document.getElementById('watchPoster');
+  const posterSidebarEl = document.getElementById('watchPosterSidebar');
   if (poster) {
     posterEl.innerHTML = `<img src="${esc(poster)}" alt="${esc(title)}" onerror="this.parentElement.innerHTML='<div class=\\'watch-poster-placeholder\\'><i class=\\'fa fa-film\\'></i></div>';">`;
+    posterSidebarEl.innerHTML = `<img src="${esc(poster)}" alt="${esc(title)}" onerror="this.parentElement.innerHTML='<div class=\\'watch-poster-placeholder\\'><i class=\\'fa fa-film\\'></i></div>';">`;
   }
 
   // Hero background
@@ -761,12 +805,7 @@
     const ep = episodes[idx];
     currentEpisodeIndex = idx;
 
-    // Update URL without reload
-    const newParams = new URLSearchParams(window.location.search);
-    newParams.set('href', ep.href);
-    window.history.replaceState(null, '', `?${newParams.toString()}`);
-
-    // Load the episode
+    // Load the episode (only refresh iframe, not whole page)
     loadPlayerForHref(ep.href);
     updateEpisodeActiveState();
 
