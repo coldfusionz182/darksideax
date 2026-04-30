@@ -1088,7 +1088,7 @@
       if (data.success && data.embed_url) {
         embedUrl = data.embed_url;
 
-        if (embedUrl.includes('vaplayer.ru') || embedUrl.includes('vidapi') || embedUrl.includes('brightpathsignals')) {
+        if (embedUrl.includes('vaplayer.ru') || embedUrl.includes('vidapi') || embedUrl.includes('brightpathsignals') || embedUrl.includes('streamimdb.ru/embed/')) {
           iframeEl.removeAttribute('sandbox');
         }
 
@@ -1217,9 +1217,9 @@
         embedUrl = data.embed_url;
         console.log('Got embed URL from API:', embedUrl, data.direct_page ? '(direct page)' : '(player embed)');
 
-        // For vaplayer.ru embeds, remove sandbox entirely — the player has anti-iframe
+        // Remove sandbox for video player embeds — VidAPI players have anti-iframe
         // checks that detect sandbox (origin becomes 'null') and self-destruct (die())
-        if (embedUrl.includes('vaplayer.ru') || embedUrl.includes('vidapi') || embedUrl.includes('brightpathsignals')) {
+        if (embedUrl.includes('vaplayer.ru') || embedUrl.includes('vidapi') || embedUrl.includes('brightpathsignals') || embedUrl.includes('streamimdb.ru/embed/')) {
           iframeEl.removeAttribute('sandbox');
         }
 

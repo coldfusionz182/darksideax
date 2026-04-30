@@ -501,94 +501,50 @@ export default async function handler(req, res) {
         const html = await response.text();
         const $ = cheerio.load(html);
 
-        // ── Strategy 1: Find IMDB ID in the page HTML and construct vaplayer.ru embed URL ──
-        // VidAPI sites load the player dynamically, so cheerio can't see the iframe.
-        // Instead, we extract the IMDB ID from the page and build the embed URL directly.
-
-        // Search for IMDB ID (tt followed by 7-8 digits) in the entire HTML
-        let imdbId = '';
-        const imdbMatches = html.match(/tt\d{7,8}/g);
-        if (imdbMatches) {
-          // Use the first match (most likely the correct one)
-          imdbId = imdbMatches[0];
-          console.log(`Found IMDB ID: ${imdbId}`);
+        // ── Strategy 1: Extract data-src from #cbMoviePlayer iframe ──
+        // VidAPI sites use a lazy-loaded iframe: <iframe id="cbMoviePlayer" data-src="/embed/movie/20043">
+        // The embed URL is: https://streamimdb.ru/embed/movie/{id} or /embed/tv/{id}/{season}/{episode}
+        let embedPath = '';
+        const $player = $('#cbMoviePlayer');
+        if ($player.length) {
+          embedPath = $player.attr('data-src') || '';
+          console.log(`Found cbMoviePlayer data-src: ${embedPath}`);
         }
 
-        // Also try to extract from __cbCwMeta
-        if (!imdbId) {
+        // ── Strategy 2: Extract from __cbCwMeta JS variable ──
+        // window.__cbCwMeta = {"type":"movie","id":"20043","title":"...","poster":"...","href":"..."}
+        // The id is a TMDB ID used to construct: /embed/movie/{id} or /embed/tv/{id}
+        if (!embedPath) {
           const metaMatch = html.match(/window\.__cbCwMeta\s*=\s*(\{[\s\S]*?\})\s*;/);
           if (metaMatch) {
             try {
               const meta = JSON.parse(metaMatch[1]);
-              if (meta.imdb_id) imdbId = meta.imdb_id;
-              else if (meta.imdb) imdbId = meta.imdb;
-              else if (meta.id && /^tt\d+$/.test(meta.id)) imdbId = meta.id;
+              if (meta.id) {
+                const isTv = meta.type === 'tv' || meta.type === 'series' || href.startsWith('/tv/');
+                if (isTv) {
+                  // Extract season/episode from href
+                  const epMatch = href.match(/\/season\/(\d+)\/episode\/(\d+)/);
+                  const season = epMatch ? parseInt(epMatch[1]) : 1;
+                  const episode = epMatch ? parseInt(epMatch[2]) : 1;
+                  embedPath = `/embed/tv/${meta.id}/${season}/${episode}`;
+                } else {
+                  embedPath = `/embed/movie/${meta.id}`;
+                }
+                console.log(`Constructed embed path from __cbCwMeta: ${embedPath} (type=${meta.type}, id=${meta.id})`);
+              }
             } catch (e) {}
           }
         }
 
-        // Also check for TMDB ID (numeric, typically 6-7 digits)
-        let tmdbId = '';
-        if (!imdbId) {
-          // Look in meta tags or data attributes
-          const $tmdbMeta = $('meta[name="tmdb_id"], [data-tmdb-id]');
-          if ($tmdbMeta.length) {
-            tmdbId = $tmdbMeta.attr('content') || $tmdbMeta.attr('data-tmdb-id') || '';
-          }
-          // Also try from __cbCwMeta
-          const metaMatch = html.match(/window\.__cbCwMeta\s*=\s*(\{[\s\S]*?\})\s*;/);
-          if (metaMatch && !tmdbId) {
-            try {
-              const meta = JSON.parse(metaMatch[1]);
-              if (meta.tmdb_id) tmdbId = String(meta.tmdb_id);
-              else if (meta.tmdb) tmdbId = String(meta.tmdb);
-            } catch (e) {}
+        // ── Strategy 3: Try data-src on any iframe with embed in path ──
+        if (!embedPath) {
+          const $dataSrc = $('[data-src*="embed"]');
+          if ($dataSrc.length) {
+            embedPath = $dataSrc.attr('data-src') || '';
           }
         }
 
-        // Determine if this is a movie or TV show
-        const isTv = href.startsWith('/tv/') || href.includes('/season/') || href.includes('/episode/');
-
-        // Extract season/episode info if present
-        let season = 1;
-        let episode = 1;
-        const epMatch = href.match(/\/season\/(\d+)\/episode\/(\d+)/);
-        if (epMatch) {
-          season = parseInt(epMatch[1]);
-          episode = parseInt(epMatch[2]);
-        }
-
-        // Construct embed URL using vaplayer.ru (VidAPI player)
-        if (imdbId || tmdbId) {
-          let embedUrl = '';
-          if (isTv) {
-            const id = imdbId || tmdbId;
-            embedUrl = `https://vaplayer.ru/embed/tv/${id}/${season}/${episode}`;
-          } else {
-            const id = imdbId || tmdbId;
-            embedUrl = `https://vaplayer.ru/embed/movie/${id}`;
-          }
-          console.log(`Constructed embed URL: ${embedUrl} (imdbId=${imdbId}, tmdbId=${tmdbId})`);
-
-          // Extract __cbCwMeta for extra info
-          let meta = {};
-          const metaMatch2 = html.match(/window\.__cbCwMeta\s*=\s*(\{[\s\S]*?\})\s*;/);
-          if (metaMatch2) {
-            try { meta = JSON.parse(metaMatch2[1]); } catch (e) {}
-          }
-
-          res.status(200).json({ success: true, embed_url: embedUrl, imdb_id: imdbId, tmdb_id: tmdbId, meta });
-          return;
-        }
-
-        // ── Strategy 2: Try to find embed URL via cheerio selectors (original approach) ──
-        let embedPath = '';
-
-        const $dataSrc = $('[data-src*="embed"]');
-        if ($dataSrc.length) {
-          embedPath = $dataSrc.attr('data-src') || '';
-        }
-
+        // ── Strategy 4: Try iframe src attributes ──
         if (!embedPath) {
           const $iframe = $('iframe[src*="embed"]');
           if ($iframe.length) {
@@ -599,10 +555,15 @@ export default async function handler(req, res) {
         if (!embedPath) {
           const $iframe = $('iframe[src]');
           if ($iframe.length) {
-            embedPath = $iframe.attr('src') || '';
+            const src = $iframe.attr('src') || '';
+            // Skip YouTube trailer iframes
+            if (!src.includes('youtube')) {
+              embedPath = src;
+            }
           }
         }
 
+        // ── Strategy 5: Check for data-embed on play buttons (homepage hero) ──
         if (!embedPath) {
           const $playBtn = $('.cb-slide-play, [data-embed]');
           if ($playBtn.length) {
@@ -610,7 +571,7 @@ export default async function handler(req, res) {
           }
         }
 
-        // For TV series, try fetching first episode page
+        // ── Strategy 6: For TV series, try fetching episode page ──
         if (!embedPath && href.startsWith('/tv/')) {
           const $firstEp = $('a[href*="/season/1/episode/1"]').first();
           if ($firstEp.length) {
@@ -619,31 +580,34 @@ export default async function handler(req, res) {
             if (episodeResp.ok) {
               const episodeHtml = await episodeResp.text();
 
-              // Try to find IMDB ID in episode page
-              const epImdbMatches = episodeHtml.match(/tt\d{7,8}/g);
-              if (epImdbMatches) {
-                imdbId = epImdbMatches[0];
-                const embedUrl = `https://vaplayer.ru/embed/tv/${imdbId}/1/1`;
-                console.log(`Found IMDB ID in episode page: ${imdbId}, embed: ${embedUrl}`);
-                res.status(200).json({ success: true, embed_url: embedUrl, imdb_id: imdbId, meta: {} });
-                return;
+              // Try cbMoviePlayer data-src on episode page
+              const $$ = cheerio.load(episodeHtml);
+              const $epPlayer = $$('#cbMoviePlayer');
+              if ($epPlayer.length) {
+                embedPath = $epPlayer.attr('data-src') || '';
               }
 
-              const $$ = cheerio.load(episodeHtml);
-              const $dataSrc2 = $$('[data-src*="embed"]');
-              if ($dataSrc2.length) {
-                embedPath = $dataSrc2.attr('data-src') || '';
-              }
+              // Try __cbCwMeta on episode page
               if (!embedPath) {
-                const $iframe2 = $$('iframe[src*="embed"]');
-                if ($iframe2.length) {
-                  embedPath = $iframe2.attr('src') || '';
+                const epMetaMatch = episodeHtml.match(/window\.__cbCwMeta\s*=\s*(\{[\s\S]*?\})\s*;/);
+                if (epMetaMatch) {
+                  try {
+                    const meta = JSON.parse(epMetaMatch[1]);
+                    if (meta.id) {
+                      const epMatch = href.match(/\/season\/(\d+)\/episode\/(\d+)/);
+                      const season = epMatch ? parseInt(epMatch[1]) : 1;
+                      const episode = epMatch ? parseInt(epMatch[2]) : 1;
+                      embedPath = `/embed/tv/${meta.id}/${season}/${episode}`;
+                    }
+                  } catch (e) {}
                 }
               }
+
+              // Fallback: data-src on any element
               if (!embedPath) {
-                const $iframe2 = $$('iframe[src]');
-                if ($iframe2.length) {
-                  embedPath = $iframe2.attr('src') || '';
+                const $dataSrc2 = $$('[data-src*="embed"]');
+                if ($dataSrc2.length) {
+                  embedPath = $dataSrc2.attr('data-src') || '';
                 }
               }
             }
@@ -651,18 +615,34 @@ export default async function handler(req, res) {
         }
 
         if (embedPath) {
+          // Normalize: if it starts with http, extract just the path
           if (embedPath.startsWith('http')) {
             try {
               const urlObj = new URL(embedPath);
               embedPath = urlObj.pathname;
             } catch (e) {}
           }
+
+          // Ensure path starts with /
+          if (!embedPath.startsWith('/')) {
+            embedPath = '/' + embedPath;
+          }
+
           const embedUrl = `https://streamimdb.ru${embedPath}`;
-          res.status(200).json({ success: true, embed_url: embedUrl, meta: {} });
+          console.log(`Final embed URL: ${embedUrl}`);
+
+          // Extract __cbCwMeta for extra info
+          let meta = {};
+          const metaMatch2 = html.match(/window\.__cbCwMeta\s*=\s*(\{[\s\S]*?\})\s*;/);
+          if (metaMatch2) {
+            try { meta = JSON.parse(metaMatch2[1]); } catch (e) {}
+          }
+
+          res.status(200).json({ success: true, embed_url: embedUrl, meta });
           return;
         }
 
-        // ── Strategy 3: Return the movie page URL itself for direct iframe loading ──
+        // ── Final fallback: Return the movie page URL itself ──
         console.warn(`No embed found for ${href}, returning direct page URL`);
         res.status(200).json({ success: true, embed_url: movieUrl, direct_page: true, meta: {} });
         return;
