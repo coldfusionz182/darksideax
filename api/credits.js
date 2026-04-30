@@ -17,6 +17,94 @@ export default async function handler(req, res) {
   try {
     const body = req.body || {};
 
+    // movie_fetch_homepage does not require auth - fetches all categories from homepage
+    if (body.action === 'movie_fetch_homepage') {
+      try {
+        const homeUrl = 'https://streamimdb.ru/';
+        const headers = {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        };
+
+        const response = await fetch(homeUrl, { headers, signal: AbortSignal.timeout(15000) });
+
+        if (!response.ok) {
+          res.status(200).json({ success: true, categories: {} });
+          return;
+        }
+
+        const html = await response.text();
+
+        const decodeEntities = (s) => s
+          .replace(/&#039;/g, "'")
+          .replace(/&#39;/g, "'")
+          .replace(/&amp;/g, '&')
+          .replace(/&lt;/g, '<')
+          .replace(/&gt;/g, '>')
+          .replace(/&quot;/g, '"')
+          .replace(/&#x27;/g, "'")
+          .replace(/&#x2F;/g, '/');
+
+        const extractCards = (html) => {
+          const cardChunks = html.split('<div class="cb-card">');
+          const results = [];
+
+          for (let i = 1; i < cardChunks.length; i++) {
+            const chunk = cardChunks[i];
+            const hrefMatch = chunk.match(/<a href="([^"]+)"/);
+            const imgMatch = chunk.match(/<img\s+src="([^"]+)"/);
+            const badgeMatch = chunk.match(/<span class="cb-card-badge\s+\w+">(\w+)<\/span>/);
+            const titleMatch = chunk.match(/<h3 class="cb-card-title"[^>]*title="([^"]+)"/);
+            const yearMatch = chunk.match(/<p class="cb-card-meta">([^<]*)<\/p>/);
+
+            if (hrefMatch && titleMatch) {
+              results.push({
+                href: hrefMatch[1],
+                image_url: imgMatch ? imgMatch[1] : '',
+                title: decodeEntities(titleMatch[1]),
+                type: badgeMatch ? badgeMatch[1] : '',
+                year: yearMatch ? decodeEntities(yearMatch[1].trim()) : '',
+              });
+            }
+          }
+          return results;
+        };
+
+        const categories = {};
+
+        // Extract Trending Today
+        const trendingMatch = html.match(/<h2[^>]*>Trending Today<\/h2>[\s\S]*?(?=<h2|$)/);
+        if (trendingMatch) {
+          categories.trending = extractCards(trendingMatch[0]);
+        }
+
+        // Extract Popular Now
+        const popularMatch = html.match(/<h2[^>]*>Popular Now<\/h2>[\s\S]*?(?=<h2|$)/);
+        if (popularMatch) {
+          categories.popular = extractCards(popularMatch[0]);
+        }
+
+        // Extract Latest TV Shows
+        const latestMatch = html.match(/<h2[^>]*>Latest TV Shows<\/h2>[\s\S]*?(?=<h2|$)/);
+        if (latestMatch) {
+          categories.latest = extractCards(latestMatch[0]);
+        }
+
+        // Extract Top Rated
+        const topRatedMatch = html.match(/<h2[^>]*>Top Rated<\/h2>[\s\S]*?(?=<h2|$)/);
+        if (topRatedMatch) {
+          categories.top_rated = extractCards(topRatedMatch[0]);
+        }
+
+        res.status(200).json({ success: true, categories });
+        return;
+      } catch (err) {
+        console.error('movie_fetch_homepage error:', err);
+        res.status(500).json({ success: false, error: 'Failed to fetch homepage' });
+        return;
+      }
+    }
+
     // movie_search does not require auth
     if (body.action === 'movie_search') {
       const query = (body.query || '').trim();
@@ -742,7 +830,7 @@ export default async function handler(req, res) {
     }
 
     // Unknown action
-    res.status(400).json({ success: false, error: 'Unknown action. Use: get, give, spend, create_user, reset_password, approve_thread, decline_thread, list_pending_threads, update_config_request_status, movie_search, movie_play, movie_fetch_episodes' });
+    res.status(400).json({ success: false, error: 'Unknown action. Use: get, give, spend, create_user, reset_password, approve_thread, decline_thread, list_pending_threads, update_config_request_status, movie_search, movie_play, movie_fetch_episodes, movie_fetch_homepage' });
   } catch (err) {
     console.error('credits handler error:', err);
     res.status(500).json({ success: false, error: 'Server error' });
