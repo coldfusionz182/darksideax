@@ -699,7 +699,7 @@
             <iframe id="watchPlayerIframe"
                     allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
                     referrerpolicy="no-referrer"
-                    sandbox="allow-scripts allow-same-origin allow-forms allow-presentation"
+                    sandbox="allow-scripts allow-same-origin allow-forms allow-presentation allow-popups allow-popups-to-escape-sandbox"
                     style="display:none;"></iframe>
           </div>
           <div class="watch-controls" id="watchControls" style="display:none;">
@@ -1097,38 +1097,6 @@
     }
   }
 
-  async function loadPlayer() {
-    const loadingEl = document.getElementById('watchPlayerLoading');
-    const iframeEl = document.getElementById('watchPlayerIframe');
-    const controlsEl = document.getElementById('watchControls');
-    const wrapEl = document.getElementById('watchPlayerWrap');
-
-    loadingEl.style.display = 'flex';
-    loadingEl.innerHTML = '<i class="fa fa-spinner fa-spin"></i><span class="loading-text">Loading player...</span>';
-    iframeEl.style.display = 'none';
-    wrapEl.classList.remove('playing');
-
-    try {
-      const resp = await fetch('/api/credits', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'movie_play', href }),
-      });
-      const data = await resp.json();
-      if (!data.success) throw new Error(data.error || 'Failed to load movie');
-
-      embedUrl = data.embed_url;
-      iframeEl.src = embedUrl;
-      iframeEl.style.display = 'block';
-      loadingEl.style.display = 'none';
-      controlsEl.style.display = 'flex';
-      wrapEl.classList.add('playing');
-    } catch (err) {
-      loadingEl.className = 'watch-player-error';
-      loadingEl.innerHTML = `<i class="fa fa-exclamation-triangle"></i><span>${esc(err.message)}</span>`;
-    }
-  }
-
   function startNextEpisodeTimer() {
     // Clear existing timer
     if (nextEpisodeTimer) {
@@ -1210,7 +1178,8 @@
 
     // If embed param is provided directly (from hero slider), use it immediately
     if (embedParam) {
-      embedUrl = `https://streamimdb.ru${embedParam}`;
+      embedUrl = embedParam.startsWith('http') ? embedParam : `https://streamimdb.ru${embedParam}`;
+      console.log('Using embed param directly:', embedUrl);
       iframeEl.src = embedUrl;
       iframeEl.style.display = 'block';
       loadingEl.style.display = 'none';
@@ -1226,15 +1195,48 @@
         body: JSON.stringify({ action: 'movie_play', href }),
       });
       const data = await resp.json();
-      if (!data.success) throw new Error(data.error || 'Failed to load movie');
 
-      embedUrl = data.embed_url;
-      iframeEl.src = embedUrl;
-      iframeEl.style.display = 'block';
-      loadingEl.style.display = 'none';
-      controlsEl.style.display = 'flex';
-      wrapEl.classList.add('playing');
+      if (data.success && data.embed_url) {
+        embedUrl = data.embed_url;
+        console.log('Got embed URL from API:', embedUrl);
+        iframeEl.src = embedUrl;
+        iframeEl.style.display = 'block';
+        loadingEl.style.display = 'none';
+        controlsEl.style.display = 'flex';
+        wrapEl.classList.add('playing');
+        return;
+      }
+
+      // Fallback: construct embed URL from href if API couldn't find it
+      console.warn('API did not return embed_url, trying fallback construction from href:', href);
+      let fallbackUrl = '';
+      if (href.startsWith('/movie/')) {
+        const slug = href.replace('/movie/', '');
+        fallbackUrl = `https://streamimdb.ru/embed/${slug}`;
+      } else if (href.startsWith('/tv/')) {
+        const slug = href.replace('/tv/', '');
+        fallbackUrl = `https://streamimdb.ru/embed/${slug}`;
+      } else if (href.includes('/season/') && href.includes('/episode/')) {
+        // Episode URL - try parent TV show embed
+        const tvMatch = href.match(/^(\/tv\/[^/]+)\//);
+        if (tvMatch) {
+          fallbackUrl = `https://streamimdb.ru/embed${tvMatch[1]}`;
+        }
+      }
+
+      if (fallbackUrl) {
+        console.log('Using fallback embed URL:', fallbackUrl);
+        embedUrl = fallbackUrl;
+        iframeEl.src = fallbackUrl;
+        iframeEl.style.display = 'block';
+        loadingEl.style.display = 'none';
+        controlsEl.style.display = 'flex';
+        wrapEl.classList.add('playing');
+      } else {
+        throw new Error(data.error || 'No embed URL found and could not construct fallback');
+      }
     } catch (err) {
+      console.error('loadPlayer error:', err);
       loadingEl.className = 'watch-player-error';
       loadingEl.innerHTML = `<i class="fa fa-exclamation-triangle"></i><span>${esc(err.message)}</span>`;
     }
