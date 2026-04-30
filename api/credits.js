@@ -102,6 +102,71 @@ export default async function handler(req, res) {
       }
     }
 
+    // movie_fetch_episodes does not require auth
+    if (body.action === 'movie_fetch_episodes') {
+      const href = (body.href || '').trim();
+      if (!href) {
+        res.status(400).json({ success: false, error: 'Missing href' });
+        return;
+      }
+
+      try {
+        const seriesUrl = `https://streamimdb.ru${href}`;
+        const headers = {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        };
+
+        const response = await fetch(seriesUrl, { headers, signal: AbortSignal.timeout(15000) });
+
+        if (!response.ok) {
+          res.status(200).json({ success: false, error: 'Could not load series page' });
+          return;
+        }
+
+        const html = await response.text();
+
+        // Extract episodes with titles - look for season/episode links
+        const episodeMatch = html.match(/href="([^"]*\/season\/\d+\/episode\/\d+)"[^>]*>([^<]+)</g);
+        if (!episodeMatch) {
+          res.status(200).json({ success: true, episodes: [] });
+          return;
+        }
+
+        const episodes = [];
+        const seen = new Set();
+        episodeMatch.forEach(link => {
+          const match = link.match(/href="([^"]+)"[^>]*>([^<]+)/);
+          if (match && !seen.has(match[1])) {
+            seen.add(match[1]);
+            // Extract season and episode numbers
+            const parts = match[1].match(/\/season\/(\d+)\/episode\/(\d+)/);
+            if (parts) {
+              episodes.push({
+                href: match[1],
+                season: parseInt(parts[1]),
+                episode: parseInt(parts[2]),
+                title: match[2].trim(),
+              });
+            }
+          }
+        });
+
+        // Sort by season then episode
+        episodes.sort((a, b) => {
+          if (a.season !== b.season) return a.season - b.season;
+          return a.episode - b.episode;
+        });
+
+        res.status(200).json({ success: true, episodes });
+        return;
+      } catch (err) {
+        console.error('movie_fetch_episodes error:', err);
+        res.status(500).json({ success: false, error: 'Failed to fetch episodes' });
+        return;
+      }
+    }
+
     // movie_play does not require auth
     if (body.action === 'movie_play') {
       const href = (body.href || '').trim();
@@ -677,7 +742,7 @@ export default async function handler(req, res) {
     }
 
     // Unknown action
-    res.status(400).json({ success: false, error: 'Unknown action. Use: get, give, spend, create_user, reset_password, approve_thread, decline_thread, list_pending_threads, update_config_request_status, movie_search, movie_play' });
+    res.status(400).json({ success: false, error: 'Unknown action. Use: get, give, spend, create_user, reset_password, approve_thread, decline_thread, list_pending_threads, update_config_request_status, movie_search, movie_play, movie_fetch_episodes' });
   } catch (err) {
     console.error('credits handler error:', err);
     res.status(500).json({ success: false, error: 'Server error' });

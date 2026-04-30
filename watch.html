@@ -274,6 +274,146 @@
       color: #e94560;
     }
 
+    /* ── Episode list ── */
+    .watch-episodes {
+      margin-top: 20px;
+      background: rgba(255,255,255,0.02);
+      border: 1px solid rgba(255,255,255,0.05);
+      border-radius: 8px;
+      padding: 16px;
+    }
+    .watch-episodes-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+    .watch-episodes-title {
+      color: #fff;
+      font-size: 14px;
+      font-weight: 600;
+    }
+    .watch-episodes-list {
+      max-height: 300px;
+      overflow-y: auto;
+    }
+    .watch-episode-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background 0.2s;
+      border: 1px solid transparent;
+    }
+    .watch-episode-item:hover {
+      background: rgba(255,255,255,0.05);
+    }
+    .watch-episode-item.active {
+      background: rgba(233,69,96,0.15);
+      border-color: rgba(233,69,96,0.3);
+    }
+    .watch-episode-num {
+      background: rgba(233,69,96,0.2);
+      color: #e94560;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 700;
+      min-width: 60px;
+      text-align: center;
+    }
+    .watch-episode-info {
+      flex: 1;
+      min-width: 0;
+    }
+    .watch-episode-title {
+      color: #ddd;
+      font-size: 13px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .watch-episode-meta {
+      color: #666;
+      font-size: 11px;
+      margin-top: 2px;
+    }
+    .watch-episode-play {
+      opacity: 0;
+      color: #e94560;
+      font-size: 14px;
+      transition: opacity 0.2s;
+    }
+    .watch-episode-item:hover .watch-episode-play {
+      opacity: 1;
+    }
+
+    /* ── Next episode notification ── */
+    .watch-next-notify {
+      display: none;
+      position: fixed;
+      bottom: 30px;
+      right: 30px;
+      z-index: 1000;
+      background: #111;
+      border: 1px solid #333;
+      border-radius: 12px;
+      padding: 16px 20px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+      animation: slideIn 0.3s ease-out;
+    }
+    .watch-next-notify.active {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .watch-next-notify-content {
+      flex: 1;
+    }
+    .watch-next-notify-title {
+      color: #fff;
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+    .watch-next-notify-text {
+      color: #888;
+      font-size: 11px;
+    }
+    .watch-next-notify-actions {
+      display: flex;
+      gap: 8px;
+    }
+    .watch-next-notify-btn {
+      padding: 8px 16px;
+      border-radius: 6px;
+      border: none;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .watch-next-notify-play {
+      background: #e94560;
+      color: #fff;
+    }
+    .watch-next-notify-play:hover {
+      background: #c93654;
+    }
+    .watch-next-notify-dismiss {
+      background: rgba(255,255,255,0.1);
+      color: #ccc;
+    }
+    .watch-next-notify-dismiss:hover {
+      background: rgba(255,255,255,0.15);
+    }
+
     /* ── Cast fallback modal ── */
     .cast-fallback-modal {
       display: none;
@@ -453,6 +593,33 @@
     </div>
   </div>
 
+  <!-- Episodes section (for TV series) -->
+  <div class="watch-player-section">
+    <div class="wrapper">
+      <div class="watch-episodes" id="watchEpisodes" style="display:none;">
+        <div class="watch-episodes-header">
+          <span class="watch-episodes-title">Episodes</span>
+          <button class="watch-ctrl-btn" id="nextEpisodeBtn" style="padding:6px 12px; font-size:11px;" type="button">
+            <i class="fa fa-step-forward"></i> Next Episode
+          </button>
+        </div>
+        <div class="watch-episodes-list" id="watchEpisodesList"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Next episode notification -->
+  <div class="watch-next-notify" id="watchNextNotify">
+    <div class="watch-next-notify-content">
+      <div class="watch-next-notify-title">Next Episode Up</div>
+      <div class="watch-next-notify-text" id="watchNextNotifyText">Starting in 60 seconds...</div>
+    </div>
+    <div class="watch-next-notify-actions">
+      <button class="watch-next-notify-btn watch-next-notify-play" id="watchNextNotifyPlay" type="button">Play Now</button>
+      <button class="watch-next-notify-btn watch-next-notify-dismiss" id="watchNextNotifyDismiss" type="button">Cancel</button>
+    </div>
+  </div>
+
   <!-- Cast fallback modal -->
   <div class="cast-fallback-modal" id="castFallbackModal">
     <div class="cast-fallback-content">
@@ -546,9 +713,203 @@
     if (e.target === window) return;
   });
 
+  // ── Episode handling for TV series ──
+  let episodes = [];
+  let currentEpisodeIndex = -1;
+  let nextEpisodeTimer = null;
+  let nextEpisodeCountdown = 60;
+
+  async function loadEpisodes() {
+    if (!href || !href.startsWith('/tv/')) return;
+
+    try {
+      const resp = await fetch('/api/credits', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'movie_fetch_episodes', href }),
+      });
+      const data = await resp.json();
+      if (data.success && data.episodes.length > 0) {
+        episodes = data.episodes;
+        renderEpisodes();
+
+        // Find current episode from href
+        const currentMatch = href.match(/\/season\/(\d+)\/episode\/(\d+)/);
+        if (currentMatch) {
+          const currentSeason = parseInt(currentMatch[1]);
+          const currentEp = parseInt(currentMatch[2]);
+          currentEpisodeIndex = episodes.findIndex(e => e.season === currentSeason && e.episode === currentEp);
+          if (currentEpisodeIndex === -1) currentEpisodeIndex = 0;
+        } else {
+          currentEpisodeIndex = 0;
+        }
+        updateEpisodeActiveState();
+      }
+    } catch (err) {
+      console.warn('Failed to load episodes:', err);
+    }
+  }
+
+  function renderEpisodes() {
+    const episodesEl = document.getElementById('watchEpisodes');
+    const listEl = document.getElementById('watchEpisodesList');
+
+    if (episodes.length === 0) {
+      episodesEl.style.display = 'none';
+      return;
+    }
+
+    episodesEl.style.display = 'block';
+    listEl.innerHTML = '';
+
+    episodes.forEach((ep, idx) => {
+      const item = document.createElement('div');
+      item.className = 'watch-episode-item';
+      item.dataset.index = idx;
+      item.innerHTML = `
+        <div class="watch-episode-num">S${ep.season} E${ep.episode}</div>
+        <div class="watch-episode-info">
+          <div class="watch-episode-title">${esc(ep.title || `Episode ${ep.episode}`)}</div>
+        </div>
+        <div class="watch-episode-play"><i class="fa fa-play"></i></div>
+      `;
+      item.addEventListener('click', () => playEpisode(idx));
+      listEl.appendChild(item);
+    });
+
+    updateEpisodeActiveState();
+  }
+
+  function updateEpisodeActiveState() {
+    const items = document.querySelectorAll('.watch-episode-item');
+    items.forEach((item, idx) => {
+      if (idx === currentEpisodeIndex) {
+        item.classList.add('active');
+      } else {
+        item.classList.remove('active');
+      }
+    });
+  }
+
+  function playEpisode(idx) {
+    if (idx < 0 || idx >= episodes.length) return;
+    const ep = episodes[idx];
+    currentEpisodeIndex = idx;
+
+    // Update URL without reload
+    const newParams = new URLSearchParams(window.location.search);
+    newParams.set('href', ep.href);
+    window.history.replaceState(null, '', `?${newParams.toString()}`);
+
+    // Load the episode
+    loadPlayerForHref(ep.href);
+    updateEpisodeActiveState();
+
+    // Start next episode timer (assume 45 min episodes)
+    startNextEpisodeTimer();
+  }
+
+  async function loadPlayerForHref(epHref) {
+    const loadingEl = document.getElementById('watchPlayerLoading');
+    const iframeEl = document.getElementById('watchPlayerIframe');
+    const controlsEl = document.getElementById('watchControls');
+
+    loadingEl.style.display = 'flex';
+    loadingEl.innerHTML = '<i class="fa fa-spinner fa-spin"></i><span class="loading-text">Loading player...</span>';
+    iframeEl.style.display = 'none';
+
+    try {
+      const resp = await fetch('/api/credits', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'movie_play', href: epHref }),
+      });
+      const data = await resp.json();
+      if (!data.success) throw new Error(data.error || 'Failed to load movie');
+
+      embedUrl = data.embed_url;
+      iframeEl.src = embedUrl;
+      iframeEl.style.display = 'block';
+      loadingEl.style.display = 'none';
+      controlsEl.style.display = 'flex';
+    } catch (err) {
+      loadingEl.className = 'watch-player-error';
+      loadingEl.innerHTML = `<i class="fa fa-exclamation-triangle"></i><span>${esc(err.message)}</span>`;
+    }
+  }
+
+  function startNextEpisodeTimer() {
+    // Clear existing timer
+    if (nextEpisodeTimer) {
+      clearInterval(nextEpisodeTimer);
+      nextEpisodeTimer = null;
+    }
+
+    // Check if there's a next episode
+    if (currentEpisodeIndex < 0 || currentEpisodeIndex >= episodes.length - 1) return;
+
+    nextEpisodeCountdown = 60; // 60 seconds before end
+    const notifyEl = document.getElementById('watchNextNotify');
+    const textEl = document.getElementById('watchNextNotifyText');
+
+    // Start countdown (assume 45 min episode, show notification at 44 min)
+    setTimeout(() => {
+      showNextEpisodeNotification();
+    }, 2700000); // 45 minutes after load (44 min before end)
+  }
+
+  function showNextEpisodeNotification() {
+    if (currentEpisodeIndex < 0 || currentEpisodeIndex >= episodes.length - 1) return;
+
+    const notifyEl = document.getElementById('watchNextNotify');
+    const textEl = document.getElementById('watchNextNotifyText');
+    const nextEp = episodes[currentEpisodeIndex + 1];
+
+    notifyEl.classList.add('active');
+    textEl.textContent = `Next: S${nextEp.season} E${nextEp.episode} - ${esc(nextEp.title || `Episode ${nextEp.episode}`)}`;
+
+    nextEpisodeCountdown = 60;
+    nextEpisodeTimer = setInterval(() => {
+      nextEpisodeCountdown--;
+      textEl.textContent = `Next: S${nextEp.season} E${nextEp.episode} - ${esc(nextEp.title || `Episode ${nextEp.episode}`)} (${nextEpisodeCountdown}s)`;
+
+      if (nextEpisodeCountdown <= 0) {
+        clearInterval(nextEpisodeTimer);
+        nextEpisodeTimer = null;
+        notifyEl.classList.remove('active');
+        playEpisode(currentEpisodeIndex + 1);
+      }
+    }, 1000);
+  }
+
+  function hideNextEpisodeNotification() {
+    const notifyEl = document.getElementById('watchNextNotify');
+    notifyEl.classList.remove('active');
+    if (nextEpisodeTimer) {
+      clearInterval(nextEpisodeTimer);
+      nextEpisodeTimer = null;
+    }
+  }
+
+  document.getElementById('nextEpisodeBtn').addEventListener('click', () => {
+    if (currentEpisodeIndex >= 0 && currentEpisodeIndex < episodes.length - 1) {
+      playEpisode(currentEpisodeIndex + 1);
+    }
+  });
+
+  document.getElementById('watchNextNotifyPlay').addEventListener('click', () => {
+    hideNextEpisodeNotification();
+    if (currentEpisodeIndex >= 0 && currentEpisodeIndex < episodes.length - 1) {
+      playEpisode(currentEpisodeIndex + 1);
+    }
+  });
+
+  document.getElementById('watchNextNotifyDismiss').addEventListener('click', hideNextEpisodeNotification);
+
   // ── Load embed URL via API ──
   let embedUrl = '';
   loadPlayer();
+  loadEpisodes();
 
   async function loadPlayer() {
     const loadingEl = document.getElementById('watchPlayerLoading');
