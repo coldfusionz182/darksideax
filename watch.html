@@ -188,6 +188,14 @@
       overflow: hidden;
       box-shadow: 0 4px 24px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.04);
     }
+    .watch-player-wrap.playing {
+      box-shadow: 0 4px 24px rgba(0,0,0,0.5), 0 0 0 1px rgba(233,69,96,0.3);
+      animation: playerGlow 3s ease-in-out infinite;
+    }
+    @keyframes playerGlow {
+      0%, 100% { box-shadow: 0 4px 24px rgba(0,0,0,0.5), 0 0 0 1px rgba(233,69,96,0.2), 0 0 20px rgba(233,69,96,0.05); }
+      50% { box-shadow: 0 4px 24px rgba(0,0,0,0.5), 0 0 0 1px rgba(233,69,96,0.5), 0 0 40px rgba(233,69,96,0.15); }
+    }
     .watch-player-wrap iframe {
       width: 100%;
       height: 100%;
@@ -1044,10 +1052,12 @@
     const loadingEl = document.getElementById('watchPlayerLoading');
     const iframeEl = document.getElementById('watchPlayerIframe');
     const controlsEl = document.getElementById('watchControls');
+    const wrapEl = document.getElementById('watchPlayerWrap');
 
     loadingEl.style.display = 'flex';
     loadingEl.innerHTML = '<i class="fa fa-spinner fa-spin"></i><span class="loading-text">Loading player...</span>';
     iframeEl.style.display = 'none';
+    wrapEl.classList.remove('playing');
 
     try {
       const resp = await fetch('/api/credits', {
@@ -1063,6 +1073,39 @@
       iframeEl.style.display = 'block';
       loadingEl.style.display = 'none';
       controlsEl.style.display = 'flex';
+      wrapEl.classList.add('playing');
+    } catch (err) {
+      loadingEl.className = 'watch-player-error';
+      loadingEl.innerHTML = `<i class="fa fa-exclamation-triangle"></i><span>${esc(err.message)}</span>`;
+    }
+  }
+
+  async function loadPlayer() {
+    const loadingEl = document.getElementById('watchPlayerLoading');
+    const iframeEl = document.getElementById('watchPlayerIframe');
+    const controlsEl = document.getElementById('watchControls');
+    const wrapEl = document.getElementById('watchPlayerWrap');
+
+    loadingEl.style.display = 'flex';
+    loadingEl.innerHTML = '<i class="fa fa-spinner fa-spin"></i><span class="loading-text">Loading player...</span>';
+    iframeEl.style.display = 'none';
+    wrapEl.classList.remove('playing');
+
+    try {
+      const resp = await fetch('/api/credits', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'movie_play', href }),
+      });
+      const data = await resp.json();
+      if (!data.success) throw new Error(data.error || 'Failed to load movie');
+
+      embedUrl = data.embed_url;
+      iframeEl.src = embedUrl;
+      iframeEl.style.display = 'block';
+      loadingEl.style.display = 'none';
+      controlsEl.style.display = 'flex';
+      wrapEl.classList.add('playing');
     } catch (err) {
       loadingEl.className = 'watch-player-error';
       loadingEl.innerHTML = `<i class="fa fa-exclamation-triangle"></i><span>${esc(err.message)}</span>`;

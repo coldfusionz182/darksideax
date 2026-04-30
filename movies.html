@@ -10,95 +10,211 @@
   <link href="notifications.css" rel="stylesheet">
 
   <style>
+    * {
+      box-sizing: border-box;
+    }
+
     body {
-      background: radial-gradient(circle at top, #151826 0, #05060a 55%);
-    }
-
-    /* user pill + avatar (top right) – same as other pages */
-    .user-pill {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 4px 8px;
-      border-radius: 999px;
-      background: #111827;
-      border: 1px solid #1f2937;
-      color: #e5e7eb;
-      cursor: pointer;
-      font-size: 0.8rem;
-    }
-    .user-pill img.user-avatar-header {
-      width: 22px;
-      height: 22px;
-      border-radius: 999px;
-      object-fit: cover;
-      border: 1px solid #1f2937;
-      display: block;
-    }
-
-    /* Page header */
-    .movies-header {
-      background: linear-gradient(135deg, #e94560 0%, #0f3460 100%);
-      border-radius: 8px;
-      padding: 30px 24px;
-      margin-bottom: 24px;
-      display: flex;
-      align-items: center;
-      gap: 16px;
-    }
-    .movies-header-icon {
-      font-size: 36px;
-      color: #fff;
-    }
-    .movies-header h1 {
-      font-size: 24px;
-      color: #fff;
+      background: #141414;
       margin: 0;
-      font-family: inherit;
-    }
-    .movies-header p {
-      color: rgba(255,255,255,0.7);
-      margin: 4px 0 0;
-      font-size: 13px;
+      padding: 0;
+      font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
     }
 
-    /* Search bar */
-    .search-section {
-      margin-bottom: 24px;
+    /* Netflix-style header */
+    #header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 1000;
+      background: linear-gradient(to bottom, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0) 100%);
+      transition: background 0.3s;
     }
+    #header.scrolled {
+      background: #141414;
+    }
+
+    .header-inner {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 4%;
+      height: 68px;
+    }
+
+    .header-logo .logo-text {
+      color: #e50914;
+      font-size: 28px;
+      font-weight: bold;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+    }
+    .header-logo .logo-slogan {
+      display: none;
+    }
+
+    /* Netflix navbar */
+    #navbar {
+      position: fixed;
+      top: 68px;
+      left: 0;
+      right: 0;
+      z-index: 999;
+      background: linear-gradient(to bottom, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0) 100%);
+      transition: background 0.3s;
+    }
+    #navbar.scrolled {
+      background: #141414;
+    }
+
+    .navbar-inner {
+      padding: 0 4%;
+    }
+
+    .nav-main {
+      display: flex;
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      gap: 20px;
+    }
+
+    .nav-main a {
+      color: #e5e5e5;
+      text-decoration: none;
+      font-size: 14px;
+      transition: color 0.3s;
+    }
+    .nav-main a:hover {
+      color: #b3b3b3;
+    }
+    .nav-main a.active {
+      color: #fff;
+      font-weight: bold;
+    }
+
+    /* Hero banner - Netflix style */
+    .hero-banner {
+      position: relative;
+      height: calc(100vh - 68px);
+      background: #141414;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 0 4%;
+      margin-top: 68px;
+    }
+
+    .hero-content {
+      max-width: 800px;
+      width: 100%;
+      text-align: center;
+      z-index: 2;
+    }
+
+    .hero-title {
+      font-size: 64px;
+      font-weight: bold;
+      color: #e50914;
+      margin: 0 0 40px 0;
+      line-height: 1.1;
+      text-transform: uppercase;
+      letter-spacing: 4px;
+    }
+
+    .hero-search-container {
+      width: 100%;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    .hero-search-box {
+      display: flex;
+      background: rgba(255,255,255,0.1);
+      border: 2px solid #333;
+      border-radius: 4px;
+      overflow: hidden;
+      transition: border-color 0.3s, background 0.3s;
+    }
+
+    .hero-search-box:focus-within {
+      border-color: #e50914;
+      background: rgba(255,255,255,0.15);
+    }
+
+    .hero-search-box input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      color: #fff;
+      padding: 20px 24px;
+      font-size: 20px;
+      outline: none;
+    }
+    .hero-search-box input::placeholder {
+      color: #888;
+    }
+
+    .hero-search-box button {
+      background: #e50914;
+      border: none;
+      color: #fff;
+      padding: 20px 40px;
+      font-size: 18px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .hero-search-box button:hover {
+      background: #f40612;
+    }
+    .hero-search-box button:disabled {
+      background: #555;
+      cursor: not-allowed;
+    }
+
+    /* Search section (for results page) */
+    .search-section {
+      padding: 40px 4%;
+    }
+
     .search-bar {
       display: flex;
-      gap: 0;
-      border-radius: 8px;
+      max-width: 600px;
+      background: rgba(255,255,255,0.1);
+      border: 2px solid #333;
+      border-radius: 4px;
       overflow: hidden;
-      border: 1px solid #2a2a2a;
+      margin: 0 auto;
     }
+
     .search-bar input {
       flex: 1;
-      background: #111;
+      background: transparent;
       border: none;
-      color: #e0e0e0;
-      padding: 14px 18px;
-      font-size: 15px;
-      font-family: inherit;
+      color: #fff;
+      padding: 16px 20px;
+      font-size: 16px;
       outline: none;
     }
     .search-bar input::placeholder {
-      color: #555;
+      color: #888;
     }
+
     .search-bar button {
-      background: #e94560;
+      background: #e50914;
       border: none;
       color: #fff;
-      padding: 14px 28px;
-      font-size: 15px;
-      font-weight: 700;
+      padding: 16px 32px;
+      font-size: 16px;
+      font-weight: bold;
       cursor: pointer;
-      font-family: inherit;
       transition: background 0.2s;
     }
     .search-bar button:hover {
-      background: #c93654;
+      background: #f40612;
     }
     .search-bar button:disabled {
       background: #555;
@@ -108,170 +224,242 @@
     /* Results count */
     .results-count {
       color: #888;
-      font-size: 13px;
+      font-size: 14px;
       margin-bottom: 16px;
-      min-height: 20px;
+      padding: 0 4%;
     }
 
-    /* Movie cards grid */
-    .movies-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
-      gap: 16px;
+    /* Netflix-style rows */
+    .netflix-row {
+      margin-bottom: 40px;
+      padding: 0 4%;
     }
 
-    /* Individual card */
+    .row-header {
+      font-size: 20px;
+      font-weight: bold;
+      color: #e5e5e5;
+      margin-bottom: 16px;
+    }
+
+    .row-slider {
+      display: flex;
+      gap: 10px;
+      overflow-x: auto;
+      padding-bottom: 20px;
+      scroll-behavior: smooth;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .row-slider::-webkit-scrollbar {
+      height: 8px;
+    }
+    .row-slider::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    .row-slider::-webkit-scrollbar-thumb {
+      background: #555;
+      border-radius: 4px;
+    }
+    .row-slider::-webkit-scrollbar-thumb:hover {
+      background: #777;
+    }
+
+    /* Netflix-style cards */
     .movie-card {
-      background: #0f3460;
-      border-radius: 8px;
-      overflow: hidden;
+      flex: 0 0 auto;
+      width: 200px;
       cursor: pointer;
-      transition: transform 0.2s, box-shadow 0.2s;
+      transition: transform 0.3s, z-index 0.3s;
       position: relative;
+      border-radius: 4px;
+      overflow: hidden;
     }
+
     .movie-card:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 8px 24px rgba(233, 69, 96, 0.2);
+      transform: scale(1.1);
+      z-index: 10;
     }
 
     .movie-card-poster {
       width: 100%;
       aspect-ratio: 2/3;
-      background: #0a0a1a;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      overflow: hidden;
+      background: #1a1a1a;
       position: relative;
+      overflow: hidden;
     }
+
     .movie-card-poster img {
       width: 100%;
       height: 100%;
       object-fit: cover;
     }
+
     .movie-card-poster .poster-placeholder {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
       color: #333;
-      font-size: 32px;
+      font-size: 48px;
     }
 
-    /* Badge (Movie / Series) */
+    /* Badge */
     .movie-card-badge {
       position: absolute;
       top: 8px;
       left: 8px;
-      padding: 2px 8px;
-      border-radius: 4px;
-      font-size: 10px;
-      font-weight: 700;
+      padding: 4px 8px;
+      border-radius: 2px;
+      font-size: 11px;
+      font-weight: bold;
       text-transform: uppercase;
-      letter-spacing: 0.05em;
     }
     .badge-movie {
-      background: rgba(233, 69, 96, 0.85);
+      background: #e50914;
       color: #fff;
     }
     .badge-series {
-      background: rgba(79, 70, 229, 0.85);
+      background: #0071eb;
       color: #fff;
     }
     .badge-other {
-      background: rgba(100, 100, 100, 0.85);
+      background: #666;
       color: #fff;
     }
 
-    /* Play overlay on hover */
-    .movie-card-poster .play-overlay {
+    /* Hover overlay */
+    .movie-card .card-overlay {
       position: absolute;
-      inset: 0;
-      background: rgba(0,0,0,0.5);
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, transparent 100%);
+      padding: 60px 12px 12px;
       opacity: 0;
-      transition: opacity 0.2s;
-    }
-    .movie-card:hover .play-overlay {
-      opacity: 1;
-    }
-    .play-overlay i {
-      font-size: 40px;
-      color: #e94560;
+      transition: opacity 0.3s;
     }
 
-    .movie-card-info {
-      padding: 10px 12px;
+    .movie-card:hover .card-overlay {
+      opacity: 1;
     }
-    .movie-card-title {
-      color: #f1f1f1;
-      font-size: 13px;
-      font-weight: 600;
+
+    .card-overlay-title {
+      color: #fff;
+      font-size: 14px;
+      font-weight: bold;
+      margin-bottom: 4px;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      margin-bottom: 4px;
-    }
-    .movie-card-meta {
-      color: #888;
-      font-size: 11px;
     }
 
-    .movie-card-play {
-      display: block;
-      width: calc(100% - 24px);
-      margin: 0 12px 12px;
-      padding: 6px 0;
-      background: #e94560;
-      border: none;
-      border-radius: 4px;
-      color: #fff;
+    .card-overlay-meta {
+      color: #aaa;
       font-size: 12px;
-      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .card-overlay-play {
+      background: #fff;
+      color: #000;
+      border: none;
+      padding: 8px 16px;
+      font-size: 14px;
+      font-weight: bold;
+      border-radius: 4px;
       cursor: pointer;
-      text-align: center;
-      font-family: inherit;
+      display: flex;
+      align-items: center;
+      gap: 6px;
       transition: background 0.2s;
     }
-    .movie-card-play:hover {
-      background: #c93654;
+    .card-overlay-play:hover {
+      background: rgba(255,255,255,0.75);
     }
 
-    /* Loading spinner */
+    /* Loading */
     .movies-loading {
       text-align: center;
-      padding: 40px 0;
+      padding: 60px 0;
       color: #888;
     }
     .movies-loading i {
-      font-size: 24px;
-      margin-bottom: 8px;
-      display: block;
+      font-size: 32px;
+      margin-bottom: 12px;
     }
 
-    /* No results */
+    /* Empty state */
     .movies-empty {
       text-align: center;
-      padding: 60px 0;
+      padding: 80px 0;
       color: #666;
     }
     .movies-empty i {
-      font-size: 48px;
-      margin-bottom: 12px;
-      display: block;
+      font-size: 64px;
+      margin-bottom: 16px;
       color: #444;
     }
     .movies-empty p {
-      font-size: 14px;
+      font-size: 16px;
     }
 
-    /* Card appear animation */
-    @keyframes cardFadeIn {
-      from { opacity: 0; transform: translateY(12px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-    .movie-card-anim {
-      animation: cardFadeIn 0.3s ease-out forwards;
+    /* Main container */
+    #container {
+      padding-top: 68px;
     }
 
+    /* Footer */
+    .index-bottom {
+      padding: 40px 4%;
+      text-align: center;
+      color: #888;
+    }
+    .index-links a {
+      color: #888;
+      text-decoration: none;
+      margin: 0 8px;
+    }
+    .index-links a:hover {
+      color: #fff;
+    }
+    .copyright {
+      margin-top: 16px;
+    }
+
+    /* Animations */
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    .fade-in {
+      animation: fadeIn 0.5s ease-out;
+    }
+
+    /* Notification dropdown - Netflix style */
+    .notif-dropdown {
+      background: #141414;
+      border: 1px solid #333;
+    }
+    .notif-dropdown-header {
+      background: #1a1a1a;
+      border-bottom: 1px solid #333;
+    }
+    .notif-item {
+      border-bottom: 1px solid #333;
+    }
+    .notif-item:hover {
+      background: #1a1a1a;
+    }
+
+    .notif-bell-btn {
+      background: transparent;
+      border: none;
+      color: #fff;
+    }
+    .notif-bell-btn:hover {
+      color: #e50914;
+    }
   </style>
 </head>
 <body>
@@ -324,18 +512,24 @@
   <main id="container">
     <div class="wrapper content-column">
 
-      <div class="movies-header">
-        <div class="movies-header-icon"><i class="fa fa-film"></i></div>
-        <div>
-          <h1>Movies & Series</h1>
-          <p>Search and stream movies and TV series instantly</p>
+      <!-- Hero Banner -->
+      <div class="hero-banner" id="hero-banner">
+        <div class="hero-content">
+          <h1 class="hero-title">Darkside</h1>
+          <div class="hero-search-container">
+            <div class="hero-search-box">
+              <input type="text" id="hero-search-input" placeholder="Search for movies, TV series..." autocomplete="off">
+              <button id="hero-search-btn"><i class="fa fa-search"></i></button>
+            </div>
+          </div>
         </div>
       </div>
 
-      <div class="search-section">
+      <!-- Search Section (hidden initially) -->
+      <div class="search-section" id="search-section" style="display: none;">
         <div class="search-bar">
           <input type="text" id="movie-search-input" placeholder="Search for a movie or series..." autocomplete="off">
-          <button id="movie-search-btn"><i class="fa fa-search"></i> Search</button>
+          <button id="movie-search-btn"><i class="fa fa-search"></i></button>
         </div>
       </div>
 
@@ -343,11 +537,8 @@
 
       <div id="movies-results">
         <!-- Results will be injected here -->
-        <div class="movies-empty">
-          <i class="fa fa-popcorn"></i>
-          <p>Search for a movie or series to get started</p>
-        </div>
       </div>
+
 
       <!-- FOOTER -->
       <footer class="index-bottom" style="margin-top: 40px;">
@@ -372,25 +563,63 @@
   <script>
 // movies.js — inlined
 
+const heroSearchInput = document.getElementById('hero-search-input');
+const heroSearchBtn = document.getElementById('hero-search-btn');
 const searchInput = document.getElementById('movie-search-input');
 const searchBtn = document.getElementById('movie-search-btn');
 const resultsContainer = document.getElementById('movies-results');
 const resultsCount = document.getElementById('results-count');
+const header = document.getElementById('header');
+const navbar = document.getElementById('navbar');
 
 let isSearching = false;
+
+// Scroll effect for header
+window.addEventListener('scroll', () => {
+  if (window.scrollY > 50) {
+    header.classList.add('scrolled');
+    navbar.classList.add('scrolled');
+  } else {
+    header.classList.remove('scrolled');
+    navbar.classList.remove('scrolled');
+  }
+});
+
+heroSearchBtn.addEventListener('click', () => performHeroSearch());
+heroSearchInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') performHeroSearch();
+});
 
 searchBtn.addEventListener('click', performSearch);
 searchInput.addEventListener('keydown', (e) => {
   if (e.key === 'Enter') performSearch();
 });
 
+async function performHeroSearch() {
+  const query = heroSearchInput.value.trim();
+  if (!query || isSearching) return;
+
+  // Hide hero and show search section
+  document.getElementById('hero-banner').style.display = 'none';
+  document.getElementById('search-section').style.display = 'block';
+  
+  // Copy query to main search input
+  searchInput.value = query;
+  
+  await performSearch();
+}
+
 async function performSearch() {
   const query = searchInput.value.trim();
   if (!query || isSearching) return;
 
+  // Hide hero if still visible
+  document.getElementById('hero-banner').style.display = 'none';
+  document.getElementById('search-section').style.display = 'block';
+
   isSearching = true;
   searchBtn.disabled = true;
-  searchBtn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Searching...';
+  searchBtn.innerHTML = '<i class="fa fa-spinner fa-spin"></i>';
 
   resultsContainer.innerHTML = `
     <div class="movies-loading">
@@ -417,7 +646,7 @@ async function performSearch() {
   } finally {
     isSearching = false;
     searchBtn.disabled = false;
-    searchBtn.innerHTML = '<i class="fa fa-search"></i> Search';
+    searchBtn.innerHTML = '<i class="fa fa-search"></i>';
   }
 }
 
@@ -442,13 +671,20 @@ function displayResults(data) {
     return;
   }
 
-  const grid = document.createElement('div');
-  grid.className = 'movies-grid';
+  const row = document.createElement('div');
+  row.className = 'netflix-row fade-in';
+
+  const header = document.createElement('div');
+  header.className = 'row-header';
+  header.textContent = 'Search Results';
+  row.appendChild(header);
+
+  const slider = document.createElement('div');
+  slider.className = 'row-slider';
 
   results.forEach((item, idx) => {
     const card = document.createElement('div');
-    card.className = 'movie-card movie-card-anim';
-    card.style.animationDelay = `${idx * 0.05}s`;
+    card.className = 'movie-card';
 
     let badgeClass = 'badge-other';
     let badgeText = item.type || '';
@@ -468,18 +704,17 @@ function displayResults(data) {
           : `<div class="poster-placeholder"><i class="fa fa-film"></i></div>`
         }
         ${badgeText ? `<span class="movie-card-badge ${badgeClass}">${escapeHtml(badgeText)}</span>` : ''}
-        <div class="play-overlay"><i class="fa fa-play-circle"></i></div>
+        <div class="card-overlay">
+          <div class="card-overlay-title" title="${escapeHtml(item.title)}">${escapeHtml(item.title)}</div>
+          ${metaText ? `<div class="card-overlay-meta">${escapeHtml(metaText)}</div>` : ''}
+          <button class="card-overlay-play" data-href="${escapeHtml(item.href)}" data-title="${escapeHtml(item.title)}">
+            <i class="fa fa-play"></i> Play
+          </button>
+        </div>
       </div>
-      <div class="movie-card-info">
-        <div class="movie-card-title" title="${escapeHtml(item.title)}">${escapeHtml(item.title)}</div>
-        ${metaText ? `<div class="movie-card-meta">${escapeHtml(metaText)}</div>` : ''}
-      </div>
-      <button class="movie-card-play" data-href="${escapeHtml(item.href)}" data-title="${escapeHtml(item.title)}">
-        <i class="fa fa-play"></i> Play
-      </button>
     `;
 
-    const playBtn = card.querySelector('.movie-card-play');
+    const playBtn = card.querySelector('.card-overlay-play');
     const openStream = () => {
       const p = new URLSearchParams();
       p.set('href', item.href);
@@ -493,11 +728,12 @@ function displayResults(data) {
     playBtn.addEventListener('click', (e) => { e.stopPropagation(); openStream(); });
     card.addEventListener('click', openStream);
 
-    grid.appendChild(card);
+    slider.appendChild(card);
   });
 
+  row.appendChild(slider);
   resultsContainer.innerHTML = '';
-  resultsContainer.appendChild(grid);
+  resultsContainer.appendChild(row);
 }
 
 function escapeHtml(str) {
