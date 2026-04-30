@@ -1072,6 +1072,7 @@
     const wrapEl = document.getElementById('watchPlayerWrap');
 
     loadingEl.style.display = 'flex';
+    loadingEl.className = 'watch-player-loading';
     loadingEl.innerHTML = '<i class="fa fa-spinner fa-spin"></i><span class="loading-text">Loading player...</span>';
     iframeEl.style.display = 'none';
     wrapEl.classList.remove('playing');
@@ -1083,14 +1084,31 @@
         body: JSON.stringify({ action: 'movie_play', href: epHref }),
       });
       const data = await resp.json();
-      if (!data.success) throw new Error(data.error || 'Failed to load movie');
 
-      embedUrl = data.embed_url;
-      iframeEl.src = embedUrl;
-      iframeEl.style.display = 'block';
-      loadingEl.style.display = 'none';
-      controlsEl.style.display = 'flex';
-      wrapEl.classList.add('playing');
+      if (data.success && data.embed_url) {
+        embedUrl = data.embed_url;
+
+        if (embedUrl.includes('vaplayer.ru') || embedUrl.includes('vidapi')) {
+          iframeEl.removeAttribute('sandbox');
+          iframeEl.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-forms allow-presentation allow-popups allow-popups-to-escape-sandbox allow-storage-access-by-user-activation');
+        }
+
+        iframeEl.src = embedUrl;
+        iframeEl.style.display = 'block';
+        loadingEl.style.display = 'none';
+        controlsEl.style.display = 'flex';
+        wrapEl.classList.add('playing');
+      } else {
+        // Fallback: load episode page directly
+        embedUrl = `https://streamimdb.ru${epHref}`;
+        iframeEl.removeAttribute('sandbox');
+        iframeEl.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-forms allow-presentation allow-popups allow-popups-to-escape-sandbox allow-top-navigation-by-user-activation');
+        iframeEl.src = embedUrl;
+        iframeEl.style.display = 'block';
+        loadingEl.style.display = 'none';
+        controlsEl.style.display = 'flex';
+        wrapEl.classList.add('playing');
+      }
     } catch (err) {
       loadingEl.className = 'watch-player-error';
       loadingEl.innerHTML = `<i class="fa fa-exclamation-triangle"></i><span>${esc(err.message)}</span>`;
@@ -1198,7 +1216,14 @@
 
       if (data.success && data.embed_url) {
         embedUrl = data.embed_url;
-        console.log('Got embed URL from API:', embedUrl);
+        console.log('Got embed URL from API:', embedUrl, data.direct_page ? '(direct page)' : '(player embed)');
+
+        // For vaplayer.ru embeds, remove sandbox restrictions that block the player
+        if (embedUrl.includes('vaplayer.ru') || embedUrl.includes('vidapi')) {
+          iframeEl.removeAttribute('sandbox');
+          iframeEl.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-forms allow-presentation allow-popups allow-popups-to-escape-sandbox allow-storage-access-by-user-activation');
+        }
+
         iframeEl.src = embedUrl;
         iframeEl.style.display = 'block';
         loadingEl.style.display = 'none';
@@ -1207,34 +1232,16 @@
         return;
       }
 
-      // Fallback: construct embed URL from href if API couldn't find it
-      console.warn('API did not return embed_url, trying fallback construction from href:', href);
-      let fallbackUrl = '';
-      if (href.startsWith('/movie/')) {
-        const slug = href.replace('/movie/', '');
-        fallbackUrl = `https://streamimdb.ru/embed/${slug}`;
-      } else if (href.startsWith('/tv/')) {
-        const slug = href.replace('/tv/', '');
-        fallbackUrl = `https://streamimdb.ru/embed/${slug}`;
-      } else if (href.includes('/season/') && href.includes('/episode/')) {
-        // Episode URL - try parent TV show embed
-        const tvMatch = href.match(/^(\/tv\/[^/]+)\//);
-        if (tvMatch) {
-          fallbackUrl = `https://streamimdb.ru/embed${tvMatch[1]}`;
-        }
-      }
-
-      if (fallbackUrl) {
-        console.log('Using fallback embed URL:', fallbackUrl);
-        embedUrl = fallbackUrl;
-        iframeEl.src = fallbackUrl;
-        iframeEl.style.display = 'block';
-        loadingEl.style.display = 'none';
-        controlsEl.style.display = 'flex';
-        wrapEl.classList.add('playing');
-      } else {
-        throw new Error(data.error || 'No embed URL found and could not construct fallback');
-      }
+      // If API failed entirely, try loading the movie page directly in the iframe
+      console.warn('API did not return embed_url, loading movie page directly');
+      embedUrl = `https://streamimdb.ru${href}`;
+      iframeEl.removeAttribute('sandbox');
+      iframeEl.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-forms allow-presentation allow-popups allow-popups-to-escape-sandbox allow-top-navigation-by-user-activation');
+      iframeEl.src = embedUrl;
+      iframeEl.style.display = 'block';
+      loadingEl.style.display = 'none';
+      controlsEl.style.display = 'flex';
+      wrapEl.classList.add('playing');
     } catch (err) {
       console.error('loadPlayer error:', err);
       loadingEl.className = 'watch-player-error';
