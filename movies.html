@@ -856,21 +856,18 @@ function displayContinueWatching() {
     `;
 
     const playBtn = card.querySelector('.card-overlay-play');
-    const openStream = async () => {
+    const openStream = () => {
+      const p = new URLSearchParams();
+      p.set('href', item.href);
+      p.set('title', item.title);
+      if (item.embed) p.set('embed', item.embed);
+      if (item.year) p.set('year', item.year);
+      if (item.type) p.set('type', item.type);
+      if (item.image_url) p.set('poster', item.image_url);
+      if (item.bg_url) p.set('bg_url', item.bg_url);
+      if (item.description) p.set('description', item.description);
       saveContinueWatching(item);
-      try {
-        const resp = await fetch('/api/credits', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'movie_play', href: item.href }),
-        });
-        const data = await resp.json();
-        if (data.success && data.embed_url) {
-          window.location.href = data.embed_url;
-          return;
-        }
-      } catch (e) {}
-      window.location.href = `https://streamimdb.ru${item.href}`;
+      window.location.href = `watch.html?${p.toString()}`;
     };
 
     playBtn.addEventListener('click', (e) => { e.stopPropagation(); openStream(); });
@@ -1052,21 +1049,18 @@ function displayCategories(categories) {
       `;
 
       const playBtn = card.querySelector('.card-overlay-play');
-      const openStream = async () => {
+      const openStream = () => {
+        const p = new URLSearchParams();
+        p.set('href', item.href);
+        p.set('title', item.title);
+        if (item.embed) p.set('embed', item.embed);
+        if (item.year) p.set('year', item.year);
+        if (item.type) p.set('type', item.type);
+        if (item.image_url) p.set('poster', item.image_url);
+        if (item.bg_url) p.set('bg_url', item.bg_url);
+        if (item.description) p.set('description', item.description);
         saveContinueWatching(item);
-        try {
-          const resp = await fetch('/api/credits', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ action: 'movie_play', href: item.href }),
-          });
-          const data = await resp.json();
-          if (data.success && data.embed_url) {
-            window.location.href = data.embed_url;
-            return;
-          }
-        } catch (e) {}
-        window.location.href = `https://streamimdb.ru${item.href}`;
+        window.location.href = `watch.html?${p.toString()}`;
       };
 
       playBtn.addEventListener('click', (e) => { e.stopPropagation(); openStream(); });
@@ -1165,21 +1159,18 @@ function displayResults(data) {
     `;
 
     const playBtn = card.querySelector('.card-overlay-play');
-    const openStream = async () => {
+    const openStream = () => {
+      const p = new URLSearchParams();
+      p.set('href', item.href);
+      p.set('title', item.title);
+      if (item.embed) p.set('embed', item.embed);
+      if (item.year) p.set('year', item.year);
+      if (item.type) p.set('type', item.type);
+      if (item.image_url) p.set('poster', item.image_url);
+      if (item.bg_url) p.set('bg_url', item.bg_url);
+      if (item.description) p.set('description', item.description);
       saveContinueWatching(item);
-      try {
-        const resp = await fetch('/api/credits', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'movie_play', href: item.href }),
-        });
-        const data = await resp.json();
-        if (data.success && data.embed_url) {
-          window.location.href = data.embed_url;
-          return;
-        }
-      } catch (e) {}
-      window.location.href = `https://streamimdb.ru${item.href}`;
+      window.location.href = `watch.html?${p.toString()}`;
     };
 
     playBtn.addEventListener('click', (e) => { e.stopPropagation(); openStream(); });
