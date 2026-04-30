@@ -9,6 +9,9 @@
   <link href="styles.css" rel="stylesheet">
   <link href="notifications.css" rel="stylesheet">
 
+  <!-- Google Cast SDK for Chromecast/TV device detection -->
+  <script src="https://www.gstatic.com/cv/js/sender/v1/cast_sender.js?loadCastFramework=1"></script>
+
   <style>
     body {
       background: #05060a;
@@ -271,6 +274,60 @@
       color: #e94560;
     }
 
+    /* ── Cast fallback modal ── */
+    .cast-fallback-modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 10000;
+      background: rgba(0,0,0,0.8);
+      align-items: center;
+      justify-content: center;
+    }
+    .cast-fallback-modal.active {
+      display: flex;
+    }
+    .cast-fallback-content {
+      background: #111;
+      border: 1px solid #333;
+      border-radius: 12px;
+      padding: 24px;
+      max-width: 400px;
+      text-align: center;
+    }
+    .cast-fallback-content h3 {
+      color: #fff;
+      margin: 0 0 12px;
+      font-size: 18px;
+    }
+    .cast-fallback-content p {
+      color: #888;
+      font-size: 13px;
+      line-height: 1.5;
+      margin: 0 0 16px;
+    }
+    .cast-fallback-content ul {
+      color: #aaa;
+      font-size: 12px;
+      text-align: left;
+      margin: 0 0 20px 20px;
+      line-height: 1.6;
+    }
+    .cast-fallback-close {
+      background: #e94560;
+      border: none;
+      color: #fff;
+      padding: 10px 24px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .cast-fallback-close:hover {
+      background: #c93654;
+    }
+
     /* ── Responsive ── */
     @media (max-width: 700px) {
       .watch-hero-content {
@@ -396,6 +453,20 @@
     </div>
   </div>
 
+  <!-- Cast fallback modal -->
+  <div class="cast-fallback-modal" id="castFallbackModal">
+    <div class="cast-fallback-content">
+      <h3><i class="fa fa-chromecast"></i> Cast to TV</h3>
+      <p>Use your browser's built-in cast feature to send this video to your TV:</p>
+      <ul>
+        <li><strong>Chrome:</strong> Click the three dots menu → Cast</li>
+        <li><strong>Edge:</strong> Click the three dots menu → Cast to device</li>
+        <li>Make sure your TV is on the same Wi-Fi network</li>
+      </ul>
+      <button class="cast-fallback-close" id="castFallbackClose" type="button">Got it</button>
+    </div>
+  </div>
+
   <!-- FOOTER -->
   <footer class="index-bottom" style="margin-top: 0;">
     <div class="index-links">
@@ -504,13 +575,142 @@
     }
   }
 
-  // ── Cast to TV (Presentation API) ──
+  // ── Cast to TV (Multi-API: Cast SDK → Presentation API → Fallback) ──
   const castBtn = document.getElementById('castBtn');
+  const castFallbackModal = document.getElementById('castFallbackModal');
+  const castFallbackClose = document.getElementById('castFallbackClose');
   let castConnection = null;
+  let castSession = null;
+  let castAvailable = false;
+
+  // Google Cast SDK callback
+  window.__onGCastApiAvailable = function(isAvailable) {
+    if (isAvailable) {
+      initializeCastApi();
+    }
+  };
+
+  function initializeCastApi() {
+    try {
+      const castContext = cast.framework.CastContext.getInstance();
+      castContext.setOptions({
+        receiverApplicationId: chrome.cast.media.DEFAULT_MEDIA_RECEIVER_APP_ID,
+        autoJoinPolicy: chrome.cast.AutoJoinPolicy.ORIGIN_SCOPED
+      });
+      castAvailable = true;
+
+      castContext.addEventListener(cast.framework.CastContextEventType.SESSION_STATE_CHANGED, function() {
+        const sessionState = castContext.getSessionState();
+        const session = castContext.getCurrentSession();
+        castSession = session;
+
+        if (sessionState === cast.framework.SessionState.SESSION_STARTED ||
+            sessionState === cast.framework.SessionState.SESSION_RESUMED) {
+          castBtn.classList.add('cast-active');
+          castBtn.innerHTML = '<i class="fa fa-chromecast"></i> Casting...';
+          loadMediaOnCast(session);
+        } else {
+          castBtn.classList.remove('cast-active');
+          castBtn.innerHTML = '<i class="fa fa-chromecast"></i> Cast to TV';
+          castSession = null;
+        }
+      });
+    } catch(e) {
+      console.warn('Cast SDK init failed:', e);
+    }
+  }
+
+  function loadMediaOnCast(session) {
+    if (!session || !embedUrl) return;
+
+    const mediaInfo = new chrome.cast.media.MediaInfo(embedUrl, 'video/mp4');
+    mediaInfo.metadata = new chrome.cast.media.GenericMediaMetadata();
+    mediaInfo.metadata.title = title || 'Movie';
+    if (poster) mediaInfo.metadata.images = [new chrome.cast.Image(poster)];
+
+    const request = new chrome.cast.media.LoadRequest(mediaInfo);
+    request.autoplay = true;
+
+    session.loadMedia(request).then(function() {
+      // Media loaded successfully
+    }).catch(function(error) {
+      console.warn('Cast loadMedia failed:', error);
+      // Default receiver can't play HTML, try Presentation API
+      session.endSession(true);
+      tryPresentationApi();
+    });
+  }
+
+  function tryCastSdk() {
+    if (!castAvailable) return false;
+
+    const castContext = cast.framework.CastContext.getInstance();
+    const session = castContext.getCurrentSession();
+
+    if (session) {
+      session.endSession(true);
+      return true;
+    }
+
+    castContext.requestSession().catch(function() {
+      // Cast SDK failed, try Presentation API
+      tryPresentationApi();
+    });
+    return true;
+  }
+
+  function tryPresentationApi() {
+    if (!window.PresentationRequest) {
+      showCastFallback();
+      return;
+    }
+
+    const pr = new PresentationRequest([embedUrl]);
+    navigator.presentation.defaultRequest = pr;
+
+    pr.start().then(function(conn) {
+      castConnection = conn;
+      castBtn.classList.add('cast-active');
+      castBtn.innerHTML = '<i class="fa fa-chromecast"></i> Casting...';
+
+      conn.addEventListener('connect', function() {
+        castBtn.classList.add('cast-active');
+        castBtn.innerHTML = '<i class="fa fa-chromecast"></i> Casting...';
+      });
+
+      conn.addEventListener('close', function() {
+        castConnection = null;
+        castBtn.classList.remove('cast-active');
+        castBtn.innerHTML = '<i class="fa fa-chromecast"></i> Cast to TV';
+      });
+
+      conn.addEventListener('terminate', function() {
+        castConnection = null;
+        castBtn.classList.remove('cast-active');
+        castBtn.innerHTML = '<i class="fa fa-chromecast"></i> Cast to TV';
+      });
+    }).catch(function() {
+      showCastFallback();
+    });
+  }
+
+  function showCastFallback() {
+    castFallbackModal.classList.add('active');
+  }
+
+  function hideCastFallback() {
+    castFallbackModal.classList.remove('active');
+  }
+
+  castFallbackClose.addEventListener('click', hideCastFallback);
+  castFallbackModal.addEventListener('click', function(e) {
+    if (e.target === castFallbackModal) hideCastFallback();
+  });
 
   castBtn.addEventListener('click', function() {
     if (!embedUrl) return;
 
+    // If already casting via Presentation API, stop
     if (castConnection) {
       castConnection.terminate();
       castConnection = null;
@@ -519,48 +719,11 @@
       return;
     }
 
-    if (!navigator.presentation || !navigator.presentation.defaultRequest) {
-      // Fallback: try opening the embed URL for the browser's built-in cast menu
-      try {
-        const pr = new PresentationRequest([embedUrl]);
-        navigator.presentation.defaultRequest = pr;
-        pr.start().then(function(conn) {
-          castConnection = conn;
-          castBtn.classList.add('cast-active');
-          castBtn.innerHTML = '<i class="fa fa-chromecast"></i> Casting...';
-          conn.addEventListener('connect', function() {
-            castBtn.classList.add('cast-active');
-            castBtn.innerHTML = '<i class="fa fa-chromecast"></i> Casting...';
-          });
-          conn.addEventListener('close', function() {
-            castConnection = null;
-            castBtn.classList.remove('cast-active');
-            castBtn.innerHTML = '<i class="fa fa-chromecast"></i> Cast to TV';
-          });
-          conn.addEventListener('terminate', function() {
-            castConnection = null;
-            castBtn.classList.remove('cast-active');
-            castBtn.innerHTML = '<i class="fa fa-chromecast"></i> Cast to TV';
-          });
-        }).catch(function(err) {
-          console.warn('Cast failed:', err);
-        });
-      } catch(e) {
-        console.warn('Presentation API not available:', e);
-      }
-      return;
-    }
+    // Try Cast SDK first (detects Chromecast/TV like YouTube)
+    if (tryCastSdk()) return;
 
-    navigator.presentation.defaultRequest.start().then(function(conn) {
-      castConnection = conn;
-      castBtn.classList.add('cast-active');
-      castBtn.innerHTML = '<i class="fa fa-chromecast"></i> Casting...';
-      conn.addEventListener('terminate', function() {
-        castConnection = null;
-        castBtn.classList.remove('cast-active');
-        castBtn.innerHTML = '<i class="fa fa-chromecast"></i> Cast to TV';
-      });
-    }).catch(function() {});
+    // Fall back to Presentation API
+    tryPresentationApi();
   });
 
   // ── Fullscreen ──
