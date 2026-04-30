@@ -176,6 +176,7 @@ export default async function handler(req, res) {
         }
 
         // Fetch /movies page for more popular movies
+        let totalMovieCount = '';
         try {
           const moviesHtml = await fetchPage('https://streamimdb.ru/movies');
           if (moviesHtml) {
@@ -185,6 +186,11 @@ export default async function handler(req, res) {
             if (newMovies.length > 0) {
               categories.popular_movies = newMovies.slice(0, 30);
               newMovies.forEach(item => existingHrefs.add(item.href));
+            }
+            // Extract total count
+            const $subtitle = $m('.cb-list-subtitle');
+            if ($subtitle.length) {
+              totalMovieCount = $subtitle.text().trim();
             }
           }
         } catch (e) { console.error('Failed to fetch /movies:', e.message); }
@@ -202,11 +208,110 @@ export default async function handler(req, res) {
           }
         } catch (e) { console.error('Failed to fetch /tv-shows:', e.message); }
 
-        res.status(200).json({ success: true, categories });
+        res.status(200).json({ success: true, categories, total_movie_count: totalMovieCount });
         return;
       } catch (err) {
         console.error('movie_fetch_homepage error:', err);
         res.status(500).json({ success: false, error: 'Failed to fetch homepage' });
+        return;
+      }
+    }
+
+    // movie_fetch_movies_page does not require auth - paginated movie listing
+    if (body.action === 'movie_fetch_movies_page') {
+      const page = parseInt(body.page) || 1;
+      const genre = (body.genre || '').trim();
+
+      try {
+        let moviesUrl = 'https://streamimdb.ru/movies';
+        const params = [];
+        if (genre) params.push(`genre=${encodeURIComponent(genre)}`);
+        params.push(`page=${page}`);
+        moviesUrl += '?' + params.join('&');
+
+        const headers = {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        };
+
+        const response = await fetch(moviesUrl, { headers, signal: AbortSignal.timeout(20000) });
+        if (!response.ok) {
+          res.status(200).json({ success: true, movies: [], total_count: '', page });
+          return;
+        }
+
+        const html = await response.text();
+        const $ = cheerio.load(html);
+
+        // Extract total count
+        let totalCount = '';
+        const $subtitle = $('.cb-list-subtitle');
+        if ($subtitle.length) {
+          totalCount = $subtitle.text().trim();
+        }
+
+        // Extract movies
+        const movies = [];
+        $('.cb-card').each((_, card) => {
+          const $card = $(card);
+          const $link = $card.find('a[href]').first();
+          const $posterImg = $card.find('.cb-card-poster img').first();
+          const $title = $card.find('.cb-card-title');
+          const $meta = $card.find('.cb-card-meta');
+          const $mcMeta = $card.find('.cb-card-mc-meta');
+          const $plot = $card.find('.cb-card-mc-plot');
+
+          const href = $link.attr('href') || '';
+          const image_url = $posterImg.attr('src') || $card.find('img').first().attr('src') || '';
+          const title = $title.text().trim() || $posterImg.attr('alt') || '';
+          const metaText = $meta.text().trim();
+
+          let year = '';
+          const yearM = metaText.match(/\b(19|20)\d{2}\b/);
+          if (yearM) year = yearM[0];
+
+          let type = '';
+          if ($mcMeta.length) {
+            const mcText = $mcMeta.text();
+            if (/movie/i.test(mcText)) type = 'Movie';
+            else if (/tv|series/i.test(mcText)) type = 'Series';
+          }
+
+          const description = $plot.text().trim() || '';
+
+          if (href && title) {
+            movies.push({ href, image_url, title, type, year, description });
+          }
+        });
+
+        // Fallback: try direct links
+        if (movies.length === 0) {
+          $('a[href*="/movie/"]').each((_, link) => {
+            const $link = $(link);
+            const $img = $link.find('img').first();
+            const href = $link.attr('href') || '';
+            const image_url = $img.attr('src') || '';
+            const title = $img.attr('alt') || $link.attr('title') || $link.text().trim().split('\n')[0].trim();
+
+            let year = '';
+            const yearM = $link.text().match(/\b(19|20)\d{2}\b/);
+            if (yearM) year = yearM[0];
+
+            if (href && title) {
+              movies.push({ href, image_url, title, type: 'Movie', year, description: '' });
+            }
+          });
+        }
+
+        // Check if there's a next page
+        const hasNextPage = $('.cb-pagination a[href*="page=' + (page + 1) + '"]').length > 0 ||
+                            $('.cb-pagination-next, .next, [rel="next"]').length > 0;
+
+        res.status(200).json({ success: true, movies, total_count: totalCount, page, has_next: hasNextPage || movies.length >= 30 });
+        return;
+      } catch (err) {
+        console.error('movie_fetch_movies_page error:', err);
+        res.status(500).json({ success: false, error: 'Failed to fetch movies page' });
         return;
       }
     }
@@ -975,7 +1080,7 @@ export default async function handler(req, res) {
     }
 
     // Unknown action
-    res.status(400).json({ success: false, error: 'Unknown action. Use: get, give, spend, create_user, reset_password, approve_thread, decline_thread, list_pending_threads, update_config_request_status, movie_search, movie_play, movie_fetch_episodes, movie_fetch_homepage' });
+    res.status(400).json({ success: false, error: 'Unknown action. Use: get, give, spend, create_user, reset_password, approve_thread, decline_thread, list_pending_threads, update_config_request_status, movie_search, movie_play, movie_fetch_episodes, movie_fetch_homepage, movie_fetch_movies_page' });
   } catch (err) {
     console.error('credits handler error:', err);
     res.status(500).json({ success: false, error: 'Server error' });
