@@ -1088,9 +1088,8 @@
       if (data.success && data.embed_url) {
         embedUrl = data.embed_url;
 
-        if (embedUrl.includes('vaplayer.ru') || embedUrl.includes('vidapi')) {
+        if (embedUrl.includes('vaplayer.ru') || embedUrl.includes('vidapi') || embedUrl.includes('brightpathsignals')) {
           iframeEl.removeAttribute('sandbox');
-          iframeEl.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-forms allow-presentation allow-popups allow-popups-to-escape-sandbox allow-storage-access-by-user-activation');
         }
 
         iframeEl.src = embedUrl;
@@ -1218,10 +1217,10 @@
         embedUrl = data.embed_url;
         console.log('Got embed URL from API:', embedUrl, data.direct_page ? '(direct page)' : '(player embed)');
 
-        // For vaplayer.ru embeds, remove sandbox restrictions that block the player
-        if (embedUrl.includes('vaplayer.ru') || embedUrl.includes('vidapi')) {
+        // For vaplayer.ru embeds, remove sandbox entirely — the player has anti-iframe
+        // checks that detect sandbox (origin becomes 'null') and self-destruct (die())
+        if (embedUrl.includes('vaplayer.ru') || embedUrl.includes('vidapi') || embedUrl.includes('brightpathsignals')) {
           iframeEl.removeAttribute('sandbox');
-          iframeEl.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-forms allow-presentation allow-popups allow-popups-to-escape-sandbox allow-storage-access-by-user-activation');
         }
 
         iframeEl.src = embedUrl;
