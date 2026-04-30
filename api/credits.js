@@ -1,6 +1,7 @@
 // api/credits.js – Combined credits API (get / give / spend / create-user / reset-password)
 import { createClient } from '@supabase/supabase-js';
 import { randomBytes } from 'crypto';
+import * as cheerio from 'cheerio';
 
 const supabaseUrl = 'https://ffmkkwskvjvytdddevmm.supabase.co';
 const supabaseServiceKey =
@@ -35,97 +36,191 @@ export default async function handler(req, res) {
         }
 
         const html = await response.text();
-
-        const decodeEntities = (s) => s
-          .replace(/&#039;/g, "'")
-          .replace(/&#39;/g, "'")
-          .replace(/&amp;/g, '&')
-          .replace(/&lt;/g, '<')
-          .replace(/&gt;/g, '>')
-          .replace(/&quot;/g, '"')
-          .replace(/&#x27;/g, "'")
-          .replace(/&#x2F;/g, '/');
-
-        const extractCards = (html) => {
-          const results = [];
-          
-          // Try multiple patterns for card containers
-          const patterns = [
-            /<div class="cb-card">([\s\S]*?)<\/div>\s*<\/div>\s*<\/div>/g,
-            /<div class="cb-card">([\s\S]*?)<\/div>/g,
-          ];
-
-          for (const pattern of patterns) {
-            const matches = [...html.matchAll(pattern)];
-            for (const match of matches) {
-              const chunk = match[0];
-              
-              const hrefMatch = chunk.match(/<a\s+href="([^"]+)"/);
-              const imgMatch = chunk.match(/<img\s+src="([^"]+)"/);
-              const badgeMatch = chunk.match(/<span class="cb-card-badge[^>]*>(\w+)<\/span>/);
-              const titleMatch = chunk.match(/<h3 class="cb-card-title"[^>]*title="([^"]+)"/) || 
-                               chunk.match(/<h3[^>]*title="([^"]+)"/) ||
-                               chunk.match(/<h3[^>]*>([^<]+)<\/h3>/);
-              const yearMatch = chunk.match(/<p class="cb-card-meta">([^<]*)<\/p>/);
-
-              if (hrefMatch && titleMatch) {
-                const title = titleMatch[1].includes('<') ? 
-                  chunk.match(/<h3[^>]*>([^<]+)<\/h3>/)?.[1] || titleMatch[1] : 
-                  titleMatch[1];
-                  
-                results.push({
-                  href: hrefMatch[1],
-                  image_url: imgMatch ? imgMatch[1] : '',
-                  title: decodeEntities(title),
-                  type: badgeMatch ? badgeMatch[1] : '',
-                  year: yearMatch ? decodeEntities(yearMatch[1].trim()) : '',
-                });
-              }
-            }
-            if (results.length > 0) break;
-          }
-          return results;
-        };
-
+        const $ = cheerio.load(html);
         const categories = {};
 
-        // More flexible category extraction - look for h2 tags with specific text
-        const categoryPatterns = [
-          { name: 'trending', title: 'Trending Today' },
-          { name: 'popular', title: 'Popular Now' },
-          { name: 'latest', title: 'Latest TV Shows' },
-          { name: 'top_rated', title: 'Top Rated' },
-        ];
+        // Extract hero slider items
+        const heroItems = [];
+        $('.cb-slide').each((_, el) => {
+          const $slide = $(el);
+          const $playBtn = $slide.find('.cb-slide-play');
+          const $detailLink = $slide.find('.cb-btn-ghost-sm');
+          const $logo = $slide.find('.cb-slide-title-logo');
+          const $bg = $slide.find('.cb-slide-bg');
 
-        for (const cat of categoryPatterns) {
-          // Try multiple patterns for the category section
-          const patterns = [
-            new RegExp(`<h2[^>]*>${cat.title.replace(/\s+/g, '\\s+')}<\\/h2>[\\s\\S]*?(?=<h2|$)`, 'i'),
-            new RegExp(`<h2[^>]*>.*${cat.title}.*<\\/h2>[\\s\\S]*?(?=<h2|$)`, 'i'),
-            new RegExp(`<h2[^>]*>${cat.title}<\\/h2>`, 'i'),
-          ];
+          const title = $playBtn.attr('data-title') || $logo.attr('alt') || '';
+          const embed = $playBtn.attr('data-embed') || '';
+          const href = $detailLink.attr('href') || '';
+          const image_url = $logo.attr('src') || $bg.css('background-image')?.replace(/url\(['"]?|['"]?\)/g, '') || '';
 
-          for (const pattern of patterns) {
-            const match = html.match(pattern);
-            if (match) {
-              const sectionHtml = match[0];
-              const cards = extractCards(sectionHtml);
-              if (cards.length > 0) {
-                categories[cat.name] = cards;
-                console.log(`Found ${cards.length} items in ${cat.name}`);
-                break;
-              }
-            }
+          // Parse meta spans for year and type
+          let year = '';
+          let type = '';
+          const metaSpans = $slide.find('.cb-slide-meta span').not('.cb-slide-dot').not('i').parent();
+          $slide.find('.cb-slide-meta span').not('.cb-slide-dot').each((_, sp) => {
+            const txt = $(sp).text().trim();
+            if (/^\d{4}$/.test(txt)) year = txt;
+          });
+
+          if (embed || href) {
+            heroItems.push({ title, href, embed, image_url, type: type || 'Movie', year });
           }
+        });
+        if (heroItems.length > 0) {
+          categories.hero = heroItems;
         }
 
-        // If no categories found, try to extract all cards from the page
+        // Extract category sections by h2 headings
+        const categoryMap = {
+          'Trending Today': 'trending',
+          'Popular Now': 'popular',
+          'Latest TV Shows': 'latest',
+          'Top Rated': 'top_rated',
+          'TOP 10': 'top10',
+        };
+
+        // Find all h2 elements and process the section after each
+        $('h2').each((_, h2el) => {
+          const h2Text = $(h2el).text().trim();
+          const catKey = categoryMap[h2Text];
+          if (!catKey) return;
+
+          // Walk to the next sibling container that holds cards
+          let $section = $(h2el).next();
+          while ($section.length && !$section.find('.cb-card, .cb-flx-item, a[href*="/movie/"], a[href*="/tv/"]').length) {
+            $section = $section.next();
+          }
+
+          const items = [];
+          // Try .cb-card elements first
+          $section.find('.cb-card').each((_, card) => {
+            const $card = $(card);
+            const $link = $card.find('a[href]').first();
+            const $img = $card.find('img').first();
+            const $badge = $card.find('.cb-card-badge');
+            const $title = $card.find('.cb-card-title');
+            const $meta = $card.find('.cb-card-meta');
+
+            const href = $link.attr('href') || '';
+            const image_url = $img.attr('src') || '';
+            const title = $title.attr('title') || $title.text().trim() || '';
+            const badge = $badge.text().trim();
+            const metaText = $meta.text().trim();
+
+            let year = '';
+            let type = badge;
+            const yearM = metaText.match(/\b(19|20)\d{2}\b/);
+            if (yearM) year = yearM[0];
+
+            if (href && title) {
+              items.push({ href, image_url, title, type, year });
+            }
+          });
+
+          // Fallback: try .cb-flx-item (flex list items)
+          if (items.length === 0) {
+            $section.find('.cb-flx-item').each((_, item) => {
+              const $item = $(item);
+              const $link = $item.find('a[href]').first();
+              const $img = $item.find('img').first();
+              const $title = $item.find('.cb-flx-title, h3, [class*="title"]').first();
+              const $badge = $item.find('[class*="badge"], [class*="type"]');
+
+              const href = $link.attr('href') || '';
+              const image_url = $img.attr('src') || '';
+              const title = $title.text().trim() || $link.attr('title') || $img.attr('alt') || '';
+              const type = $badge.text().trim();
+
+              let year = '';
+              const yearM = $item.text().match(/\b(19|20)\d{2}\b/);
+              if (yearM) year = yearM[0];
+
+              if (href && title) {
+                items.push({ href, image_url, title, type, year });
+              }
+            });
+          }
+
+          // Fallback: try direct links with movie/tv hrefs
+          if (items.length === 0) {
+            $section.find('a[href*="/movie/"], a[href*="/tv/"]').each((_, link) => {
+              const $link = $(link);
+              const $img = $link.find('img').first();
+              const href = $link.attr('href') || '';
+              const image_url = $img.attr('src') || '';
+              const title = $img.attr('alt') || $link.attr('title') || $link.text().trim().split('\n')[0].trim();
+
+              let year = '';
+              const yearM = $link.text().match(/\b(19|20)\d{2}\b/);
+              if (yearM) year = yearM[0];
+
+              if (href && title) {
+                items.push({ href, image_url, title, type: '', year });
+              }
+            });
+          }
+
+          if (items.length > 0) {
+            categories[catKey] = items;
+            console.log(`Found ${items.length} items in ${catKey} (${h2Text})`);
+          }
+        });
+
+        // If no categories found via h2, try extracting all cards from the page
         if (Object.keys(categories).length === 0) {
-          console.log('No categories found, trying to extract all cards');
-          const allCards = extractCards(html);
-          if (allCards.length > 0) {
-            categories.all = allCards.slice(0, 20);
-            console.log(`Found ${allCards.length} total cards`);
+          console.log('No categories found via h2, trying all cards');
+          const allItems = [];
+          $('.cb-card').each((_, card) => {
+            const $card = $(card);
+            const $link = $card.find('a[href]').first();
+            const $img = $card.find('img').first();
+            const $badge = $card.find('.cb-card-badge');
+            const $title = $card.find('.cb-card-title');
+            const $meta = $card.find('.cb-card-meta');
+
+            const href = $link.attr('href') || '';
+            const image_url = $img.attr('src') || '';
+            const title = $title.attr('title') || $title.text().trim() || '';
+            const badge = $badge.text().trim();
+            const metaText = $meta.text().trim();
+
+            let year = '';
+            let type = badge;
+            const yearM = metaText.match(/\b(19|20)\d{2}\b/);
+            if (yearM) year = yearM[0];
+
+            if (href && title) {
+              allItems.push({ href, image_url, title, type, year });
+            }
+          });
+
+          // Also try hero slides
+          if (allItems.length === 0) {
+            $('.cb-slide').each((_, el) => {
+              const $slide = $(el);
+              const $playBtn = $slide.find('.cb-slide-play');
+              const $detailLink = $slide.find('.cb-btn-ghost-sm');
+              const $logo = $slide.find('.cb-slide-title-logo');
+
+              const title = $playBtn.attr('data-title') || $logo.attr('alt') || '';
+              const href = $detailLink.attr('href') || '';
+              const image_url = $logo.attr('src') || '';
+
+              let year = '';
+              $slide.find('.cb-slide-meta span').not('.cb-slide-dot').each((_, sp) => {
+                const txt = $(sp).text().trim();
+                if (/^\d{4}$/.test(txt)) year = txt;
+              });
+
+              if (href && title) {
+                allItems.push({ href, image_url, title, type: 'Movie', year });
+              }
+            });
+          }
+
+          if (allItems.length > 0) {
+            categories.all = allItems.slice(0, 20);
+            console.log(`Found ${allItems.length} total items`);
           }
         }
 
@@ -162,56 +257,61 @@ export default async function handler(req, res) {
         }
 
         const html = await response.text();
+        const $ = cheerio.load(html);
 
-        if (html.includes('<h3>No Results Found</h3>')) {
+        if ($('h3').text().includes('No Results Found')) {
           res.status(200).json({ success: true, count_text: 'No Results Found', results: [] });
           return;
         }
 
         let countText = '';
-        const countMatch = html.match(/<p class="cb-search-results-title">\s*([\s\S]*?)\s*<\/p>/);
-        if (countMatch) {
-          const raw = countMatch[1];
-          const mainText = raw.replace(/<[^>]+>/g, '').trim();
-          const spanMatch = raw.match(/<span[^>]*>([\s\S]*?)<\/span>/);
-          if (spanMatch) {
-            const spanText = spanMatch[1].replace(/<[^>]+>/g, '').trim();
-            countText = `${mainText} ${spanText}`;
-          } else {
-            countText = mainText;
-          }
+        const $countEl = $('.cb-search-results-title');
+        if ($countEl.length) {
+          countText = $countEl.text().trim();
         }
 
-        const decodeEntities = (s) => s
-          .replace(/&#039;/g, "'")
-          .replace(/&#39;/g, "'")
-          .replace(/&amp;/g, '&')
-          .replace(/&lt;/g, '<')
-          .replace(/&gt;/g, '>')
-          .replace(/&quot;/g, '"')
-          .replace(/&#x27;/g, "'")
-          .replace(/&#x2F;/g, '/');
-
-        const cardChunks = html.split('<div class="cb-card">');
         const results = [];
+        $('.cb-card').each((_, card) => {
+          const $card = $(card);
+          const $link = $card.find('a[href]').first();
+          const $img = $card.find('img').first();
+          const $badge = $card.find('.cb-card-badge');
+          const $title = $card.find('.cb-card-title');
+          const $meta = $card.find('.cb-card-meta');
 
-        for (let i = 1; i < cardChunks.length; i++) {
-          const chunk = cardChunks[i];
-          const hrefMatch = chunk.match(/<a href="([^"]+)"/);
-          const imgMatch = chunk.match(/<img\s+src="([^"]+)"/);
-          const badgeMatch = chunk.match(/<span class="cb-card-badge\s+\w+">(\w+)<\/span>/);
-          const titleMatch = chunk.match(/<h3 class="cb-card-title"[^>]*title="([^"]+)"/);
-          const yearMatch = chunk.match(/<p class="cb-card-meta">([^<]*)<\/p>/);
+          const href = $link.attr('href') || '';
+          const image_url = $img.attr('src') || '';
+          const title = $title.attr('title') || $title.text().trim() || '';
+          const badge = $badge.text().trim();
+          const metaText = $meta.text().trim();
 
-          if (hrefMatch && titleMatch) {
-            results.push({
-              href: hrefMatch[1],
-              image_url: imgMatch ? imgMatch[1] : '',
-              title: decodeEntities(titleMatch[1]),
-              type: badgeMatch ? badgeMatch[1] : '',
-              year: yearMatch ? decodeEntities(yearMatch[1].trim()) : '',
-            });
+          let year = '';
+          let type = badge;
+          const yearM = metaText.match(/\b(19|20)\d{2}\b/);
+          if (yearM) year = yearM[0];
+
+          if (href && title) {
+            results.push({ href, image_url, title, type, year });
           }
+        });
+
+        // Fallback: try links with movie/tv hrefs if no cards found
+        if (results.length === 0) {
+          $('a[href*="/movie/"], a[href*="/tv/"]').each((_, link) => {
+            const $link = $(link);
+            const $img = $link.find('img').first();
+            const href = $link.attr('href') || '';
+            const image_url = $img.attr('src') || '';
+            const title = $img.attr('alt') || $link.attr('title') || $link.text().trim().split('\n')[0].trim();
+
+            let year = '';
+            const yearM = $link.text().match(/\b(19|20)\d{2}\b/);
+            if (yearM) year = yearM[0];
+
+            if (href && title) {
+              results.push({ href, image_url, title, type: '', year });
+            }
+          });
         }
 
         res.status(200).json({ success: true, count_text: countText, results });
@@ -246,30 +346,27 @@ export default async function handler(req, res) {
         }
 
         const html = await response.text();
-
-        // Extract episodes with titles - look for season/episode links
-        const episodeMatch = html.match(/href="([^"]*\/season\/\d+\/episode\/\d+)"[^>]*>([^<]+)</g);
-        if (!episodeMatch) {
-          res.status(200).json({ success: true, episodes: [] });
-          return;
-        }
+        const $ = cheerio.load(html);
 
         const episodes = [];
         const seen = new Set();
-        episodeMatch.forEach(link => {
-          const match = link.match(/href="([^"]+)"[^>]*>([^<]+)/);
-          if (match && !seen.has(match[1])) {
-            seen.add(match[1]);
-            // Extract season and episode numbers
-            const parts = match[1].match(/\/season\/(\d+)\/episode\/(\d+)/);
-            if (parts) {
-              episodes.push({
-                href: match[1],
-                season: parseInt(parts[1]),
-                episode: parseInt(parts[2]),
-                title: match[2].trim(),
-              });
-            }
+
+        $('a[href*="/season/"][href*="/episode/"]').each((_, el) => {
+          const $link = $(el);
+          const epHref = $link.attr('href') || '';
+          const title = $link.text().trim();
+
+          if (seen.has(epHref)) return;
+          seen.add(epHref);
+
+          const parts = epHref.match(/\/season\/(\d+)\/episode\/(\d+)/);
+          if (parts) {
+            episodes.push({
+              href: epHref,
+              season: parseInt(parts[1]),
+              episode: parseInt(parts[2]),
+              title,
+            });
           }
         });
 
@@ -311,48 +408,77 @@ export default async function handler(req, res) {
         }
 
         const html = await response.text();
+        const $ = cheerio.load(html);
 
-        // Try multiple patterns to extract embed URL (works for both movies and TV series)
-        let dataSrcMatch = html.match(/data-src="([^"]*embed[^"]*)"/);  // Standard pattern
-        if (!dataSrcMatch) {
-          dataSrcMatch = html.match(/src="([^"]*embed\/[^"]*)"/);  // Direct src pattern
-        }
-        if (!dataSrcMatch) {
-          dataSrcMatch = html.match(/iframe[^>]*src="([^"]+)"/);  // Any iframe src
-        }
-        if (!dataSrcMatch) {
-          dataSrcMatch = html.match(/\/embed\/(tv|movie)\/[^"'\s]+/);  // URL pattern in HTML
+        // Try to find embed URL via cheerio selectors
+        let embedPath = '';
+
+        // Check data-src on iframes/elements
+        const $dataSrc = $('[data-src*="embed"]');
+        if ($dataSrc.length) {
+          embedPath = $dataSrc.attr('data-src') || '';
         }
 
-        // For TV series, the main page doesn't have the player - need to fetch first episode
-        if (!dataSrcMatch && href.startsWith('/tv/')) {
-          const firstEpisodeMatch = html.match(/href="([^"]*\/season\/1\/episode\/1)"/);
-          if (firstEpisodeMatch) {
-            const episodeUrl = `https://streamimdb.ru${firstEpisodeMatch[1]}`;
+        // Check iframe src with embed
+        if (!embedPath) {
+          const $iframe = $('iframe[src*="embed"]');
+          if ($iframe.length) {
+            embedPath = $iframe.attr('src') || '';
+          }
+        }
+
+        // Check any iframe src
+        if (!embedPath) {
+          const $iframe = $('iframe[src]');
+          if ($iframe.length) {
+            embedPath = $iframe.attr('src') || '';
+          }
+        }
+
+        // Check for play button with data-embed (like on homepage)
+        if (!embedPath) {
+          const $playBtn = $('.cb-slide-play, [data-embed]');
+          if ($playBtn.length) {
+            embedPath = $playBtn.attr('data-embed') || '';
+          }
+        }
+
+        // For TV series, the main page may not have the player - need to fetch first episode
+        if (!embedPath && href.startsWith('/tv/')) {
+          const $firstEp = $('a[href*="/season/1/episode/1"]').first();
+          if ($firstEp.length) {
+            const episodeUrl = `https://streamimdb.ru${$firstEp.attr('href')}`;
             const episodeResp = await fetch(episodeUrl, { headers, signal: AbortSignal.timeout(15000) });
             if (episodeResp.ok) {
               const episodeHtml = await episodeResp.text();
-              dataSrcMatch = episodeHtml.match(/data-src="([^"]*embed[^"]*)"/);
-              if (!dataSrcMatch) {
-                dataSrcMatch = episodeHtml.match(/src="([^"]*embed\/[^"]*)"/);
+              const $$ = cheerio.load(episodeHtml);
+
+              const $dataSrc2 = $$('[data-src*="embed"]');
+              if ($dataSrc2.length) {
+                embedPath = $dataSrc2.attr('data-src') || '';
               }
-              if (!dataSrcMatch) {
-                dataSrcMatch = episodeHtml.match(/iframe[^>]*src="([^"]+)"/);
+              if (!embedPath) {
+                const $iframe2 = $$('iframe[src*="embed"]');
+                if ($iframe2.length) {
+                  embedPath = $iframe2.attr('src') || '';
+                }
               }
-              if (!dataSrcMatch) {
-                dataSrcMatch = episodeHtml.match(/\/embed\/(tv|movie)\/[^"'\s]+/);
+              if (!embedPath) {
+                const $iframe2 = $$('iframe[src]');
+                if ($iframe2.length) {
+                  embedPath = $iframe2.attr('src') || '';
+                }
               }
             }
           }
         }
 
-        if (!dataSrcMatch) {
+        if (!embedPath) {
           res.status(200).json({ success: false, error: 'No embed URL found' });
           return;
         }
 
-        let embedPath = dataSrcMatch[1];
-        // If the match includes the full URL, extract just the path
+        // If the path includes the full URL, extract just the path
         if (embedPath.startsWith('http')) {
           try {
             const urlObj = new URL(embedPath);

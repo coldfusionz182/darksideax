@@ -787,6 +787,7 @@
   const year = params.get('year') || '';
   const type = params.get('type') || '';
   const poster = params.get('poster') || '';
+  const embedParam = params.get('embed') || '';
 
   if (!href) {
     document.getElementById('watchTitle').textContent = 'No movie specified';
@@ -1189,6 +1190,18 @@
     const loadingEl = document.getElementById('watchPlayerLoading');
     const iframeEl = document.getElementById('watchPlayerIframe');
     const controlsEl = document.getElementById('watchControls');
+    const wrapEl = document.getElementById('watchPlayerWrap');
+
+    // If embed param is provided directly (from hero slider), use it immediately
+    if (embedParam) {
+      embedUrl = `https://streamimdb.ru${embedParam}`;
+      iframeEl.src = embedUrl;
+      iframeEl.style.display = 'block';
+      loadingEl.style.display = 'none';
+      controlsEl.style.display = 'flex';
+      wrapEl.classList.add('playing');
+      return;
+    }
 
     try {
       const resp = await fetch('/api/credits', {
@@ -1204,6 +1217,7 @@
       iframeEl.style.display = 'block';
       loadingEl.style.display = 'none';
       controlsEl.style.display = 'flex';
+      wrapEl.classList.add('playing');
     } catch (err) {
       loadingEl.className = 'watch-player-error';
       loadingEl.innerHTML = `<i class="fa fa-exclamation-triangle"></i><span>${esc(err.message)}</span>`;

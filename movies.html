@@ -639,6 +639,8 @@ function displayCategories(categories) {
   resultsContainer.innerHTML = '';
 
   const categoryTitles = {
+    hero: 'Featured',
+    top10: 'TOP 10',
     trending: 'Trending Today',
     popular: 'Popular Now',
     latest: 'Latest TV Shows',
@@ -702,6 +704,7 @@ function displayCategories(categories) {
         const p = new URLSearchParams();
         p.set('href', item.href);
         p.set('title', item.title);
+        if (item.embed) p.set('embed', item.embed);
         if (item.year) p.set('year', item.year);
         if (item.type) p.set('type', item.type);
         if (item.image_url) p.set('poster', item.image_url);
@@ -796,6 +799,7 @@ function displayResults(data) {
       const p = new URLSearchParams();
       p.set('href', item.href);
       p.set('title', item.title);
+      if (item.embed) p.set('embed', item.embed);
       if (item.year) p.set('year', item.year);
       if (item.type) p.set('type', item.type);
       if (item.image_url) p.set('poster', item.image_url);
