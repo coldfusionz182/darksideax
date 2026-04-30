@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Now Playing • Darkside</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+  <link href="styles.css" rel="stylesheet">
+  <link href="notifications.css" rel="stylesheet">
+
+  <style>
+    body {
+      background: #05060a;
+      min-height: 100vh;
+    }
+
+    /* ── Back bar ── */
+    .watch-back-bar {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(5,6,10,0.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      padding: 12px 0;
+    }
+    .watch-back-inner {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .watch-back-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: #aaa;
+      font-size: 13px;
+      cursor: pointer;
+      transition: color 0.2s;
+      text-decoration: none;
+      background: none;
+      border: none;
+      font-family: inherit;
+      padding: 0;
+    }
+    .watch-back-btn:hover {
+      color: #e94560;
+      text-decoration: none;
+    }
+    .watch-back-btn i {
+      font-size: 14px;
+    }
+    .watch-back-title {
+      color: #666;
+      font-size: 12px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    /* ── Hero banner ── */
+    .watch-hero {
+      position: relative;
+      width: 100%;
+      min-height: 340px;
+      display: flex;
+      align-items: flex-end;
+      overflow: hidden;
+    }
+    .watch-hero-bg {
+      position: absolute;
+      inset: 0;
+      background-size: cover;
+      background-position: center 20%;
+      filter: blur(20px) brightness(0.35) saturate(1.3);
+      transform: scale(1.15);
+      z-index: 0;
+    }
+    .watch-hero-gradient {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(
+        to top,
+        #05060a 0%,
+        rgba(5,6,10,0.85) 30%,
+        rgba(5,6,10,0.4) 60%,
+        rgba(5,6,10,0.15) 100%
+      );
+      z-index: 1;
+    }
+    .watch-hero-content {
+      position: relative;
+      z-index: 2;
+      display: flex;
+      gap: 28px;
+      align-items: flex-end;
+      padding: 0 0 32px;
+      width: 100%;
+      max-width: 1180px;
+      margin: 0 auto;
+    }
+
+    /* Poster */
+    .watch-poster {
+      flex-shrink: 0;
+      width: 180px;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.05);
+      background: #111;
+      aspect-ratio: 2/3;
+    }
+    .watch-poster img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    .watch-poster-placeholder {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #333;
+      font-size: 48px;
+      background: #0a0a1a;
+    }
+
+    /* Info */
+    .watch-info {
+      flex: 1;
+      min-width: 0;
+      padding-bottom: 4px;
+    }
+    .watch-badge {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 4px;
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 10px;
+    }
+    .watch-badge-movie { background: rgba(233,69,96,0.85); color: #fff; }
+    .watch-badge-series { background: rgba(79,70,229,0.85); color: #fff; }
+    .watch-badge-other { background: rgba(100,100,100,0.85); color: #fff; }
+
+    .watch-title {
+      font-size: 32px;
+      font-weight: 700;
+      color: #fff;
+      margin: 0 0 8px;
+      line-height: 1.2;
+      letter-spacing: -0.01em;
+    }
+    .watch-meta {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      color: #888;
+      font-size: 13px;
+      flex-wrap: wrap;
+    }
+    .watch-meta span {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .watch-meta i {
+      font-size: 12px;
+      color: #666;
+    }
+    .watch-meta .meta-dot {
+      color: #444;
+      font-size: 10px;
+    }
+
+    /* ── Player section ── */
+    .watch-player-section {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 0 0 40px;
+    }
+    .watch-player-wrap {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 16/9;
+      background: #000;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.04);
+    }
+    .watch-player-wrap iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+      display: block;
+    }
+    .watch-player-loading {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      color: #666;
+      font-size: 14px;
+      background: radial-gradient(circle, #111 0%, #000 100%);
+    }
+    .watch-player-loading i {
+      font-size: 36px;
+      color: #e94560;
+    }
+    .watch-player-loading .loading-text {
+      color: #888;
+    }
+    .watch-player-error {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      color: #e94560;
+      font-size: 14px;
+      background: radial-gradient(circle, #111 0%, #000 100%);
+    }
+    .watch-player-error i {
+      font-size: 32px;
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 700px) {
+      .watch-hero-content {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        gap: 16px;
+        padding-bottom: 24px;
+      }
+      .watch-poster {
+        width: 130px;
+      }
+      .watch-title {
+        font-size: 22px;
+      }
+      .watch-meta {
+        justify-content: center;
+      }
+      .watch-info {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+    }
+
+    /* ── Fade-in animation ── */
+    @keyframes watchFadeIn {
+      from { opacity: 0; transform: translateY(16px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .watch-anim {
+      animation: watchFadeIn 0.5s ease-out forwards;
+    }
+    .watch-anim-delay {
+      animation: watchFadeIn 0.5s 0.15s ease-out forwards;
+      opacity: 0;
+    }
+  </style>
+</head>
+<body>
+
+<div id="page">
+  <!-- HEADER -->
+  <header id="header">
+    <div class="wrapper header-inner">
+      <div class="header-left">
+        <div class="header-logo">
+          <span class="logo-text">Darkside</span>
+          <span class="logo-slogan">Beyond the Limits</span>
+        </div>
+      </div>
+      <div class="header-right">
+        <div class="auth-area">
+          <div class="notif-wrapper">
+            <button class="notif-bell-btn" id="notif-bell-btn" type="button" aria-label="Notifications">
+              <i class="fa fa-bell" id="n-bell-icon"></i>
+              <span class="notif-count" id="notif-count">0</span>
+            </button>
+            <div class="notif-dropdown" id="notif-dropdown">
+              <div class="notif-dropdown-header">
+                <span><i class="fa fa-bell"></i> Notifications</span>
+                <span class="badge" id="notif-badge-count">0</span>
+              </div>
+              <button type="button" class="notif-clear-btn" id="notif-clear-btn">
+                <i class="fa fa-check-double"></i> Mark all as read
+              </button>
+              <div class="notif-list" id="notif-list"></div>
+            </div>
+          </div>
+          <div class="auth-links"></div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Back bar -->
+  <div class="watch-back-bar">
+    <div class="wrapper watch-back-inner">
+      <a href="movies.html" class="watch-back-btn">
+        <i class="fa fa-arrow-left"></i> Back to Movies
+      </a>
+      <span class="watch-back-title" id="watchBackTitle"></span>
+    </div>
+  </div>
+
+  <!-- Hero banner -->
+  <div class="watch-hero" id="watchHero">
+    <div class="watch-hero-bg" id="watchHeroBg"></div>
+    <div class="watch-hero-gradient"></div>
+    <div class="watch-hero-content watch-anim">
+      <div class="watch-poster" id="watchPoster">
+        <div class="watch-poster-placeholder"><i class="fa fa-film"></i></div>
+      </div>
+      <div class="watch-info">
+        <div class="watch-badge watch-badge-other" id="watchBadge" style="display:none;"></div>
+        <h1 class="watch-title" id="watchTitle">Loading...</h1>
+        <div class="watch-meta" id="watchMeta"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Player -->
+  <div class="watch-player-section">
+    <div class="wrapper">
+      <div class="watch-player-wrap watch-anim-delay" id="watchPlayerWrap">
+        <div class="watch-player-loading" id="watchPlayerLoading">
+          <i class="fa fa-spinner fa-spin"></i>
+          <span class="loading-text">Loading player...</span>
+        </div>
+        <iframe id="watchPlayerIframe"
+                allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
+                referrerpolicy="no-referrer"
+                style="display:none;"></iframe>
+      </div>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <footer class="index-bottom" style="margin-top: 0;">
+    <div class="index-links">
+      <a href="#">Mark all threads read</a> &middot;
+      <a href="#">Forum Team</a> &middot;
+      <a href="#">Contact</a>
+    </div>
+    <div class="copyright">
+      &copy; 2026 Darkside. Theme inspired by dark community forums.
+    </div>
+  </footer>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-config.js"></script>
+<script src="auth.js"></script>
+<script src="notifications.js"></script>
+<script>
+(function() {
+  const params = new URLSearchParams(window.location.search);
+  const href = params.get('href') || '';
+  const title = params.get('title') || '';
+  const year = params.get('year') || '';
+  const type = params.get('type') || '';
+  const poster = params.get('poster') || '';
+
+  if (!href) {
+    document.getElementById('watchTitle').textContent = 'No movie specified';
+    document.getElementById('watchPlayerLoading').innerHTML =
+      '<i class="fa fa-exclamation-triangle"></i><span>No movie href provided</span>';
+    document.getElementById('watchPlayerLoading').classList.remove('watch-player-loading');
+    document.getElementById('watchPlayerLoading').classList.add('watch-player-error');
+    return;
+  }
+
+  // ── Populate hero info ──
+  document.title = `${title || 'Now Playing'} • Darkside`;
+  document.getElementById('watchBackTitle').textContent = title;
+
+  // Badge
+  const badge = document.getElementById('watchBadge');
+  if (type) {
+    badge.textContent = type;
+    badge.style.display = '';
+    badge.className = 'watch-badge';
+    const t = type.toLowerCase();
+    if (t === 'movie') badge.classList.add('watch-badge-movie');
+    else if (t === 'series') badge.classList.add('watch-badge-series');
+    else badge.classList.add('watch-badge-other');
+  }
+
+  // Title
+  document.getElementById('watchTitle').textContent = title || 'Untitled';
+
+  // Meta
+  const metaEl = document.getElementById('watchMeta');
+  const metaParts = [];
+  if (year) metaParts.push(`<span><i class="fa fa-calendar"></i> ${esc(year)}</span>`);
+  if (type) metaParts.push(`<span><i class="fa fa-${type.toLowerCase() === 'series' ? 'tv' : 'film'}"></i> ${esc(type)}</span>`);
+  metaEl.innerHTML = metaParts.join('<span class="meta-dot">&bull;</span>');
+
+  // Poster
+  const posterEl = document.getElementById('watchPoster');
+  if (poster) {
+    posterEl.innerHTML = `<img src="${esc(poster)}" alt="${esc(title)}" onerror="this.parentElement.innerHTML='<div class=\\'watch-poster-placeholder\\'><i class=\\'fa fa-film\\'></i></div>';">`;
+  }
+
+  // Hero background
+  if (poster) {
+    document.getElementById('watchHeroBg').style.backgroundImage = `url('${poster}')`;
+  }
+
+  // ── Load embed URL via API ──
+  loadPlayer();
+
+  async function loadPlayer() {
+    const loadingEl = document.getElementById('watchPlayerLoading');
+    const iframeEl = document.getElementById('watchPlayerIframe');
+
+    try {
+      const resp = await fetch('/api/credits', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'movie_play', href }),
+      });
+      const data = await resp.json();
+      if (!data.success) throw new Error(data.error || 'Failed to load movie');
+
+      iframeEl.src = data.embed_url;
+      iframeEl.style.display = 'block';
+      loadingEl.style.display = 'none';
+    } catch (err) {
+      loadingEl.className = 'watch-player-error';
+      loadingEl.innerHTML = `<i class="fa fa-exclamation-triangle"></i><span>${esc(err.message)}</span>`;
+    }
+  }
+
+  function esc(str) {
+    if (!str) return '';
+    const d = document.createElement('div');
+    d.textContent = str;
+    return d.innerHTML;
+  }
+})();
+</script>
+</body>
+</html>
