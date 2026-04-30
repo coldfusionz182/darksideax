@@ -126,14 +126,32 @@ export default async function handler(req, res) {
 
         const html = await response.text();
 
-        // Extract data-src from the player iframe (e.g. /embed/movie/27205)
-        const dataSrcMatch = html.match(/data-src="([^"]*embed[^"]*)"/);
+        // Try multiple patterns to extract embed URL (works for both movies and TV series)
+        let dataSrcMatch = html.match(/data-src="([^"]*embed[^"]*)"/);  // Standard pattern
+        if (!dataSrcMatch) {
+          dataSrcMatch = html.match(/src="([^"]*embed\/[^"]*)"/);  // Direct src pattern
+        }
+        if (!dataSrcMatch) {
+          dataSrcMatch = html.match(/iframe[^>]*src="([^"]+)"/);  // Any iframe src
+        }
+        if (!dataSrcMatch) {
+          dataSrcMatch = html.match(/\/embed\/(tv|movie)\/[^"'\s]+/);  // URL pattern in HTML
+        }
+
         if (!dataSrcMatch) {
           res.status(200).json({ success: false, error: 'No embed URL found' });
           return;
         }
 
-        const embedPath = dataSrcMatch[1];
+        let embedPath = dataSrcMatch[1];
+        // If the match includes the full URL, extract just the path
+        if (embedPath.startsWith('http')) {
+          try {
+            const urlObj = new URL(embedPath);
+            embedPath = urlObj.pathname;
+          } catch (e) {}
+        }
+
         const embedUrl = `https://streamimdb.ru${embedPath}`;
 
         // Extract __cbCwMeta for title/poster info
