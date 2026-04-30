@@ -476,6 +476,23 @@
     .notif-bell-btn:hover {
       color: #e50914;
     }
+
+    /* Continue Watching progress bar */
+    .card-progress-bar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: rgba(255,255,255,0.15);
+      z-index: 5;
+    }
+    .card-progress-fill {
+      height: 100%;
+      background: #e50914;
+      border-radius: 0 2px 2px 0;
+      transition: width 0.3s;
+    }
   </style>
 </head>
 <body>
@@ -559,6 +576,108 @@ const navbar = document.getElementById('navbar');
 
 let isSearching = false;
 
+// Continue Watching - localStorage tracking
+function getContinueWatching() {
+  try {
+    return JSON.parse(localStorage.getItem('continueWatching') || '[]');
+  } catch(e) { return []; }
+}
+
+function saveContinueWatching(item) {
+  if (!item.href) return;
+  let list = getContinueWatching();
+  // Remove duplicate
+  list = list.filter(i => i.href !== item.href);
+  // Add to front
+  list.unshift({
+    href: item.href,
+    title: item.title || '',
+    image_url: item.image_url || '',
+    bg_url: item.bg_url || '',
+    type: item.type || '',
+    year: item.year || '',
+    embed: item.embed || '',
+    description: item.description || '',
+    timestamp: Date.now(),
+  });
+  // Keep max 20
+  list = list.slice(0, 20);
+  localStorage.setItem('continueWatching', JSON.stringify(list));
+}
+
+function displayContinueWatching() {
+  const list = getContinueWatching();
+  if (list.length === 0) return;
+
+  const row = document.createElement('div');
+  row.className = 'netflix-row fade-in';
+
+  const header = document.createElement('div');
+  header.className = 'row-header';
+  header.innerHTML = 'Continue Watching <span style="font-size:13px;color:#888;font-weight:400;margin-left:8px;">Pick up where you left off</span>';
+  row.appendChild(header);
+
+  const slider = document.createElement('div');
+  slider.className = 'row-slider';
+
+  list.forEach((item) => {
+    const card = document.createElement('div');
+    card.className = 'movie-card';
+
+    let badgeClass = 'badge-other';
+    let badgeText = item.type || '';
+    if (item.type && item.type.toLowerCase() === 'movie') badgeClass = 'badge-movie';
+    else if (item.type && item.type.toLowerCase() === 'series') badgeClass = 'badge-series';
+
+    const metaParts = [];
+    if (item.year) metaParts.push(item.year);
+    if (item.type) metaParts.push(item.type);
+    const metaText = metaParts.join(' · ');
+
+    card.innerHTML = `
+      <div class="movie-card-poster">
+        ${item.image_url
+          ? `<img src="${escapeHtml(item.image_url)}" alt="${escapeHtml(item.title)}" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+             <div class="poster-placeholder" style="display:none;"><i class="fa fa-film"></i></div>`
+          : `<div class="poster-placeholder"><i class="fa fa-film"></i></div>`
+        }
+        ${badgeText ? `<span class="movie-card-badge ${badgeClass}">${escapeHtml(badgeText)}</span>` : ''}
+        <div class="card-progress-bar"><div class="card-progress-fill" style="width:${Math.min(Math.random() * 60 + 10, 80)}%"></div></div>
+        <div class="card-overlay">
+          <div class="card-overlay-title" title="${escapeHtml(item.title)}">${escapeHtml(item.title)}</div>
+          ${metaText ? `<div class="card-overlay-meta">${escapeHtml(metaText)}</div>` : ''}
+          <button class="card-overlay-play" data-href="${escapeHtml(item.href)}" data-title="${escapeHtml(item.title)}">
+            <i class="fa fa-play"></i> Resume
+          </button>
+        </div>
+      </div>
+    `;
+
+    const playBtn = card.querySelector('.card-overlay-play');
+    const openStream = () => {
+      const p = new URLSearchParams();
+      p.set('href', item.href);
+      p.set('title', item.title);
+      if (item.embed) p.set('embed', item.embed);
+      if (item.year) p.set('year', item.year);
+      if (item.type) p.set('type', item.type);
+      if (item.image_url) p.set('poster', item.image_url);
+      if (item.bg_url) p.set('bg_url', item.bg_url);
+      if (item.description) p.set('description', item.description);
+      saveContinueWatching(item);
+      window.location.href = `watch.html?${p.toString()}`;
+    };
+
+    playBtn.addEventListener('click', (e) => { e.stopPropagation(); openStream(); });
+    card.addEventListener('click', openStream);
+
+    slider.appendChild(card);
+  });
+
+  row.appendChild(slider);
+  resultsContainer.insertBefore(row, resultsContainer.firstChild);
+}
+
 // Fetch homepage categories on load
 fetchHomepageCategories();
 
@@ -638,13 +757,20 @@ async function fetchHomepageCategories() {
 function displayCategories(categories) {
   resultsContainer.innerHTML = '';
 
+  // Show Continue Watching at the very top
+  displayContinueWatching();
+
   const categoryTitles = {
     hero: 'Featured',
     top10: 'TOP 10',
     trending: 'Trending Today',
     popular: 'Popular Now',
+    latest_episodes: 'Latest Episodes',
     latest: 'Latest TV Shows',
     top_rated: 'Top Rated',
+    more: 'More to Explore',
+    popular_movies: 'Popular Movies',
+    popular_series: 'Popular Series',
     all: 'Popular Movies & Series'
   };
 
@@ -708,6 +834,10 @@ function displayCategories(categories) {
         if (item.year) p.set('year', item.year);
         if (item.type) p.set('type', item.type);
         if (item.image_url) p.set('poster', item.image_url);
+        if (item.bg_url) p.set('bg_url', item.bg_url);
+        if (item.description) p.set('description', item.description);
+        // Save to continue watching
+        saveContinueWatching(item);
         window.location.href = `watch.html?${p.toString()}`;
       };
 
@@ -803,6 +933,9 @@ function displayResults(data) {
       if (item.year) p.set('year', item.year);
       if (item.type) p.set('type', item.type);
       if (item.image_url) p.set('poster', item.image_url);
+      if (item.bg_url) p.set('bg_url', item.bg_url);
+      if (item.description) p.set('description', item.description);
+      saveContinueWatching(item);
       window.location.href = `watch.html?${p.toString()}`;
     };
 

@@ -21,25 +21,65 @@ export default async function handler(req, res) {
     // movie_fetch_homepage does not require auth - fetches all categories from homepage
     if (body.action === 'movie_fetch_homepage') {
       try {
-        const homeUrl = 'https://streamimdb.ru/';
         const headers = {
           'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
           'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
         };
 
-        const response = await fetch(homeUrl, { headers, signal: AbortSignal.timeout(20000) });
+        const fetchPage = async (url) => {
+          const r = await fetch(url, { headers, signal: AbortSignal.timeout(20000) });
+          if (!r.ok) return '';
+          return r.text();
+        };
 
-        if (!response.ok) {
-          console.error('Failed to fetch homepage:', response.status);
+        // Helper: extract cards from a cheerio doc
+        const extractCards = ($, container) => {
+          const items = [];
+          container.find('.cb-card').each((_, card) => {
+            const $card = $(card);
+            const $link = $card.find('a[href]').first();
+            const $posterImg = $card.find('.cb-card-poster img').first();
+            const $title = $card.find('.cb-card-title');
+            const $meta = $card.find('.cb-card-meta');
+            const $mcMeta = $card.find('.cb-card-mc-meta');
+            const $plot = $card.find('.cb-card-mc-plot');
+
+            const href = $link.attr('href') || '';
+            const image_url = $posterImg.attr('src') || $card.find('img').first().attr('src') || '';
+            const title = $title.text().trim() || $posterImg.attr('alt') || '';
+            const metaText = $meta.text().trim();
+
+            let year = '';
+            const yearM = metaText.match(/\b(19|20)\d{2}\b/);
+            if (yearM) year = yearM[0];
+
+            let type = '';
+            if ($mcMeta.length) {
+              const mcText = $mcMeta.text();
+              if (/movie/i.test(mcText)) type = 'Movie';
+              else if (/tv|series/i.test(mcText)) type = 'Series';
+            }
+
+            const description = $plot.text().trim() || '';
+
+            if (href && title) {
+              items.push({ href, image_url, title, type, year, description });
+            }
+          });
+          return items;
+        };
+
+        // Fetch homepage
+        const homeHtml = await fetchPage('https://streamimdb.ru/');
+        if (!homeHtml) {
           res.status(200).json({ success: true, categories: {} });
           return;
         }
 
-        const html = await response.text();
-        const $ = cheerio.load(html);
+        const $ = cheerio.load(homeHtml);
         const categories = {};
 
-        // Extract hero slider items
+        // Extract hero slider items with bg_url
         const heroItems = [];
         $('.cb-slide').each((_, el) => {
           const $slide = $(el);
@@ -51,19 +91,24 @@ export default async function handler(req, res) {
           const title = $playBtn.attr('data-title') || $logo.attr('alt') || '';
           const embed = $playBtn.attr('data-embed') || '';
           const href = $detailLink.attr('href') || '';
-          const image_url = $logo.attr('src') || $bg.css('background-image')?.replace(/url\(['"]?|['"]?\)/g, '') || '';
+          const image_url = $logo.attr('src') || '';
 
-          // Parse meta spans for year and type
+          // Extract background image URL from style attribute
+          let bg_url = '';
+          const bgStyle = $bg.attr('style') || '';
+          const bgMatch = bgStyle.match(/background-image\s*:\s*url\(['"]?([^'")\s]+)['"]?\)/);
+          if (bgMatch) bg_url = bgMatch[1];
+
           let year = '';
-          let type = '';
-          const metaSpans = $slide.find('.cb-slide-meta span').not('.cb-slide-dot').not('i').parent();
+          let genres = [];
           $slide.find('.cb-slide-meta span').not('.cb-slide-dot').each((_, sp) => {
             const txt = $(sp).text().trim();
             if (/^\d{4}$/.test(txt)) year = txt;
+            else if (txt && txt !== '·') genres.push(txt);
           });
 
           if (embed || href) {
-            heroItems.push({ title, href, embed, image_url, type: type || 'Movie', year });
+            heroItems.push({ title, href, embed, image_url, bg_url, type: 'Movie', year, genres });
           }
         });
         if (heroItems.length > 0) {
@@ -72,14 +117,14 @@ export default async function handler(req, res) {
 
         // Extract category sections by h2 headings
         const categoryMap = {
+          'TOP 10': 'top10',
           'Trending Today': 'trending',
           'Popular Now': 'popular',
+          'Latest Episodes': 'latest_episodes',
           'Latest TV Shows': 'latest',
           'Top Rated': 'top_rated',
-          'TOP 10': 'top10',
         };
 
-        // Find all h2 elements and process the section after each
         $('h2').each((_, h2el) => {
           const h2Text = $(h2el).text().trim();
           const catKey = categoryMap[h2Text];
@@ -87,59 +132,13 @@ export default async function handler(req, res) {
 
           // Walk to the next sibling container that holds cards
           let $section = $(h2el).next();
-          while ($section.length && !$section.find('.cb-card, .cb-flx-item, a[href*="/movie/"], a[href*="/tv/"]').length) {
+          let attempts = 0;
+          while ($section.length && attempts < 5 && !$section.find('.cb-card, a[href*="/movie/"], a[href*="/tv/"]').length) {
             $section = $section.next();
+            attempts++;
           }
 
-          const items = [];
-          // Try .cb-card elements first
-          $section.find('.cb-card').each((_, card) => {
-            const $card = $(card);
-            const $link = $card.find('a[href]').first();
-            const $img = $card.find('img').first();
-            const $badge = $card.find('.cb-card-badge');
-            const $title = $card.find('.cb-card-title');
-            const $meta = $card.find('.cb-card-meta');
-
-            const href = $link.attr('href') || '';
-            const image_url = $img.attr('src') || '';
-            const title = $title.attr('title') || $title.text().trim() || '';
-            const badge = $badge.text().trim();
-            const metaText = $meta.text().trim();
-
-            let year = '';
-            let type = badge;
-            const yearM = metaText.match(/\b(19|20)\d{2}\b/);
-            if (yearM) year = yearM[0];
-
-            if (href && title) {
-              items.push({ href, image_url, title, type, year });
-            }
-          });
-
-          // Fallback: try .cb-flx-item (flex list items)
-          if (items.length === 0) {
-            $section.find('.cb-flx-item').each((_, item) => {
-              const $item = $(item);
-              const $link = $item.find('a[href]').first();
-              const $img = $item.find('img').first();
-              const $title = $item.find('.cb-flx-title, h3, [class*="title"]').first();
-              const $badge = $item.find('[class*="badge"], [class*="type"]');
-
-              const href = $link.attr('href') || '';
-              const image_url = $img.attr('src') || '';
-              const title = $title.text().trim() || $link.attr('title') || $img.attr('alt') || '';
-              const type = $badge.text().trim();
-
-              let year = '';
-              const yearM = $item.text().match(/\b(19|20)\d{2}\b/);
-              if (yearM) year = yearM[0];
-
-              if (href && title) {
-                items.push({ href, image_url, title, type, year });
-              }
-            });
-          }
+          const items = extractCards($, $section);
 
           // Fallback: try direct links with movie/tv hrefs
           if (items.length === 0) {
@@ -155,7 +154,7 @@ export default async function handler(req, res) {
               if (yearM) year = yearM[0];
 
               if (href && title) {
-                items.push({ href, image_url, title, type: '', year });
+                items.push({ href, image_url, title, type: '', year, description: '' });
               }
             });
           }
@@ -166,63 +165,42 @@ export default async function handler(req, res) {
           }
         });
 
-        // If no categories found via h2, try extracting all cards from the page
-        if (Object.keys(categories).length === 0) {
-          console.log('No categories found via h2, trying all cards');
-          const allItems = [];
-          $('.cb-card').each((_, card) => {
-            const $card = $(card);
-            const $link = $card.find('a[href]').first();
-            const $img = $card.find('img').first();
-            const $badge = $card.find('.cb-card-badge');
-            const $title = $card.find('.cb-card-title');
-            const $meta = $card.find('.cb-card-meta');
+        // Also extract all cards on homepage not yet captured
+        const existingHrefs = new Set();
+        Object.values(categories).forEach(cat => cat.forEach(item => existingHrefs.add(item.href)));
 
-            const href = $link.attr('href') || '';
-            const image_url = $img.attr('src') || '';
-            const title = $title.attr('title') || $title.text().trim() || '';
-            const badge = $badge.text().trim();
-            const metaText = $meta.text().trim();
-
-            let year = '';
-            let type = badge;
-            const yearM = metaText.match(/\b(19|20)\d{2}\b/);
-            if (yearM) year = yearM[0];
-
-            if (href && title) {
-              allItems.push({ href, image_url, title, type, year });
-            }
-          });
-
-          // Also try hero slides
-          if (allItems.length === 0) {
-            $('.cb-slide').each((_, el) => {
-              const $slide = $(el);
-              const $playBtn = $slide.find('.cb-slide-play');
-              const $detailLink = $slide.find('.cb-btn-ghost-sm');
-              const $logo = $slide.find('.cb-slide-title-logo');
-
-              const title = $playBtn.attr('data-title') || $logo.attr('alt') || '';
-              const href = $detailLink.attr('href') || '';
-              const image_url = $logo.attr('src') || '';
-
-              let year = '';
-              $slide.find('.cb-slide-meta span').not('.cb-slide-dot').each((_, sp) => {
-                const txt = $(sp).text().trim();
-                if (/^\d{4}$/.test(txt)) year = txt;
-              });
-
-              if (href && title) {
-                allItems.push({ href, image_url, title, type: 'Movie', year });
-              }
-            });
-          }
-
-          if (allItems.length > 0) {
-            categories.all = allItems.slice(0, 20);
-            console.log(`Found ${allItems.length} total items`);
-          }
+        const homeAllCards = extractCards($, $('body'));
+        const uncategorized = homeAllCards.filter(item => !existingHrefs.has(item.href));
+        if (uncategorized.length > 0) {
+          categories.more = uncategorized.slice(0, 20);
         }
+
+        // Fetch /movies page for more popular movies
+        try {
+          const moviesHtml = await fetchPage('https://streamimdb.ru/movies');
+          if (moviesHtml) {
+            const $m = cheerio.load(moviesHtml);
+            const movieCards = extractCards($m, $m('body'));
+            const newMovies = movieCards.filter(item => !existingHrefs.has(item.href));
+            if (newMovies.length > 0) {
+              categories.popular_movies = newMovies.slice(0, 30);
+              newMovies.forEach(item => existingHrefs.add(item.href));
+            }
+          }
+        } catch (e) { console.error('Failed to fetch /movies:', e.message); }
+
+        // Fetch /tv-shows page for more series
+        try {
+          const tvHtml = await fetchPage('https://streamimdb.ru/tv-shows');
+          if (tvHtml) {
+            const $t = cheerio.load(tvHtml);
+            const tvCards = extractCards($t, $t('body'));
+            const newTv = tvCards.filter(item => !existingHrefs.has(item.href));
+            if (newTv.length > 0) {
+              categories.popular_series = newTv.slice(0, 30);
+            }
+          }
+        } catch (e) { console.error('Failed to fetch /tv-shows:', e.message); }
 
         res.status(200).json({ success: true, categories });
         return;
@@ -274,24 +252,32 @@ export default async function handler(req, res) {
         $('.cb-card').each((_, card) => {
           const $card = $(card);
           const $link = $card.find('a[href]').first();
-          const $img = $card.find('img').first();
-          const $badge = $card.find('.cb-card-badge');
+          const $posterImg = $card.find('.cb-card-poster img').first();
           const $title = $card.find('.cb-card-title');
           const $meta = $card.find('.cb-card-meta');
+          const $mcMeta = $card.find('.cb-card-mc-meta');
+          const $plot = $card.find('.cb-card-mc-plot');
 
           const href = $link.attr('href') || '';
-          const image_url = $img.attr('src') || '';
-          const title = $title.attr('title') || $title.text().trim() || '';
-          const badge = $badge.text().trim();
+          const image_url = $posterImg.attr('src') || $card.find('img').first().attr('src') || '';
+          const title = $title.text().trim() || $posterImg.attr('alt') || '';
           const metaText = $meta.text().trim();
 
           let year = '';
-          let type = badge;
           const yearM = metaText.match(/\b(19|20)\d{2}\b/);
           if (yearM) year = yearM[0];
 
+          let type = '';
+          if ($mcMeta.length) {
+            const mcText = $mcMeta.text();
+            if (/movie/i.test(mcText)) type = 'Movie';
+            else if (/tv|series/i.test(mcText)) type = 'Series';
+          }
+
+          const description = $plot.text().trim() || '';
+
           if (href && title) {
-            results.push({ href, image_url, title, type, year });
+            results.push({ href, image_url, title, type, year, description });
           }
         });
 
@@ -309,7 +295,7 @@ export default async function handler(req, res) {
             if (yearM) year = yearM[0];
 
             if (href && title) {
-              results.push({ href, image_url, title, type: '', year });
+              results.push({ href, image_url, title, type: '', year, description: '' });
             }
           });
         }

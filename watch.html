@@ -788,6 +788,8 @@
   const type = params.get('type') || '';
   const poster = params.get('poster') || '';
   const embedParam = params.get('embed') || '';
+  const bgUrlParam = params.get('bg_url') || '';
+  const descriptionParam = params.get('description') || '';
 
   if (!href) {
     document.getElementById('watchTitle').textContent = 'No movie specified';
@@ -852,12 +854,26 @@
   if (type) infoMetaParts.push(`<span><i class="fa fa-${type.toLowerCase() === 'series' ? 'tv' : 'film'}"></i> ${esc(type)}</span>`);
   infoMetaEl.innerHTML = infoMetaParts.join('<span class="meta-dot">&bull;</span>');
 
-  infoDescEl.textContent = '';
+  infoDescEl.textContent = descriptionParam || '';
 
-  // Hero background
-  if (poster) {
-    document.getElementById('watchHeroBg').style.backgroundImage = `url('${poster}')`;
+  // Hero background - prefer bg_url (from hero slider), fallback to poster
+  const heroBg = bgUrlParam || poster;
+  if (heroBg) {
+    document.getElementById('watchHeroBg').style.backgroundImage = `url('${heroBg}')`;
   }
+
+  // Save to Continue Watching
+  try {
+    let cw = JSON.parse(localStorage.getItem('continueWatching') || '[]');
+    cw = cw.filter(i => i.href !== href);
+    cw.unshift({
+      href, title, image_url: poster, bg_url: bgUrlParam,
+      type, year, embed: embedParam, description: descriptionParam,
+      timestamp: Date.now(),
+    });
+    cw = cw.slice(0, 20);
+    localStorage.setItem('continueWatching', JSON.stringify(cw));
+  } catch(e) {}
 
   // ── Block popups from iframe ──
   const originalOpen = window.open;
