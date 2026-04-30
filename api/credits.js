@@ -61,6 +61,16 @@ export default async function handler(req, res) {
           }
         }
 
+        const decodeEntities = (s) => s
+          .replace(/&#039;/g, "'")
+          .replace(/&#39;/g, "'")
+          .replace(/&amp;/g, '&')
+          .replace(/&lt;/g, '<')
+          .replace(/&gt;/g, '>')
+          .replace(/&quot;/g, '"')
+          .replace(/&#x27;/g, "'")
+          .replace(/&#x2F;/g, '/');
+
         const cardChunks = html.split('<div class="cb-card">');
         const results = [];
 
@@ -76,9 +86,9 @@ export default async function handler(req, res) {
             results.push({
               href: hrefMatch[1],
               image_url: imgMatch ? imgMatch[1] : '',
-              title: titleMatch[1],
+              title: decodeEntities(titleMatch[1]),
               type: badgeMatch ? badgeMatch[1] : '',
-              year: yearMatch ? yearMatch[1].trim() : '',
+              year: yearMatch ? decodeEntities(yearMatch[1].trim()) : '',
             });
           }
         }
