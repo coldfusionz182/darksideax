@@ -1155,18 +1155,24 @@ export default async function handler(req, res) {
         const headers = {
           'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
           'Accept': 'application/json',
+          'Origin': 'https://www.crazygames.com',
+          'Referer': 'https://www.crazygames.com/',
         };
 
         const apiUrl = 'https://api.crazygames.com/v4/en_US/games/originals?device=desktop&paginationPage=1&paginationSize=30';
+        console.log('games_fetch: calling API', apiUrl);
         const response = await fetch(apiUrl, { headers, signal: AbortSignal.timeout(20000) });
+        console.log('games_fetch: API response status', response.status);
         
         if (!response.ok) {
+          console.log('games_fetch: API not ok, returning empty');
           res.status(200).json({ success: true, games: [] });
           return;
         }
 
         const data = await response.json();
         const games = [];
+        console.log('games_fetch: API returned items count', data?.games?.items?.length);
 
         if (data?.games?.items && Array.isArray(data.games.items)) {
           data.games.items.slice(0, 25).forEach(game => {
@@ -1176,7 +1182,7 @@ export default async function handler(req, res) {
             
             if (title && slug) {
               const url = `https://www.crazygames.com/game/${slug}`;
-              const image_url = cover ? `https://imgs.crazygames.com/${cover}` : '';
+              const image_url = cover ? `https://imgs.crazygames.com/${cover}?metadata=none&quality=85&width=675&fit=crop` : '';
               
               if (!games.some(g => g.url === url)) {
                 games.push({ title, url, image_url });
@@ -1185,6 +1191,7 @@ export default async function handler(req, res) {
           });
         }
 
+        console.log('games_fetch: returning', games.length, 'games');
         res.status(200).json({ success: true, games: games.slice(0, 25) });
         return;
       } catch (err) {
