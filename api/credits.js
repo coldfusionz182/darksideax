@@ -1149,8 +1149,67 @@ export default async function handler(req, res) {
       return;
     }
 
+    // games_fetch - scrape yandex.com/games for game thumbnails and URLs
+    if (body.action === 'games_fetch') {
+      try {
+        const headers = {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        };
+
+        const response = await fetch('https://yandex.com/games/', { headers, signal: AbortSignal.timeout(20000) });
+        if (!response.ok) {
+          res.status(200).json({ success: true, games: [] });
+          return;
+        }
+
+        const html = await response.text();
+        const $ = cheerio.load(html);
+
+        const games = [];
+        // Try to find game cards - yandex uses various selectors
+        const selectors = [
+          '.game-card',
+          '.games-item',
+          '[data-testid="game-card"]',
+          'a[href*="/play/"]',
+        ];
+
+        for (const selector of selectors) {
+          const elements = $(selector);
+          if (elements.length > 0) {
+            elements.each((_, el) => {
+              const $el = $(el);
+              const $link = $el.is('a') ? $el : $el.find('a').first();
+              const $img = $el.find('img').first();
+              const $title = $el.find('[class*="title"], [class*="name"], h3, h4').first();
+
+              const href = $link.attr('href') || '';
+              const title = $title.text().trim() || $img.attr('alt') || '';
+              const image_url = $img.attr('src') || $img.attr('data-src') || '';
+
+              if (href && title) {
+                const fullUrl = href.startsWith('http') ? href : `https://yandex.com${href}`;
+                if (games.length < 25 && !games.some(g => g.url === fullUrl)) {
+                  games.push({ title, url: fullUrl, image_url });
+                }
+              }
+            });
+            if (games.length >= 25) break;
+          }
+        }
+
+        res.status(200).json({ success: true, games: games.slice(0, 25) });
+        return;
+      } catch (err) {
+        console.error('games_fetch error:', err);
+        res.status(500).json({ success: false, error: 'Failed to fetch games' });
+        return;
+      }
+    }
+
     // Unknown action
-    res.status(400).json({ success: false, error: 'Unknown action. Use: get, give, spend, create_user, reset_password, approve_thread, decline_thread, list_pending_threads, update_config_request_status, movie_search, movie_play, movie_fetch_episodes, movie_fetch_homepage, movie_fetch_movies_page' });
+    res.status(400).json({ success: false, error: 'Unknown action. Use: get, give, spend, create_user, reset_password, approve_thread, decline_thread, list_pending_threads, update_config_request_status, movie_search, movie_play, movie_fetch_episodes, movie_fetch_homepage, movie_fetch_movies_page, games_fetch' });
   } catch (err) {
     console.error('credits handler error:', err);
     res.status(500).json({ success: false, error: 'Server error' });

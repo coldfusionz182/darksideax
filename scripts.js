@@ -153,6 +153,18 @@ document.addEventListener('DOMContentLoaded', () => {
   }
   showAdminNavIfAllowed();
 
+  // --- show Darkside Games section for logged-in users ---
+  async function showDarksideGamesIfLoggedIn() {
+    const gamesSection = document.getElementById('darkside-games-section');
+    if (!gamesSection) return;
+
+    const current = await getCurrentUserWithRole();
+    if (current) {
+      gamesSection.style.display = '';
+    }
+  }
+  showDarksideGamesIfLoggedIn();
+
 
   async function loadAdmins() {
     const { data, error } = await supabaseClient
