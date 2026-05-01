@@ -113,179 +113,19 @@
       margin: 0 auto;
     }
 
-    /* Games empty state */
-    .games-empty {
-      text-align: center;
-      padding: 80px 4%;
-    }
-    .games-empty i {
-      font-size: 64px;
-      color: #8b5cf6;
-      margin-bottom: 20px;
-    }
-    .games-empty h2 {
-      color: #e5e7ff;
-      font-size: 1.3rem;
-      margin-bottom: 8px;
-    }
-    .games-empty p {
-      color: #9ca3c9;
-      font-size: 0.95rem;
-    }
-
-    /* Games grid */
-    .games-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-      gap: 20px;
+    /* Game embed */
+    .game-embed-wrapper {
       padding: 0 4%;
       max-width: 1200px;
       margin: 0 auto;
     }
-
-    .game-card {
-      background: linear-gradient(145deg, #111827 0%, #0d1117 100%);
+    .game-embed {
+      width: 100%;
+      height: 75vh;
+      min-height: 500px;
       border: 1px solid #1f2937;
       border-radius: 12px;
-      overflow: hidden;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      position: relative;
-    }
-    .game-card:hover {
-      transform: translateY(-4px);
-      border-color: #8b5cf6;
-      box-shadow: 0 8px 30px rgba(139,92,246,0.2), 0 0 60px rgba(139,92,246,0.05);
-    }
-
-    .game-card-thumb {
-      width: 100%;
-      aspect-ratio: 16/9;
-      background: #1a1a2e;
-      position: relative;
-      overflow: hidden;
-    }
-    .game-card-thumb img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-    .game-card-thumb .placeholder {
-      width: 100%;
-      height: 100%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: #4b5563;
-      font-size: 2rem;
-    }
-
-    .game-card-body {
-      padding: 14px;
-    }
-    .game-card-title {
-      font-size: 0.95rem;
-      font-weight: 600;
-      color: #e5e7ff;
-      margin-bottom: 4px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-    .game-card-play {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 8px 16px;
-      background: linear-gradient(135deg, #8b5cf6, #6d28d9);
-      color: #fff;
-      border: none;
-      border-radius: 6px;
-      font-size: 0.8rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.2s;
-      text-decoration: none;
-    }
-    .game-card-play:hover {
-      background: linear-gradient(135deg, #a78bfa, #7c3aed);
-      box-shadow: 0 4px 15px rgba(139,92,246,0.4);
-    }
-
-    /* Game player iframe */
-    .game-player {
-      display: none;
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      z-index: 9999;
-      background: #0a0a0f;
-    }
-    .game-player.active {
-      display: flex;
-      flex-direction: column;
-    }
-    .game-player-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 10px 20px;
-      background: #111827;
-      border-bottom: 1px solid #1f2937;
-      flex-shrink: 0;
-    }
-    .game-player-title {
-      color: #e5e7ff;
-      font-size: 1rem;
-      font-weight: 600;
-    }
-    .game-player-close {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 8px 16px;
-      background: #1f2937;
-      color: #9ca3c9;
-      border: 1px solid #374151;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 0.85rem;
-      font-weight: 500;
-      transition: all 0.2s;
-    }
-    .game-player-close:hover {
-      background: #374151;
-      color: #e5e7ff;
-    }
-    .game-player-iframe {
-      flex: 1;
-      border: none;
-      width: 100%;
       background: #000;
-    }
-    .game-player-loading {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      color: #9ca3c9;
-      text-align: center;
-    }
-    .game-player-loading i {
-      font-size: 32px;
-      margin-bottom: 12px;
-    }
-
-    .games-loading {
-      text-align: center;
-      padding: 60px 4%;
-      color: #9ca3c9;
-    }
-    .games-loading i {
-      font-size: 32px;
-      margin-bottom: 12px;
     }
 
     /* Auth required overlay */
@@ -387,31 +227,10 @@
           <p>Exclusive games for Darkside members.</p>
         </div>
 
-        <div class="games-loading" id="games-loading">
-          <i class="fa fa-spinner fa-spin"></i>
-          <p>Loading games...</p>
+        <div class="game-embed-wrapper">
+          <iframe class="game-embed" src="https://veck.io/?cg=true&auto_play=true" allow="autoplay; fullscreen; gamepad; clipboard-write" allowfullscreen></iframe>
         </div>
 
-        <div class="games-grid" id="games-grid" style="display:none;"></div>
-
-        <div class="games-empty" id="games-empty" style="display:none;">
-          <i class="fa fa-gamepad"></i>
-          <h2>No games found</h2>
-          <p>Unable to load games at this time.</p>
-        </div>
-      </div>
-
-      <!-- Game player overlay -->
-      <div class="game-player" id="game-player">
-        <div class="game-player-header">
-          <div class="game-player-title" id="game-player-title">Loading...</div>
-          <button class="game-player-close" id="game-player-close"><i class="fa fa-times"></i> Close Game</button>
-        </div>
-        <div class="game-player-loading" id="game-player-loading">
-          <i class="fa fa-spinner fa-spin"></i>
-          <p>Loading game...</p>
-        </div>
-        <iframe class="game-player-iframe" id="game-player-iframe" allow="autoplay; fullscreen; gamepad; clipboard-write" allowfullscreen></iframe>
       </div>
 
       <div class="games-footer">
@@ -438,100 +257,6 @@
   if (userData?.user) {
     gamesContent.style.display = '';
     authMsg.style.display = 'none';
-
-    // Fetch games from API
-    const gamesLoading = document.getElementById('games-loading');
-    const gamesGrid = document.getElementById('games-grid');
-    const gamesEmpty = document.getElementById('games-empty');
-
-    try {
-      const resp = await fetch('/api/credits', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'games_fetch' }),
-      });
-      const data = await resp.json();
-
-      gamesLoading.style.display = 'none';
-
-      if (data.success && data.games && data.games.length > 0) {
-        gamesGrid.style.display = 'grid';
-        gamesGrid.innerHTML = data.games.map(game => `
-          <div class="game-card" data-slug="${game.slug}">
-            <div class="game-card-thumb">
-              ${game.image_url ? `<img src="${game.image_url}" alt="${game.title}" loading="lazy">` : '<div class="placeholder"><i class="fa fa-gamepad"></i></div>'}
-            </div>
-            <div class="game-card-body">
-              <div class="game-card-title" title="${game.title}">${game.title}</div>
-              <button class="game-card-play" data-slug="${game.slug}" data-title="${game.title}"><i class="fa fa-play"></i> Play</button>
-            </div>
-          </div>
-        `).join('');
-
-        // Play button click handler
-        const player = document.getElementById('game-player');
-        const playerTitle = document.getElementById('game-player-title');
-        const playerIframe = document.getElementById('game-player-iframe');
-        const playerLoading = document.getElementById('game-player-loading');
-        const playerClose = document.getElementById('game-player-close');
-
-        async function playGame(slug, title) {
-          player.classList.add('active');
-          playerTitle.textContent = title;
-          playerIframe.src = '';
-          playerLoading.style.display = '';
-
-          try {
-            const embedResp = await fetch('/api/credits', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ action: 'games_embed', slug }),
-            });
-            const embedData = await embedResp.json();
-
-            if (embedData.success && embedData.embed_url) {
-              playerIframe.src = embedData.embed_url;
-              playerIframe.onload = () => { playerLoading.style.display = 'none'; };
-            } else {
-              playerLoading.innerHTML = '<i class="fa fa-exclamation-triangle"></i><p>Failed to load game.</p>';
-            }
-          } catch (e) {
-            console.error('Failed to get embed URL:', e);
-            playerLoading.innerHTML = '<i class="fa fa-exclamation-triangle"></i><p>Failed to load game.</p>';
-          }
-        }
-
-        gamesGrid.addEventListener('click', (e) => {
-          const playBtn = e.target.closest('.game-card-play');
-          if (playBtn) {
-            playGame(playBtn.dataset.slug, playBtn.dataset.title);
-            return;
-          }
-          const card = e.target.closest('.game-card');
-          if (card) {
-            playGame(card.dataset.slug, card.querySelector('.game-card-title').textContent);
-          }
-        });
-
-        playerClose.addEventListener('click', () => {
-          player.classList.remove('active');
-          playerIframe.src = '';
-        });
-
-        document.addEventListener('keydown', (e) => {
-          if (e.key === 'Escape' && player.classList.contains('active')) {
-            player.classList.remove('active');
-            playerIframe.src = '';
-          }
-        });
-      } else {
-        gamesEmpty.style.display = 'block';
-      }
-    } catch (e) {
-      console.error('Failed to fetch games:', e);
-      gamesLoading.style.display = 'none';
-      gamesEmpty.style.display = 'block';
-    }
   } else {
     gamesContent.style.display = 'none';
     authMsg.style.display = '';
