@@ -1149,94 +1149,40 @@ export default async function handler(req, res) {
       return;
     }
 
-    // games_fetch - scrape crazygames.com for game thumbnails and URLs
+    // games_fetch - fetch games from CrazyGames API
     if (body.action === 'games_fetch') {
       try {
         const headers = {
           'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+          'Accept': 'application/json',
         };
 
-        const response = await fetch('https://www.crazygames.com/', { headers, signal: AbortSignal.timeout(20000) });
+        const apiUrl = 'https://api.crazygames.com/v4/en_US/games/originals?device=desktop&paginationPage=1&paginationSize=30';
+        const response = await fetch(apiUrl, { headers, signal: AbortSignal.timeout(20000) });
+        
         if (!response.ok) {
           res.status(200).json({ success: true, games: [] });
           return;
         }
 
-        const html = await response.text();
-        const $ = cheerio.load(html);
+        const data = await response.json();
         const games = [];
 
-        // Extract __NEXT_DATA__ from script tag
-        $('script[id="__NEXT_DATA__"]').each((_, script) => {
-          try {
-            const content = $(script).html() || '';
-            const jsonData = JSON.parse(content);
+        if (data?.games?.items && Array.isArray(data.games.items)) {
+          data.games.items.slice(0, 25).forEach(game => {
+            const title = game.name || game.title || '';
+            const slug = game.slug || '';
+            const cover = game.cover || game.covers?.['16x9'] || game.covers?.['1x1'] || '';
             
-            // Navigate through Next.js data structure to find games
-            // Common paths in Next.js apps
-            const possiblePaths = [
-              jsonData?.props?.pageProps?.games,
-              jsonData?.props?.pageProps?.trendingGames,
-              jsonData?.props?.pageProps?.popularGames,
-              jsonData?.props?.pageProps?.featuredGames,
-              jsonData?.props?.initialProps?.pageProps?.games,
-            ];
-
-            for (const gameArray of possiblePaths) {
-              if (Array.isArray(gameArray) && gameArray.length > 0) {
-                gameArray.slice(0, 25).forEach(g => {
-                  const title = g.title || g.name || g.gameTitle || g.slug || '';
-                  const slug = g.slug || g.url?.replace?.('/game/', '') || '';
-                  const image = g.thumbnail || g.cover || g.image || g.poster || g.icon || '';
-                  
-                  if (title && slug && games.length < 25) {
-                    const url = `https://www.crazygames.com/game/${slug}`;
-                    if (!games.some(gg => gg.url === url)) {
-                      games.push({ title, url, image_url: image });
-                    }
-                  }
-                });
-                if (games.length >= 25) break;
+            if (title && slug) {
+              const url = `https://www.crazygames.com/game/${slug}`;
+              const image_url = cover ? `https://imgs.crazygames.com/${cover}` : '';
+              
+              if (!games.some(g => g.url === url)) {
+                games.push({ title, url, image_url });
               }
             }
-          } catch (e) {
-            console.log('Failed to parse __NEXT_DATA__:', e.message);
-          }
-        });
-
-        // Fallback: try scraping with selectors if __NEXT_DATA__ didn't work
-        if (games.length === 0) {
-          const selectors = [
-            'a[href*="/game/"]',
-            '[class*="GameCard"]',
-            '[class*="game-card"]',
-            '.game-item',
-          ];
-
-          for (const selector of selectors) {
-            const elements = $(selector);
-            if (elements.length > 0) {
-              elements.each((_, el) => {
-                const $el = $(el);
-                const $link = $el.is('a') ? $el : $el.find('a[href*="/game/"]').first();
-                const $img = $el.find('img').first();
-                const $title = $el.find('[class*="title"], [class*="name"], h3, h4').first();
-
-                const href = $link.attr('href') || '';
-                const title = $title.text().trim() || $img.attr('alt') || $img.attr('title') || '';
-                const image_url = $img.attr('src') || $img.attr('data-src') || '';
-
-                if (href && title) {
-                  const fullUrl = href.startsWith('http') ? href : `https://www.crazygames.com${href}`;
-                  if (games.length < 25 && !games.some(g => g.url === fullUrl)) {
-                    games.push({ title, url: fullUrl, image_url });
-                  }
-                }
-              });
-              if (games.length >= 25) break;
-            }
-          }
+          });
         }
 
         res.status(200).json({ success: true, games: games.slice(0, 25) });
