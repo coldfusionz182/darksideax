@@ -1149,7 +1149,7 @@ export default async function handler(req, res) {
       return;
     }
 
-    // games_fetch - fetch games from CrazyGames API
+    // games_fetch - fetch games from CrazyGames API using string parsing
     if (body.action === 'games_fetch') {
       try {
         const headers = {
@@ -1163,32 +1163,57 @@ export default async function handler(req, res) {
         console.log('games_fetch: calling API', apiUrl);
         const response = await fetch(apiUrl, { headers, signal: AbortSignal.timeout(20000) });
         console.log('games_fetch: API response status', response.status);
-        
+
         if (!response.ok) {
           console.log('games_fetch: API not ok, returning empty');
           res.status(200).json({ success: true, games: [] });
           return;
         }
 
-        const data = await response.json();
-        const games = [];
-        console.log('games_fetch: API returned items count', data?.games?.items?.length);
+        const raw = await response.text();
+        console.log('games_fetch: raw response length', raw.length);
 
-        if (data?.games?.items && Array.isArray(data.games.items)) {
-          data.games.items.slice(0, 25).forEach(game => {
-            const title = game.name || game.title || '';
-            const slug = game.slug || '';
-            const cover = game.cover || game.covers?.['16x9'] || game.covers?.['1x1'] || '';
-            
-            if (title && slug) {
-              const url = `https://www.crazygames.com/game/${slug}`;
-              const image_url = cover ? `https://imgs.crazygames.com/${cover}?metadata=none&quality=85&width=675&fit=crop` : '';
-              
-              if (!games.some(g => g.url === url)) {
-                games.push({ title, url, image_url });
-              }
+        // Parse using left/right string extraction
+        function extractBetween(text, leftStr, rightStr, startIndex) {
+          const leftIdx = text.indexOf(leftStr, startIndex);
+          if (leftIdx === -1) return { value: '', nextIndex: -1 };
+          const start = leftIdx + leftStr.length;
+          const rightIdx = text.indexOf(rightStr, start);
+          if (rightIdx === -1) return { value: '', nextIndex: -1 };
+          return { value: text.substring(start, rightIdx), nextIndex: rightIdx + rightStr.length };
+        }
+
+        const games = [];
+        let searchIdx = 0;
+
+        // Each game object starts with "id":" so we find game boundaries
+        while (games.length < 25) {
+          // Find next game block by looking for "name":"
+          const nameResult = extractBetween(raw, '"name":"', '"', searchIdx);
+          if (nameResult.nextIndex === -1) break;
+
+          const title = nameResult.value;
+          searchIdx = nameResult.nextIndex;
+
+          // After name, find "slug":"
+          const slugResult = extractBetween(raw, '"slug":"', '"', searchIdx);
+          if (slugResult.nextIndex === -1) break;
+
+          const slug = slugResult.value;
+          searchIdx = slugResult.nextIndex;
+
+          // After slug, find "cover":"
+          const coverResult = extractBetween(raw, '"cover":"', '"', searchIdx);
+          const cover = coverResult.nextIndex !== -1 ? coverResult.value : '';
+          if (coverResult.nextIndex !== -1) searchIdx = coverResult.nextIndex;
+
+          if (title && slug) {
+            const url = `https://www.crazygames.com/game/${slug}`;
+            const image_url = cover ? `https://imgs.crazygames.com/${cover}?metadata=none&quality=85&width=675&fit=crop` : '';
+            if (!games.some(g => g.url === url)) {
+              games.push({ title, url, image_url });
             }
-          });
+          }
         }
 
         console.log('games_fetch: returning', games.length, 'games');
