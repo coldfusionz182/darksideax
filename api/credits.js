@@ -1186,32 +1186,27 @@ export default async function handler(req, res) {
         const games = [];
         let searchIdx = 0;
 
-        // Each game object starts with "id":" so we find game boundaries
         while (games.length < 25) {
-          // Find next game block by looking for "name":"
           const nameResult = extractBetween(raw, '"name":"', '"', searchIdx);
           if (nameResult.nextIndex === -1) break;
 
           const title = nameResult.value;
           searchIdx = nameResult.nextIndex;
 
-          // After name, find "slug":"
           const slugResult = extractBetween(raw, '"slug":"', '"', searchIdx);
           if (slugResult.nextIndex === -1) break;
 
           const slug = slugResult.value;
           searchIdx = slugResult.nextIndex;
 
-          // After slug, find "cover":"
           const coverResult = extractBetween(raw, '"cover":"', '"', searchIdx);
           const cover = coverResult.nextIndex !== -1 ? coverResult.value : '';
           if (coverResult.nextIndex !== -1) searchIdx = coverResult.nextIndex;
 
           if (title && slug) {
-            const url = `https://www.crazygames.com/game/${slug}`;
             const image_url = cover ? `https://imgs.crazygames.com/${cover}?metadata=none&quality=85&width=675&fit=crop` : '';
-            if (!games.some(g => g.url === url)) {
-              games.push({ title, url, image_url });
+            if (!games.some(g => g.slug === slug)) {
+              games.push({ title, slug, image_url });
             }
           }
         }
@@ -1222,6 +1217,59 @@ export default async function handler(req, res) {
       } catch (err) {
         console.error('games_fetch error:', err);
         res.status(500).json({ success: false, error: 'Failed to fetch games' });
+        return;
+      }
+    }
+
+    // games_embed - get embed URL for a specific CrazyGames game
+    if (body.action === 'games_embed') {
+      try {
+        const slug = body.slug;
+        if (!slug) {
+          res.status(400).json({ success: false, error: 'Missing slug' });
+          return;
+        }
+
+        const headers = {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          'Accept': 'text/html',
+        };
+
+        const gameUrl = `https://www.crazygames.com/game/${slug}`;
+        console.log('games_embed: fetching', gameUrl);
+        const response = await fetch(gameUrl, { headers, signal: AbortSignal.timeout(20000) });
+
+        if (!response.ok) {
+          res.status(200).json({ success: false, error: 'Game page not found' });
+          return;
+        }
+
+        const raw = await response.text();
+
+        // Extract loaderConfig URL using string parsing
+        // Pattern: "loaderConfig":{"url":"https://SLUG.game-files.crazygames.com/..."}
+        const leftStr = '"loaderConfig":{"url":"';
+        const leftIdx = raw.indexOf(leftStr);
+        if (leftIdx === -1) {
+          res.status(200).json({ success: false, error: 'Embed URL not found' });
+          return;
+        }
+
+        const start = leftIdx + leftStr.length;
+        const rightIdx = raw.indexOf('"', start);
+        if (rightIdx === -1) {
+          res.status(200).json({ success: false, error: 'Embed URL not found' });
+          return;
+        }
+
+        const embedUrl = raw.substring(start, rightIdx).replace(/\\u0026/g, '&').replace(/\\\//g, '/');
+        console.log('games_embed: found embed URL', embedUrl);
+
+        res.status(200).json({ success: true, embed_url: embedUrl });
+        return;
+      } catch (err) {
+        console.error('games_embed error:', err);
+        res.status(500).json({ success: false, error: 'Failed to get embed URL' });
         return;
       }
     }

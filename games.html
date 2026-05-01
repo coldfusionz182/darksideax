@@ -212,6 +212,72 @@
       box-shadow: 0 4px 15px rgba(139,92,246,0.4);
     }
 
+    /* Game player iframe */
+    .game-player {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 9999;
+      background: #0a0a0f;
+    }
+    .game-player.active {
+      display: flex;
+      flex-direction: column;
+    }
+    .game-player-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 20px;
+      background: #111827;
+      border-bottom: 1px solid #1f2937;
+      flex-shrink: 0;
+    }
+    .game-player-title {
+      color: #e5e7ff;
+      font-size: 1rem;
+      font-weight: 600;
+    }
+    .game-player-close {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      background: #1f2937;
+      color: #9ca3c9;
+      border: 1px solid #374151;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      font-weight: 500;
+      transition: all 0.2s;
+    }
+    .game-player-close:hover {
+      background: #374151;
+      color: #e5e7ff;
+    }
+    .game-player-iframe {
+      flex: 1;
+      border: none;
+      width: 100%;
+      background: #000;
+    }
+    .game-player-loading {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: #9ca3c9;
+      text-align: center;
+    }
+    .game-player-loading i {
+      font-size: 32px;
+      margin-bottom: 12px;
+    }
+
     .games-loading {
       text-align: center;
       padding: 60px 4%;
@@ -335,6 +401,19 @@
         </div>
       </div>
 
+      <!-- Game player overlay -->
+      <div class="game-player" id="game-player">
+        <div class="game-player-header">
+          <div class="game-player-title" id="game-player-title">Loading...</div>
+          <button class="game-player-close" id="game-player-close"><i class="fa fa-times"></i> Close Game</button>
+        </div>
+        <div class="game-player-loading" id="game-player-loading">
+          <i class="fa fa-spinner fa-spin"></i>
+          <p>Loading game...</p>
+        </div>
+        <iframe class="game-player-iframe" id="game-player-iframe" allow="autoplay; fullscreen; gamepad; clipboard-write" allowfullscreen></iframe>
+      </div>
+
       <div class="games-footer">
         &copy; 2026 Darkside Games &mdash; Members Only
       </div>
@@ -378,16 +457,73 @@
       if (data.success && data.games && data.games.length > 0) {
         gamesGrid.style.display = 'grid';
         gamesGrid.innerHTML = data.games.map(game => `
-          <div class="game-card" onclick="window.open('${game.url}', '_blank')">
+          <div class="game-card" data-slug="${game.slug}">
             <div class="game-card-thumb">
               ${game.image_url ? `<img src="${game.image_url}" alt="${game.title}" loading="lazy">` : '<div class="placeholder"><i class="fa fa-gamepad"></i></div>'}
             </div>
             <div class="game-card-body">
               <div class="game-card-title" title="${game.title}">${game.title}</div>
-              <a href="${game.url}" target="_blank" class="game-card-play" onclick="event.stopPropagation()"><i class="fa fa-play"></i> Play</a>
+              <button class="game-card-play" data-slug="${game.slug}" data-title="${game.title}"><i class="fa fa-play"></i> Play</button>
             </div>
           </div>
         `).join('');
+
+        // Play button click handler
+        const player = document.getElementById('game-player');
+        const playerTitle = document.getElementById('game-player-title');
+        const playerIframe = document.getElementById('game-player-iframe');
+        const playerLoading = document.getElementById('game-player-loading');
+        const playerClose = document.getElementById('game-player-close');
+
+        async function playGame(slug, title) {
+          player.classList.add('active');
+          playerTitle.textContent = title;
+          playerIframe.src = '';
+          playerLoading.style.display = '';
+
+          try {
+            const embedResp = await fetch('/api/credits', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ action: 'games_embed', slug }),
+            });
+            const embedData = await embedResp.json();
+
+            if (embedData.success && embedData.embed_url) {
+              playerIframe.src = embedData.embed_url;
+              playerIframe.onload = () => { playerLoading.style.display = 'none'; };
+            } else {
+              playerLoading.innerHTML = '<i class="fa fa-exclamation-triangle"></i><p>Failed to load game.</p>';
+            }
+          } catch (e) {
+            console.error('Failed to get embed URL:', e);
+            playerLoading.innerHTML = '<i class="fa fa-exclamation-triangle"></i><p>Failed to load game.</p>';
+          }
+        }
+
+        gamesGrid.addEventListener('click', (e) => {
+          const playBtn = e.target.closest('.game-card-play');
+          if (playBtn) {
+            playGame(playBtn.dataset.slug, playBtn.dataset.title);
+            return;
+          }
+          const card = e.target.closest('.game-card');
+          if (card) {
+            playGame(card.dataset.slug, card.querySelector('.game-card-title').textContent);
+          }
+        });
+
+        playerClose.addEventListener('click', () => {
+          player.classList.remove('active');
+          playerIframe.src = '';
+        });
+
+        document.addEventListener('keydown', (e) => {
+          if (e.key === 'Escape' && player.classList.contains('active')) {
+            player.classList.remove('active');
+            playerIframe.src = '';
+          }
+        });
       } else {
         gamesEmpty.style.display = 'block';
       }
