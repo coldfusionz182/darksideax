@@ -1149,7 +1149,7 @@ export default async function handler(req, res) {
       return;
     }
 
-    // games_fetch - scrape yandex.com/games for game thumbnails and URLs
+    // games_fetch - scrape crazygames.com for game thumbnails and URLs
     if (body.action === 'games_fetch') {
       try {
         const headers = {
@@ -1157,7 +1157,7 @@ export default async function handler(req, res) {
           'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
         };
 
-        const response = await fetch('https://yandex.com/games/', { headers, signal: AbortSignal.timeout(20000) });
+        const response = await fetch('https://www.crazygames.com/', { headers, signal: AbortSignal.timeout(20000) });
         if (!response.ok) {
           res.status(200).json({ success: true, games: [] });
           return;
@@ -1165,37 +1165,77 @@ export default async function handler(req, res) {
 
         const html = await response.text();
         const $ = cheerio.load(html);
-
         const games = [];
-        // Try to find game cards - yandex uses various selectors
-        const selectors = [
-          '.game-card',
-          '.games-item',
-          '[data-testid="game-card"]',
-          'a[href*="/play/"]',
-        ];
 
-        for (const selector of selectors) {
-          const elements = $(selector);
-          if (elements.length > 0) {
-            elements.each((_, el) => {
-              const $el = $(el);
-              const $link = $el.is('a') ? $el : $el.find('a').first();
-              const $img = $el.find('img').first();
-              const $title = $el.find('[class*="title"], [class*="name"], h3, h4').first();
+        // Extract __NEXT_DATA__ from script tag
+        $('script[id="__NEXT_DATA__"]').each((_, script) => {
+          try {
+            const content = $(script).html() || '';
+            const jsonData = JSON.parse(content);
+            
+            // Navigate through Next.js data structure to find games
+            // Common paths in Next.js apps
+            const possiblePaths = [
+              jsonData?.props?.pageProps?.games,
+              jsonData?.props?.pageProps?.trendingGames,
+              jsonData?.props?.pageProps?.popularGames,
+              jsonData?.props?.pageProps?.featuredGames,
+              jsonData?.props?.initialProps?.pageProps?.games,
+            ];
 
-              const href = $link.attr('href') || '';
-              const title = $title.text().trim() || $img.attr('alt') || '';
-              const image_url = $img.attr('src') || $img.attr('data-src') || '';
-
-              if (href && title) {
-                const fullUrl = href.startsWith('http') ? href : `https://yandex.com${href}`;
-                if (games.length < 25 && !games.some(g => g.url === fullUrl)) {
-                  games.push({ title, url: fullUrl, image_url });
-                }
+            for (const gameArray of possiblePaths) {
+              if (Array.isArray(gameArray) && gameArray.length > 0) {
+                gameArray.slice(0, 25).forEach(g => {
+                  const title = g.title || g.name || g.gameTitle || g.slug || '';
+                  const slug = g.slug || g.url?.replace?.('/game/', '') || '';
+                  const image = g.thumbnail || g.cover || g.image || g.poster || g.icon || '';
+                  
+                  if (title && slug && games.length < 25) {
+                    const url = `https://www.crazygames.com/game/${slug}`;
+                    if (!games.some(gg => gg.url === url)) {
+                      games.push({ title, url, image_url: image });
+                    }
+                  }
+                });
+                if (games.length >= 25) break;
               }
-            });
-            if (games.length >= 25) break;
+            }
+          } catch (e) {
+            console.log('Failed to parse __NEXT_DATA__:', e.message);
+          }
+        });
+
+        // Fallback: try scraping with selectors if __NEXT_DATA__ didn't work
+        if (games.length === 0) {
+          const selectors = [
+            'a[href*="/game/"]',
+            '[class*="GameCard"]',
+            '[class*="game-card"]',
+            '.game-item',
+          ];
+
+          for (const selector of selectors) {
+            const elements = $(selector);
+            if (elements.length > 0) {
+              elements.each((_, el) => {
+                const $el = $(el);
+                const $link = $el.is('a') ? $el : $el.find('a[href*="/game/"]').first();
+                const $img = $el.find('img').first();
+                const $title = $el.find('[class*="title"], [class*="name"], h3, h4').first();
+
+                const href = $link.attr('href') || '';
+                const title = $title.text().trim() || $img.attr('alt') || $img.attr('title') || '';
+                const image_url = $img.attr('src') || $img.attr('data-src') || '';
+
+                if (href && title) {
+                  const fullUrl = href.startsWith('http') ? href : `https://www.crazygames.com${href}`;
+                  if (games.length < 25 && !games.some(g => g.url === fullUrl)) {
+                    games.push({ title, url: fullUrl, image_url });
+                  }
+                }
+              });
+              if (games.length >= 25) break;
+            }
           }
         }
 
