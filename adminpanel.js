@@ -942,6 +942,138 @@ async function handleResetPassword(currentUser) {
   }
 }
 
+/* ===================== RANK MANAGEMENT SECTION (OWNER ONLY) ===================== */
+
+let selectedUserForRank = null;
+
+async function handleSearchRankUser(currentUser) {
+  if (!currentUser || currentUser.role !== 'owner') {
+    alert('Only the owner can manage ranks.');
+    return;
+  }
+
+  const usernameInput = document.getElementById('rank-username');
+  const userInfoDiv = document.getElementById('rank-user-info');
+  const statusEl = document.getElementById('rank-status');
+  const usernameDisplay = document.getElementById('rank-username-display');
+  const currentRankDisplay = document.getElementById('rank-current-display');
+
+  const username = usernameInput.value.trim();
+  if (!username) {
+    statusEl.textContent = 'Please enter a username.';
+    statusEl.style.color = '#f43f5e';
+    return;
+  }
+
+  statusEl.textContent = 'Searching...';
+  statusEl.style.color = '#94a3b8';
+
+  try {
+    const { data: user, error } = await supabaseClient
+      .from('users')
+      .select('id, username, userrank, role')
+      .ilike('username', username)
+      .maybeSingle();
+
+    if (error || !user) {
+      statusEl.textContent = 'User not found.';
+      statusEl.style.color = '#f43f5e';
+      userInfoDiv.style.display = 'none';
+      return;
+    }
+
+    selectedUserForRank = user;
+    usernameDisplay.textContent = user.username;
+    currentRankDisplay.textContent = user.userrank || 'Member';
+    userInfoDiv.style.display = 'block';
+    statusEl.textContent = '';
+  } catch (err) {
+    console.error('Search rank user error:', err);
+    statusEl.textContent = 'Error searching user.';
+    statusEl.style.color = '#f43f5e';
+  }
+}
+
+async function handleSetRank(currentUser) {
+  if (!currentUser || currentUser.role !== 'owner') {
+    alert('Only the owner can manage ranks.');
+    return;
+  }
+
+  if (!selectedUserForRank) {
+    alert('Please search for a user first.');
+    return;
+  }
+
+  const rankSelect = document.getElementById('rank-select');
+  const statusEl = document.getElementById('rank-status');
+  const currentRankDisplay = document.getElementById('rank-current-display');
+
+  const newRank = rankSelect.value.trim();
+
+  statusEl.textContent = 'Updating rank...';
+  statusEl.style.color = '#94a3b8';
+
+  try {
+    const { error } = await supabaseClient
+      .from('users')
+      .update({ userrank: newRank || null })
+      .eq('id', selectedUserForRank.id);
+
+    if (error) {
+      throw error;
+    }
+
+    currentRankDisplay.textContent = newRank || 'Member';
+    selectedUserForRank.userrank = newRank || null;
+    statusEl.textContent = 'Rank updated successfully!';
+    statusEl.style.color = '#10b981';
+    rankSelect.value = '';
+  } catch (err) {
+    console.error('Set rank error:', err);
+    statusEl.textContent = 'Error updating rank: ' + err.message;
+    statusEl.style.color = '#f43f5e';
+  }
+}
+
+async function handleRemoveRank(currentUser) {
+  if (!currentUser || currentUser.role !== 'owner') {
+    alert('Only the owner can manage ranks.');
+    return;
+  }
+
+  if (!selectedUserForRank) {
+    alert('Please search for a user first.');
+    return;
+  }
+
+  const statusEl = document.getElementById('rank-status');
+  const currentRankDisplay = document.getElementById('rank-current-display');
+
+  statusEl.textContent = 'Removing rank...';
+  statusEl.style.color = '#94a3b8';
+
+  try {
+    const { error } = await supabaseClient
+      .from('users')
+      .update({ userrank: null })
+      .eq('id', selectedUserForRank.id);
+
+    if (error) {
+      throw error;
+    }
+
+    currentRankDisplay.textContent = 'Member';
+    selectedUserForRank.userrank = null;
+    statusEl.textContent = 'Rank removed successfully!';
+    statusEl.style.color = '#10b981';
+  } catch (err) {
+    console.error('Remove rank error:', err);
+    statusEl.textContent = 'Error removing rank: ' + err.message;
+    statusEl.style.color = '#f43f5e';
+  }
+}
+
 /* ===================== INIT ===================== */
 
 function switchTab(tab) {
@@ -989,6 +1121,9 @@ async function initAdminPanel() {
   const btnGenerateResetPassword = document.getElementById('btn-generate-reset-password');
   const btnRefreshPending = document.getElementById('btn-refresh-pending');
   const creditsCard = document.getElementById('admin-credits-card');
+  const btnSearchRankUser = document.getElementById('btn-search-rank-user');
+  const btnSetRank = document.getElementById('btn-set-rank');
+  const btnRemoveRank = document.getElementById('btn-remove-rank');
 
   const current = await getCurrentUserWithRole();
   console.log('current user for adminpanel', current);
@@ -1112,6 +1247,42 @@ async function initAdminPanel() {
       if (passwordInput) {
         passwordInput.value = generatePassword();
       }
+    });
+  }
+
+  // Rank management event listeners
+  if (btnSearchRankUser)
+    btnSearchRankUser.addEventListener('click', async () => {
+      const freshUser = await getCurrentUserWithRole();
+      handleSearchRankUser(freshUser);
+    });
+
+  if (btnSetRank)
+    btnSetRank.addEventListener('click', async () => {
+      const freshUser = await getCurrentUserWithRole();
+      handleSetRank(freshUser);
+    });
+
+  if (btnRemoveRank)
+    btnRemoveRank.addEventListener('click', async () => {
+      const freshUser = await getCurrentUserWithRole();
+      handleRemoveRank(freshUser);
+    });
+
+  // Username autocomplete for rank management
+  const rankUsernameInput = document.getElementById('rank-username');
+  if (rankUsernameInput) {
+    loadUsernamesForAutocomplete().then(usernames => {
+      if (!usernames.length) return;
+      const datalist = document.createElement('datalist');
+      datalist.id = 'rank-username-datalist';
+      usernames.forEach(username => {
+        const option = document.createElement('option');
+        option.value = username;
+        datalist.appendChild(option);
+      });
+      document.body.appendChild(datalist);
+      rankUsernameInput.setAttribute('list', 'rank-username-datalist');
     });
   }
 

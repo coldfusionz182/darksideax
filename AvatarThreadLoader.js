@@ -28,14 +28,40 @@ function applyAvatarToImage(imgEl, url) {
 }
 
 /**
+ * Get rank CSS class based on userrank and role
+ */
+function getAvatarRankClass(userrank, role) {
+  if (role === 'owner') return 'ds-user-owner';
+  if (role === 'admin') return 'ds-user-admin';
+  const rank = (userrank || '').toLowerCase();
+  if (rank === 'elite') return 'ds-user-elite';
+  if (rank === 'veteran') return 'ds-user-veteran';
+  if (rank === 'contributor') return 'ds-user-contributor';
+  if (rank === 'trusted') return 'ds-user-trusted';
+  return 'ds-user-member';
+}
+
+/**
+ * Get rank display text
+ */
+function getAvatarRankDisplay(userrank, role) {
+  if (role === 'owner') return 'Owner';
+  if (role === 'admin') return 'Admin';
+  const rank = (userrank || '').toLowerCase();
+  if (rank) return rank.charAt(0).toUpperCase() + rank.slice(1);
+  return 'Member';
+}
+
+/**
  * Main entry: call this after you have the thread object.
  * - thread.author  : username string (e.g. "ColdFusionz")
  * - thread.content : raw BBCode text (may contain [avatar=...])
  *
  * It will:
- * 1) Look up users.avatar_url + users.userrank by username (public select)
+ * 1) Look up users.avatar_url + users.userrank + users.role by username (public select)
  * 2) Fallback to [avatar=URL] in thread.content if no avatar_url
  * 3) Fallback rank to "Member" if none set
+ * 4) Apply rank CSS class to rank element
  */
 export async function initAvatarForThread(thread) {
   if (!thread) return;
@@ -47,12 +73,12 @@ export async function initAvatarForThread(thread) {
   const authorUsername = thread.author || null;
   const content = thread.content || '';
 
-  // 1) Try DB users.avatar_url + users.userrank by username
+  // 1) Try DB users.avatar_url + users.userrank + users.role by username
   if (authorUsername) {
     try {
       const { data, error } = await supabaseClient
         .from('users')
-        .select('avatar_url, userrank')
+        .select('avatar_url, userrank, role')
         .eq('username', authorUsername)
         .maybeSingle();
 
@@ -62,7 +88,10 @@ export async function initAvatarForThread(thread) {
         }
 
         if (rankEl) {
-          rankEl.textContent = data.userrank || 'Member';
+          rankEl.textContent = getAvatarRankDisplay(data.userrank, data.role);
+          // Apply rank color class
+          const rankClass = getAvatarRankClass(data.userrank, data.role);
+          rankEl.className = rankClass;
         }
 
         // If we got an avatar URL from DB, we're done.
@@ -82,5 +111,6 @@ export async function initAvatarForThread(thread) {
   // 3) Fallback rank if nothing set yet
   if (rankEl && !rankEl.textContent) {
     rankEl.textContent = 'Member';
+    rankEl.className = 'ds-user-member';
   }
 }
