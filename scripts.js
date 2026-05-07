@@ -165,6 +165,20 @@ document.addEventListener('DOMContentLoaded', () => {
   }
   showDarksideGamesIfLoggedIn();
 
+  // --- show forums content only for logged-in users ---
+  async function showForumsIfLoggedIn() {
+    const forumsContent = document.getElementById('forums-content');
+    const loginMsg = document.getElementById('forums-login-msg');
+    if (!forumsContent || !loginMsg) return;
+
+    const current = await getCurrentUserWithRole();
+    if (current) {
+      forumsContent.style.display = '';
+      loginMsg.style.display = 'none';
+    }
+  }
+  showForumsIfLoggedIn();
+
   // --- show Movies & Series section for logged-in users ---
   async function showMoviesSeriesIfLoggedIn() {
     const moviesSection = document.getElementById('movies-series-section');
