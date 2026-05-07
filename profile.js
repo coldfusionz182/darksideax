@@ -129,9 +129,11 @@ async function loadProfile() {
   const rankClass = getRankClass(targetUser.userrank, targetUser.role);
   usernameEl.className = 'profile-username-big ' + rankClass;
 
-  // Display rank text (userrank takes priority, fallback to role)
+  // Display rank text (userrank takes priority, fallback to role) with color
   const rankDisplay = getRankDisplay(targetUser.userrank, targetUser.role);
-  document.getElementById('profile-role-text').textContent = rankDisplay;
+  const rankTextEl = document.getElementById('profile-role-text');
+  rankTextEl.textContent = rankDisplay;
+  rankTextEl.className = 'profile-rank-text ' + rankClass;
 
   // Privacy
   if (isOwner) {
@@ -165,7 +167,9 @@ async function loadProfile() {
     // Re-apply branding after auto-rank
     const newRankClass = getRankClass(targetUser.userrank, targetUser.role);
     usernameEl.className = 'profile-username-big ' + newRankClass;
-    document.getElementById('profile-role-text').textContent = getRankDisplay(targetUser.userrank, targetUser.role);
+    const rankTextEl = document.getElementById('profile-role-text');
+    rankTextEl.textContent = getRankDisplay(targetUser.userrank, targetUser.role);
+    rankTextEl.className = 'profile-rank-text ' + newRankClass;
   }
 
   // Render dynamic group pills
