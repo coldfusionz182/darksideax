@@ -165,6 +165,18 @@ document.addEventListener('DOMContentLoaded', () => {
   }
   showDarksideGamesIfLoggedIn();
 
+  // --- show Movies & Series section for logged-in users ---
+  async function showMoviesSeriesIfLoggedIn() {
+    const moviesSection = document.getElementById('movies-series-section');
+    if (!moviesSection) return;
+
+    const current = await getCurrentUserWithRole();
+    if (current) {
+      moviesSection.style.display = '';
+    }
+  }
+  showMoviesSeriesIfLoggedIn();
+
 
   async function loadAdmins() {
     const { data, error } = await supabaseClient
