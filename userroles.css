@@ -1,4 +1,4 @@
-/* === SPARKLY BRANDING SYSTEM === */
+/* === RANK BRANDING SYSTEM === */
 
 /* OWNER: Vibrant Purple with Shimmer */
 .ds-user-owner {
@@ -26,6 +26,46 @@
   display: inline-block;
 }
 
+/* ELITE: Gold with Shimmer */
+.ds-user-elite {
+  font-weight: 800 !important;
+  color: #f59e0b;
+  text-shadow: 0 0 10px rgba(245, 158, 11, 0.4);
+  background: linear-gradient(90deg, #f59e0b, #fbbf24, #f59e0b);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: dsSparkle 3s linear infinite;
+  display: inline-block;
+}
+
+/* VETERAN: Blue with Shimmer */
+.ds-user-veteran {
+  font-weight: 800 !important;
+  color: #3b82f6;
+  text-shadow: 0 0 10px rgba(59, 130, 246, 0.4);
+  background: linear-gradient(90deg, #3b82f6, #60a5fa, #3b82f6);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: dsSparkle 3s linear infinite;
+  display: inline-block;
+}
+
+/* CONTRIBUTOR: Amber/Yellow */
+.ds-user-contributor {
+  font-weight: 700 !important;
+  color: #f59e0b !important;
+  text-shadow: 0 0 6px rgba(245, 158, 11, 0.3);
+}
+
+/* TRUSTED: Cyan */
+.ds-user-trusted {
+  font-weight: 700 !important;
+  color: #06b6d4 !important;
+  text-shadow: 0 0 6px rgba(6, 182, 212, 0.3);
+}
+
 /* MEMBER: Lush Green (No Shimmer) */
 .ds-user-member {
   font-weight: 700 !important;
@@ -43,7 +83,7 @@
 .user-title-admin { @extend .ds-user-admin; }
 
 /* Shoutbox & Staff List Integration Helpers */
-.staff-name.ds-user-owner, .staff-name.ds-user-admin {
+.staff-name.ds-user-owner, .staff-name.ds-user-admin, .staff-name.ds-user-elite, .staff-name.ds-user-veteran {
   font-size: 1.05rem;
 }
 
@@ -55,3 +95,20 @@
 .profile-username-link:hover {
   transform: scale(1.03);
 }
+
+/* === RANK GROUP PILLS === */
+.group-pill {
+  padding: 4px 12px;
+  border-radius: 3px;
+  font-size: 0.8rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.group-pill-owner { background: #a855f7; color: #fff; }
+.group-pill-admin { background: #ec4899; color: #fff; }
+.group-pill-elite { background: #f59e0b; color: #111827; }
+.group-pill-veteran { background: #3b82f6; color: #fff; }
+.group-pill-contributor { background: rgba(245, 158, 11, 0.15); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.35); }
+.group-pill-trusted { background: rgba(6, 182, 212, 0.15); color: #06b6d4; border: 1px solid rgba(6, 182, 212, 0.35); }
+.group-pill-member { background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.35); }

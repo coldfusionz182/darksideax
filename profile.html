@@ -9,6 +9,7 @@
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
   <link href="styles.css" rel="stylesheet">
   <link href="profile.css" rel="stylesheet">
+  <link href="userroles.css" rel="stylesheet">
   <link href="notifications.css" rel="stylesheet">
 </head>
 <body>
@@ -200,11 +201,8 @@
             <header class="profile-tab-header">
               <span>Groups</span>
             </header>
-            <div class="profile-groups-row">
-              <span class="group-pill group-pill-main">∞ Infinity</span>
-              <span class="group-pill group-pill-secondary">
-                <i class="fa fa-trophy"></i> Contributor
-              </span>
+            <div class="profile-groups-row" id="profile-groups-row">
+              <!-- Dynamically populated by profile.js -->
             </div>
           </section>
 

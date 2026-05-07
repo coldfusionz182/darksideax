@@ -823,6 +823,66 @@
         <div id="credits-status" style="margin-top:8px; font-size:0.8rem; color:var(--admin-text-muted);"></div>
       </section>
 
+      <!-- Rank Management card (owner only) -->
+      <section class="admin-card" id="admin-rank-card">
+        <div class="admin-card-header">
+          <div class="admin-card-title-wrap">
+            <div class="admin-card-title">
+              <i class="fa fa-trophy"></i>
+              Rank Management
+            </div>
+            <div class="admin-card-sub">
+              Assign custom ranks to users. Each rank changes username color in shoutbox and profile. Owner only.
+            </div>
+          </div>
+        </div>
+
+        <div style="display:flex; flex-wrap:wrap; gap:12px; align-items:center; margin-top:8px;">
+          <input
+            type="text"
+            id="rank-username"
+            placeholder="Search username..."
+            style="flex:1 1 200px; max-width:280px; background:rgba(0,0,0,0.2); border:1px solid var(--admin-border); border-radius:var(--admin-radius-pill); padding:8px 16px; font-size:0.85rem; color:var(--admin-text-main); font-family:inherit;"
+          >
+          <button id="btn-search-rank-user" class="btn-owner-ghost">
+            <i class="fa fa-search"></i> Search
+          </button>
+        </div>
+
+        <div id="rank-user-info" style="margin-top:16px; padding:12px; background:rgba(0,0,0,0.15); border-radius:8px; display:none;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+            <div>
+              <strong id="rank-username-display" style="font-size:0.95rem; color:var(--admin-text-main);"></strong>
+              <div style="font-size:0.8rem; color:var(--admin-text-muted); margin-top:2px;">Current Rank</div>
+            </div>
+            <div id="rank-current-display" style="font-size:1.1rem; font-weight:700; color:var(--admin-accent);">Member</div>
+          </div>
+
+          <div style="display:flex; flex-wrap:wrap; gap:8px; align-items:center;">
+            <select
+              id="rank-select"
+              style="flex:1 1 180px; max-width:220px; background:rgba(0,0,0,0.2); border:1px solid var(--admin-border); border-radius:var(--admin-radius-pill); padding:8px 16px; font-size:0.85rem; color:var(--admin-text-main); font-family:inherit; cursor:pointer;"
+            >
+              <option value="">-- Select Rank --</option>
+              <option value="elite">Elite (Gold)</option>
+              <option value="veteran">Veteran (Blue)</option>
+              <option value="contributor">Contributor (Amber)</option>
+              <option value="trusted">Trusted (Cyan)</option>
+              <option value="member">Member (Green)</option>
+              <option value="">-- Remove Rank --</option>
+            </select>
+            <button id="btn-set-rank" class="btn-owner-primary">
+              <i class="fa fa-check"></i> Set Rank
+            </button>
+            <button id="btn-remove-rank" class="btn-owner-ghost" style="border-color:var(--admin-danger); color:var(--admin-danger);">
+              <i class="fa fa-times"></i> Remove Rank
+            </button>
+          </div>
+        </div>
+
+        <div id="rank-status" style="margin-top:8px; font-size:0.8rem; color:var(--admin-text-muted);"></div>
+      </section>
+
       <!-- Ban management card (owner only) -->
       <section class="admin-card" id="admin-ban-card">
         <div class="admin-card-header">

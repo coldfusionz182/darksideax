@@ -17,6 +17,68 @@ function formatDate(iso) {
   return `${dd}/${mm}/${yyyy}`;
 }
 
+// Rank hierarchy: owner > admin > elite > veteran > contributor > trusted > member
+const RANK_HIERARCHY = ['owner', 'admin', 'elite', 'veteran', 'contributor', 'trusted', 'member'];
+
+const RANK_ICONS = {
+  owner: 'fa-crown',
+  admin: 'fa-shield-alt',
+  elite: 'fa-gem',
+  veteran: 'fa-medal',
+  contributor: 'fa-trophy',
+  trusted: 'fa-check-circle',
+  member: 'fa-user'
+};
+
+function getRankClass(userrank, role) {
+  // Role-based ranks take absolute priority (owner/admin)
+  if (role === 'owner') return 'ds-user-owner';
+  if (role === 'admin') return 'ds-user-admin';
+  // Then userrank
+  const rank = (userrank || '').toLowerCase();
+  if (rank === 'elite') return 'ds-user-elite';
+  if (rank === 'veteran') return 'ds-user-veteran';
+  if (rank === 'contributor') return 'ds-user-contributor';
+  if (rank === 'trusted') return 'ds-user-trusted';
+  return 'ds-user-member';
+}
+
+function getRankDisplay(userrank, role) {
+  if (role === 'owner') return 'Owner';
+  if (role === 'admin') return 'Admin';
+  const rank = (userrank || '').toLowerCase();
+  if (rank && RANK_HIERARCHY.includes(rank)) {
+    return rank.charAt(0).toUpperCase() + rank.slice(1);
+  }
+  return 'Member';
+}
+
+function renderGroupPills(user) {
+  const container = document.getElementById('profile-groups-row');
+  if (!container) return;
+  container.innerHTML = '';
+
+  // Always show the primary rank pill
+  const primaryRank = user.role === 'owner' ? 'owner' : user.role === 'admin' ? 'admin' : (user.userrank || 'member').toLowerCase();
+  const primaryPill = document.createElement('span');
+  primaryPill.className = `group-pill group-pill-${primaryRank}`;
+  const primaryIcon = RANK_ICONS[primaryRank] || 'fa-user';
+  primaryPill.innerHTML = `<i class="fa ${primaryIcon}"></i> ${getRankDisplay(user.userrank, user.role)}`;
+  container.appendChild(primaryPill);
+
+  // If user has a userrank AND a staff role, show both pills
+  if (user.userrank && (user.role === 'owner' || user.role === 'admin')) {
+    const rank = user.userrank.toLowerCase();
+    if (rank !== 'owner' && rank !== 'admin') {
+      const extraPill = document.createElement('span');
+      extraPill.className = `group-pill group-pill-${rank}`;
+      const extraIcon = RANK_ICONS[rank] || 'fa-user';
+      extraPill.innerHTML = `<i class="fa ${extraIcon}"></i> ${rank.charAt(0).toUpperCase() + rank.slice(1)}`;
+      container.appendChild(extraPill);
+    }
+  }
+}
+
 async function loadProfile() {
   const usernameEl = document.getElementById('profile-username');
   if (!usernameEl) return;
@@ -51,7 +113,6 @@ async function loadProfile() {
 
   // 2. Populate UI
   usernameEl.textContent = targetUser.username;
-  document.getElementById('profile-role-text').textContent = targetUser.userrank || targetUser.role.toUpperCase();
   document.getElementById('profile-joined').textContent = formatDate(targetUser.created_at);
   if (document.getElementById('info-uid')) document.getElementById('info-uid').textContent = targetUser.id.substring(0, 8);
 
@@ -64,10 +125,13 @@ async function loadProfile() {
   if (targetUser.discord) document.getElementById('discord-input').value = targetUser.discord;
   if (targetUser.telegram) document.getElementById('telegram-input').value = targetUser.telegram;
 
-  // Branding Integration
-  if (targetUser.role === 'owner') usernameEl.className = 'profile-username-big ds-user-owner';
-  else if (targetUser.role === 'admin') usernameEl.className = 'profile-username-big ds-user-admin';
-  else usernameEl.className = 'profile-username-big ds-user-member';
+  // Branding Integration - use userrank for color, fallback to role
+  const rankClass = getRankClass(targetUser.userrank, targetUser.role);
+  usernameEl.className = 'profile-username-big ' + rankClass;
+
+  // Display rank text (userrank takes priority, fallback to role)
+  const rankDisplay = getRankDisplay(targetUser.userrank, targetUser.role);
+  document.getElementById('profile-role-text').textContent = rankDisplay;
 
   // Privacy
   if (isOwner) {
@@ -88,10 +152,24 @@ async function loadProfile() {
     supabase.from('thread_likes').select('id, thread_id, created_at').ilike('username', targetUser.username).order('created_at', { ascending: false })
   ]);
 
+  const likesCount = likesGiven?.length || 0;
   document.getElementById('stat-threads').textContent = threads?.length || 0;
   document.getElementById('stat-replies').textContent = replies?.length || 0;
-  document.getElementById('stat-likes').textContent = likesGiven?.length || 0;
-  document.getElementById('profile-likes-total').textContent = likesGiven?.length || 0;
+  document.getElementById('stat-likes').textContent = likesCount;
+  document.getElementById('profile-likes-total').textContent = likesCount;
+
+  // Auto-assign Contributor rank if 200+ likes and no higher rank set
+  if (likesCount >= 200 && !targetUser.userrank) {
+    await supabase.from('users').update({ userrank: 'contributor' }).eq('id', targetUser.id);
+    targetUser.userrank = 'contributor';
+    // Re-apply branding after auto-rank
+    const newRankClass = getRankClass(targetUser.userrank, targetUser.role);
+    usernameEl.className = 'profile-username-big ' + newRankClass;
+    document.getElementById('profile-role-text').textContent = getRankDisplay(targetUser.userrank, targetUser.role);
+  }
+
+  // Render dynamic group pills
+  renderGroupPills(targetUser);
 
   // Render Threads
   const tList = document.getElementById('profile-threads-list');

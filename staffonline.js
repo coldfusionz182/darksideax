@@ -131,10 +131,21 @@ const activeStaff = users.filter((u) => {
         ? u.username
         : (u.email ? u.email.split('@')[0] : 'Unknown');
 
-      // Determine Branding Class
+      // Determine Branding Class based on userrank (fallback to role)
+      const rank = (u.userrank || '').toLowerCase();
       let roleClass = 'ds-user-member';
       if (u.role === 'owner') roleClass = 'ds-user-owner';
       else if (u.role === 'admin') roleClass = 'ds-user-admin';
+      else if (rank === 'elite') roleClass = 'ds-user-elite';
+      else if (rank === 'veteran') roleClass = 'ds-user-veteran';
+      else if (rank === 'contributor') roleClass = 'ds-user-contributor';
+      else if (rank === 'trusted') roleClass = 'ds-user-trusted';
+
+      // Rank display text
+      let rankText = 'Member';
+      if (u.role === 'owner') rankText = 'Owner';
+      else if (u.role === 'admin') rankText = 'Admin';
+      else if (rank) rankText = rank.charAt(0).toUpperCase() + rank.slice(1);
 
       // Avatar Logic (Keeping avatars but removing links to profiles)
       // We can fetch from cache if available or just use a default
@@ -143,7 +154,7 @@ const activeStaff = users.filter((u) => {
       line.innerHTML = `
         <span class="staff-name">
           <span class="staff-name-text ${roleClass}">${displayName}</span>
-          <div class="staff-rank" style="font-size:10px; color:#888;">${u.userrank || u.role.toUpperCase()}</div>
+          <div class="staff-rank" style="font-size:10px; color:#888;">${rankText}</div>
         </span>
       `;
 

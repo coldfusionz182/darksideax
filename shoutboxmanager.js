@@ -45,13 +45,14 @@ async function fetchUserDataWithCache(username) {
 
     const { data: user } = await window.supabaseClient
       .from('users')
-      .select('avatar_url, role, discord, telegram')
+      .select('avatar_url, role, userrank, discord, telegram')
       .eq('id', profile.id)
       .maybeSingle();
     
     const result = {
       url: user?.avatar_url || null,
       role: user?.role || 'member',
+      userrank: user?.userrank || null,
       discord: user?.discord || null,
       telegram: user?.telegram || null
     };
@@ -98,6 +99,17 @@ function getAvatarColor(username) {
   let hash = 0;
   for (let i = 0; i < username.length; i++) hash = username.charCodeAt(i) + ((hash << 5) - hash);
   return colors[Math.abs(hash) % colors.length];
+}
+
+function getShoutRankClass(userrank, role) {
+  if (role === 'owner') return 'ds-user-owner';
+  if (role === 'admin') return 'ds-user-admin';
+  const rank = (userrank || '').toLowerCase();
+  if (rank === 'elite') return 'ds-user-elite';
+  if (rank === 'veteran') return 'ds-user-veteran';
+  if (rank === 'contributor') return 'ds-user-contributor';
+  if (rank === 'trusted') return 'ds-user-trusted';
+  return 'ds-user-member';
 }
 
 function createShoutContextMenu() {
@@ -153,14 +165,10 @@ async function renderShout(row, currentUser, isOptimistic = false) {
         avatar.innerHTML = `<img src="${res.url}" alt="${row.username}">`;
         avatar.style.borderColor = 'transparent';
       }
-      // Apply Branding Class
-      if (res.role === 'owner') {
-        userLink.classList.remove('ds-user-member');
-        userLink.classList.add('ds-user-owner');
-      } else if (res.role === 'admin') {
-        userLink.classList.remove('ds-user-member');
-        userLink.classList.add('ds-user-admin');
-      }
+      // Apply Branding Class based on userrank (fallback to role)
+      const rankClass = getShoutRankClass(res.userrank, res.role);
+      userLink.classList.remove('ds-user-member');
+      userLink.classList.add(rankClass);
     }
   });
 
