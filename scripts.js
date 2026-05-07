@@ -154,6 +154,14 @@ document.addEventListener('DOMContentLoaded', () => {
   showAdminNavIfAllowed();
 
   // --- show Darkside Games section for logged-in users ---
+  // Quick sync check to avoid flash
+  (function quickGamesAuthCheck() {
+    const gamesSection = document.getElementById('darkside-games-section');
+    if (!gamesSection) return;
+    const hasToken = !!localStorage.getItem('sb-ffmkkwskvjvytdddevmm-auth-token');
+    if (hasToken) gamesSection.style.display = '';
+  })();
+
   async function showDarksideGamesIfLoggedIn() {
     const gamesSection = document.getElementById('darkside-games-section');
     if (!gamesSection) return;
@@ -161,12 +169,30 @@ document.addEventListener('DOMContentLoaded', () => {
     const current = await getCurrentUserWithRole();
     if (current) {
       gamesSection.style.display = '';
+    } else {
+      gamesSection.style.display = 'none';
     }
   }
   showDarksideGamesIfLoggedIn();
 
   // --- show forums content only for logged-in users ---
-  async function showForumsIfLoggedIn() {
+  // Quick sync check: if localStorage has a Supabase session, show forums immediately (no flash)
+  (function quickForumAuthCheck() {
+    const forumsContent = document.getElementById('forums-content');
+    const loginMsg = document.getElementById('forums-login-msg');
+    if (!forumsContent || !loginMsg) return;
+
+    // Supabase stores session at sb-{projectRef}-auth-token in localStorage
+    const hasToken = !!localStorage.getItem('sb-ffmkkwskvjvytdddevmm-auth-token');
+    if (hasToken) {
+      forumsContent.style.display = '';
+    } else {
+      loginMsg.style.display = '';
+    }
+  })();
+
+  // Async verification: confirm the token is actually valid
+  (async function verifyForumAuth() {
     const forumsContent = document.getElementById('forums-content');
     const loginMsg = document.getElementById('forums-login-msg');
     if (!forumsContent || !loginMsg) return;
@@ -175,11 +201,21 @@ document.addEventListener('DOMContentLoaded', () => {
     if (current) {
       forumsContent.style.display = '';
       loginMsg.style.display = 'none';
+    } else {
+      forumsContent.style.display = 'none';
+      loginMsg.style.display = '';
     }
-  }
-  showForumsIfLoggedIn();
+  })();
 
   // --- show Movies & Series section for logged-in users ---
+  // Quick sync check to avoid flash
+  (function quickMoviesAuthCheck() {
+    const moviesSection = document.getElementById('movies-series-section');
+    if (!moviesSection) return;
+    const hasToken = !!localStorage.getItem('sb-ffmkkwskvjvytdddevmm-auth-token');
+    if (hasToken) moviesSection.style.display = '';
+  })();
+
   async function showMoviesSeriesIfLoggedIn() {
     const moviesSection = document.getElementById('movies-series-section');
     if (!moviesSection) return;
@@ -187,6 +223,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const current = await getCurrentUserWithRole();
     if (current) {
       moviesSection.style.display = '';
+    } else {
+      moviesSection.style.display = 'none';
     }
   }
   showMoviesSeriesIfLoggedIn();
