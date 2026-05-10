@@ -125,6 +125,13 @@ function renderCard(card, avatarUrl) {
   else if (layout === 'compact') layoutClass = 'layout-compact ';
 
   const visibleName = card.display_name || card.username || '';
+  console.log('Rendering card with:', {
+    display_name: card.display_name,
+    username: card.username,
+    visibleName: visibleName,
+    text_color: card.text_color
+  });
+  
   container.innerHTML = videoHtml + hiddenAudioHtml + audioPlayerHtml + overlayColor + particlesHtml
     + '<div class="card-content ' + layoutClass + '">'
     + avatarHtml
