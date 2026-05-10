@@ -191,7 +191,6 @@
         }
 
         renderCard(card, avatarUrl);
-        setupAutoUnmute();
       } catch (err) {
         console.error('Load error:', err);
         showError('Error loading profile card');
@@ -201,14 +200,9 @@
     function renderCard(card, avatarUrl) {
       const container = document.getElementById('cardContainer');
 
-      let videoHtml = '';
-      if (card.video_url) {
-        videoHtml = getVideoEmbedHtml(card.video_url);
-      }
-
       const overlayHtml = `<div class="overlay" style="background: ${card.background_color}${card.video_url ? 'aa' : ''}"></div>`;
 
-      const socialLinksHtml = card.social_links && card.social_links.length > 0 
+      const socialLinksHtml = card.social_links && card.social_links.length > 0
         ? card.social_links.map(link => {
             const icon = getSocialIcon(link.platform);
             return `<a href="${link.url}" class="social-link" style="background: ${card.accent_color}33; color: ${card.text_color};" target="_blank" rel="noopener"><i class="${icon}"></i></a>`;
@@ -221,7 +215,6 @@
       const avatarHtml = avatarUrl ? `<img src="${avatarUrl}" class="card-avatar" alt="Avatar" style="border-color: ${card.accent_color || '#7c3aed'};">` : '';
 
       container.innerHTML = `
-        ${videoHtml}
         ${overlayHtml}
         <div class="card-content">
           ${avatarHtml}
@@ -233,6 +226,13 @@
           </div>
         </div>
       `;
+
+      // Append video via DOM so autoplay fires reliably
+      if (card.video_url) {
+        const videoWrap = createVideoElement(card.video_url);
+        container.insertBefore(videoWrap, container.firstChild);
+        playVideoWithSound(videoWrap.querySelector('video'));
+      }
     }
 
     function getSocialIcon(platform) {
@@ -249,30 +249,35 @@
       return icons[platform] || 'fa fa-link';
     }
 
-    function getVideoEmbedHtml(url) {
-      if (!url) return '';
-      return `
-        <div class="video-background">
-          <video autoplay muted loop playsinline>
-            <source src="${url}" type="video/mp4">
-          </video>
-        </div>
-      `;
+    function createVideoElement(url) {
+      const wrap = document.createElement('div');
+      wrap.className = 'video-background';
+      const video = document.createElement('video');
+      video.src = url;
+      video.autoplay = true;
+      video.loop = true;
+      video.playsInline = true;
+      video.muted = true;
+      video.style.cssText = 'width:100%;height:100%;object-fit:cover;position:absolute;top:0;left:0;pointer-events:none;border:none;';
+      wrap.appendChild(video);
+      return wrap;
     }
 
-    function setupAutoUnmute() {
-      const video = document.querySelector('.video-background video');
+    function playVideoWithSound(video) {
       if (!video) return;
-      // Try unmuting immediately (works if domain is trusted)
+      video.play().catch(() => {});
+      // Try unmuting immediately
       video.muted = false;
-      // Also unmute on first click anywhere
-      const unmuteOnClick = () => {
+      video.play().catch(() => {});
+      // Also on first interaction
+      const tryPlay = () => {
         video.muted = false;
-        document.body.removeEventListener('click', unmuteOnClick);
-        document.body.removeEventListener('touchstart', unmuteOnClick);
+        video.play().catch(() => {});
+        document.body.removeEventListener('click', tryPlay);
+        document.body.removeEventListener('touchstart', tryPlay);
       };
-      document.body.addEventListener('click', unmuteOnClick);
-      document.body.addEventListener('touchstart', unmuteOnClick);
+      document.body.addEventListener('click', tryPlay);
+      document.body.addEventListener('touchstart', tryPlay);
     }
 
     function showError(message) {
