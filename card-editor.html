@@ -352,19 +352,6 @@
 
     // Initialize
     async function init() {
-      // Simulate user interaction for autoplay
-      document.body.addEventListener('click', function establishInteraction() {
-        window.userHasInteracted = true;
-        document.body.removeEventListener('click', establishInteraction);
-      }, { once: true });
-      
-      // Auto-click after short delay to establish interaction
-      setTimeout(() => {
-        if (!window.userHasInteracted) {
-          document.body.click();
-        }
-      }, 100);
-
       // Check if user is admin/owner
       const { data: { user: authUser } } = await supabase.auth.getUser();
       if (!authUser) {
@@ -479,9 +466,9 @@
         `;
       });
 
-      // Try to play with sound after user interaction
+      // Try to click video with XPath for sound
       if (videoUrl) {
-        setTimeout(attemptUnmutedPlay, 100);
+        setTimeout(clickVideoForSound, 500);
       }
     }
 
@@ -540,17 +527,24 @@
       updatePreview();
     };
 
-    function attemptUnmutedPlay() {
-      const video = document.querySelector('.preview-video');
-      if (video && window.userHasInteracted) {
-        video.play().then(() => {
-          video.muted = false;
-        }).catch(err => {
-          console.log('Autoplay with sound blocked, will play muted');
-        });
-      } else if (video) {
-        // Try again after a delay if interaction hasn't been established yet
-        setTimeout(attemptUnmutedPlay, 200);
+    function clickVideoForSound() {
+      try {
+        // Find video using XPath
+        const video = document.evaluate('/html/body/video', document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+        
+        if (video) {
+          // Click the video 3 times to establish user interaction
+          for (let i = 0; i < 3; i++) {
+            setTimeout(() => {
+              video.click();
+              // Try to unmute and play with sound
+              video.muted = false;
+              video.play().catch(err => console.log('Play with sound failed:', err));
+            }, i * 100);
+          }
+        }
+      } catch (err) {
+        console.log('XPath video click failed:', err);
       }
     }
 
