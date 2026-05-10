@@ -465,6 +465,7 @@
           </a>
         `;
       });
+      setupAutoUnmute();
     }
 
     function getSocialIcon(platform) {
@@ -483,7 +484,20 @@
 
     function getVideoEmbedHtml(url) {
       if (!url) return '';
-      return `<video class="preview-video" autoplay loop playsinline><source src="${url}" type="video/mp4"></video>`;
+      return `<video class="preview-video" autoplay muted loop playsinline><source src="${url}" type="video/mp4"></video>`;
+    }
+
+    function setupAutoUnmute() {
+      const video = document.querySelector('.preview-frame .preview-video');
+      if (!video) return;
+      video.muted = false;
+      const unmuteOnClick = () => {
+        video.muted = false;
+        document.body.removeEventListener('click', unmuteOnClick);
+        document.body.removeEventListener('touchstart', unmuteOnClick);
+      };
+      document.body.addEventListener('click', unmuteOnClick);
+      document.body.addEventListener('touchstart', unmuteOnClick);
     }
 
     window.addSocialLink = function() {

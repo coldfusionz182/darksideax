@@ -191,6 +191,7 @@
         }
 
         renderCard(card, avatarUrl);
+        setupAutoUnmute();
       } catch (err) {
         console.error('Load error:', err);
         showError('Error loading profile card');
@@ -252,11 +253,26 @@
       if (!url) return '';
       return `
         <div class="video-background">
-          <video autoplay loop playsinline>
+          <video autoplay muted loop playsinline>
             <source src="${url}" type="video/mp4">
           </video>
         </div>
       `;
+    }
+
+    function setupAutoUnmute() {
+      const video = document.querySelector('.video-background video');
+      if (!video) return;
+      // Try unmuting immediately (works if domain is trusted)
+      video.muted = false;
+      // Also unmute on first click anywhere
+      const unmuteOnClick = () => {
+        video.muted = false;
+        document.body.removeEventListener('click', unmuteOnClick);
+        document.body.removeEventListener('touchstart', unmuteOnClick);
+      };
+      document.body.addEventListener('click', unmuteOnClick);
+      document.body.addEventListener('touchstart', unmuteOnClick);
     }
 
     function showError(message) {
