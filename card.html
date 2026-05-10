@@ -19,6 +19,8 @@
       animation: cardEnter 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
       opacity: 0;
       transform: translateY(30px) scale(0.95);
+      display: flex; flex-direction: column; align-items: center;
+      gap: 8px;
     }
     @keyframes cardEnter {
       to { opacity: 1; transform: translateY(0) scale(1); }
@@ -39,7 +41,7 @@
     /* Avatar hover */
     .card-avatar {
       width: 100px; height: 100px; border-radius: 50%; object-fit: cover;
-      border: 3px solid rgba(255,255,255,0.2); margin-bottom: 16px;
+      border: 3px solid rgba(255,255,255,0.2);
       box-shadow: 0 4px 20px rgba(0,0,0,0.3);
       transition: all 0.3s ease;
     }
@@ -48,18 +50,18 @@
       box-shadow: 0 8px 30px rgba(0,0,0,0.4);
     }
     /* Enhanced username */
-    .username { font-size: 52px; font-weight: 700; margin-bottom: 16px; text-shadow: 0 2px 10px rgba(0,0,0,0.5); }
+    .username { font-size: 52px; font-weight: 700; text-shadow: 0 2px 10px rgba(0,0,0,0.5); }
     /* Badge glow */
     .badge {
       display: inline-block; padding: 8px 20px; border-radius: 30px;
-      font-size: 14px; font-weight: 600; margin-bottom: 20px;
+      font-size: 14px; font-weight: 600;
       text-shadow: 0 1px 5px rgba(0,0,0,0.3);
       box-shadow: 0 4px 15px rgba(0,0,0,0.2);
     }
     /* Bio */
-    .bio { font-size: 18px; margin-bottom: 32px; max-width: 600px; line-height: 1.6; text-shadow: 0 1px 5px rgba(0,0,0,0.3); }
+    .bio { font-size: 18px; max-width: 600px; line-height: 1.6; text-shadow: 0 1px 5px rgba(0,0,0,0.3); }
     /* Social links enhanced */
-    .social-links { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; }
+    .social-links { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; margin-top: 8px; }
     .social-link {
       width: 56px; height: 56px; border-radius: 50%; display: flex;
       align-items: center; justify-content: center; font-size: 24px;
@@ -295,7 +297,7 @@
     .layout-right .card-content { align-items: flex-end; text-align: right; padding-right: 60px; }
     .layout-compact .card-content { padding: 20px; }
     .layout-compact .username { font-size: 36px; }
-    .layout-compact .bio { font-size: 16px; margin-bottom: 20px; }
+    .layout-compact .bio { font-size: 16px; }
     .layout-compact .card-avatar { width: 80px; height: 80px; }
     
     @media (max-width: 768px) {

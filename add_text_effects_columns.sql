@@ -29,5 +29,8 @@ ALTER TABLE profile_cards ADD COLUMN IF NOT EXISTS enter_text TEXT DEFAULT 'Clic
 ALTER TABLE profile_cards ADD COLUMN IF NOT EXISTS enter_text_effect TEXT DEFAULT 'rainbow-text';
 ALTER TABLE profile_cards ADD COLUMN IF NOT EXISTS enter_text_font TEXT DEFAULT 'font-cyberpunk';
 
+-- NEW: Separate display name (what shows on card) from username (URL slug)
+ALTER TABLE profile_cards ADD COLUMN IF NOT EXISTS display_name TEXT;
+
 -- Add index for better performance
 CREATE INDEX IF NOT EXISTS idx_profile_cards_profile_layout ON profile_cards(profile_layout);

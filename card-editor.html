@@ -637,23 +637,28 @@
           </div>
           <div class="form-row">
             <div class="form-group">
-              <label>Display Username</label>
-              <input type="text" id="displayUsername" placeholder="Your username" />
+              <label>Profile URL Username</label>
+              <input type="text" id="displayUsername" placeholder="coldfusionz" required>
+              <span class="form-hint">Your URL slug: the-darkside.me/username</span>
             </div>
             <div class="form-group">
-              <label>Badge Text</label>
-              <input type="text" id="badgeText" placeholder="Owner • Admin • Elite" />
+              <label>Display Name</label>
+              <input type="text" id="displayName" placeholder="ColdFusionz" maxlength="50">
+              <span class="form-hint">Name shown on your profile card. Leave empty to use URL username.</span>
             </div>
+            <div class="form-group">
+              <label>Badge</label>
+              <input type="text" id="badgeText" placeholder="Admin • Premium • Verified" maxlength="30">
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Bio</label>
+            <textarea id="bio" rows="3" placeholder="Tell us about yourself..." maxlength="200"></textarea>
           </div>
           <div class="form-group">
             <label>Profile Photo / GIF URL</label>
             <input type="url" id="cardAvatarUrl" placeholder="https://files.catbox.moe/avatar.gif" />
             <span class="form-hint">Direct link to your avatar image or GIF. Leave empty to use your account avatar.</span>
-          </div>
-          <div class="form-group">
-            <label>Bio / Tagline</label>
-            <textarea id="bio" placeholder="Short bio or tagline..."></textarea>
-            <span class="form-hint">This appears below your username on the card</span>
           </div>
         </div>
       </div>
@@ -1116,6 +1121,7 @@
         safeSetValue('textColor', card.text_color);
         safeSetValue('accentColor', card.accent_color);
         safeSetValue('displayUsername', card.username);
+        safeSetValue('displayName', card.display_name || '');
         safeSetValue('badgeText', card.badge);
         safeSetValue('cardAvatarUrl', card.card_avatar_url);
         safeSetValue('bio', card.bio);
@@ -1184,7 +1190,7 @@
     }
 
     function setupLivePreview() {
-      const inputs = ['videoUrl', 'bgColor', 'textColor', 'accentColor', 'displayUsername', 'badgeText', 'cardAvatarUrl', 'bio', 
+      const inputs = ['videoUrl', 'bgColor', 'textColor', 'accentColor', 'displayUsername', 'displayName', 'badgeText', 'cardAvatarUrl', 'bio', 
                       'usernameEffect', 'usernameFont', 'badgeEffect', 'badgeFont', 'bioEffect', 'bioFont',
                       'enableAudioPlayer', 'audioUrl', 'audioTitle', 'audioCover',
                       'audioPlayerPosition', 'audioPlayerStyle', 'audioPlayerTheme', 'audioVisualizer',
@@ -1225,7 +1231,8 @@
 
     function updatePreview() {
       updateProfileUrlBanner();
-      const username = document.getElementById('displayUsername')?.value || 'Your Username';
+      const displayName = document.getElementById('displayName')?.value || '';
+      const username = displayName || document.getElementById('displayUsername')?.value || 'Your Username';
       const badge = document.getElementById('badgeText')?.value || '';
       const bio = document.getElementById('bio')?.value || '';
       const videoUrl = document.getElementById('videoUrl')?.value || '';
@@ -1424,11 +1431,11 @@
 
         const cardData = {
           user_id: authUser.id,
-          username: username,
+          username: document.getElementById('displayUsername').value,
+          display_name: document.getElementById('displayName').value,
           video_url: document.getElementById('videoUrl').value,
           background_color: document.getElementById('bgColor').value,
           text_color: document.getElementById('textColor').value,
-          accent_color: document.getElementById('accentColor').value,
           badge: document.getElementById('badgeText').value,
           card_avatar_url: document.getElementById('cardAvatarUrl').value,
           bio: document.getElementById('bio').value,

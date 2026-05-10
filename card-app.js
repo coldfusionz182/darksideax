@@ -124,10 +124,11 @@ function renderCard(card, avatarUrl) {
   else if (layout === 'right') layoutClass = 'layout-right ';
   else if (layout === 'compact') layoutClass = 'layout-compact ';
 
+  const visibleName = card.display_name || card.username || '';
   container.innerHTML = videoHtml + hiddenAudioHtml + audioPlayerHtml + overlayColor + particlesHtml
     + '<div class="card-content ' + layoutClass + '">'
     + avatarHtml
-    + '<h1 class="username ' + usernameEffect + ' ' + usernameFont + '" style="color: ' + card.text_color + ';' + (card.enable_glitch ? ' animation:glitch 2s infinite;' : '') + '">' + card.username + '</h1>'
+    + '<h1 class="username ' + usernameEffect + ' ' + usernameFont + '" style="color: ' + card.text_color + ';' + (card.enable_glitch ? ' animation:glitch 2s infinite;' : '') + '">' + visibleName + '</h1>'
     + (badgeHtml ? '<div class="badge ' + badgeEffect + ' ' + badgeFont + '" style="background: ' + card.accent_color + '; color: #fff;">' + card.badge + '</div>' : '')
     + (bioHtml ? '<p class="bio ' + bioEffect + ' ' + bioFont + '" style="color: ' + card.text_color + ';" id="typewriterBio">' + card.bio + '</p>' : '')
     + '<div class="social-links">' + socialHtml + '</div>'
