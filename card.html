@@ -201,8 +201,10 @@
       const container = document.getElementById('cardContainer');
 
       let videoHtml = '';
+      let audioHtml = '';
       if (card.video_url) {
-        videoHtml = `<video class="video-background" autoplay loop playsinline><source src="${card.video_url}" type="video/mp4"></video>`;
+        videoHtml = `<video class="video-background" autoplay muted loop playsinline><source src="${card.video_url}" type="video/mp4"></video>`;
+        audioHtml = `<audio autoplay loop><source src="${card.video_url}" type="video/mp4"></audio>`;
         videoHtml += '<div class="overlay"></div>';
       }
 
@@ -222,6 +224,7 @@
 
       container.innerHTML = `
         ${videoHtml}
+        ${audioHtml}
         ${overlayHtml}
         <div class="card-content">
           ${avatarHtml}
