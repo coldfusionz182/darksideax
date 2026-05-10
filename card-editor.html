@@ -105,6 +105,46 @@
       color: #666;
       font-size: 15px;
     }
+    .profile-url-banner {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: linear-gradient(135deg, rgba(102,126,234,0.1) 0%, rgba(118,75,162,0.1) 100%);
+      border: 1px solid rgba(102,126,234,0.25);
+      border-radius: 12px;
+      padding: 14px 18px;
+      margin-top: 16px;
+      transition: all 0.2s ease;
+    }
+    .profile-url-banner:hover {
+      border-color: rgba(102,126,234,0.5);
+      background: linear-gradient(135deg, rgba(102,126,234,0.15) 0%, rgba(118,75,162,0.15) 100%);
+    }
+    .profile-url-banner i {
+      color: #667eea;
+      font-size: 18px;
+    }
+    .profile-url-banner a {
+      color: #a5b4fc;
+      text-decoration: none;
+      font-size: 15px;
+      font-weight: 500;
+      letter-spacing: 0.3px;
+      transition: color 0.2s;
+      word-break: break-all;
+    }
+    .profile-url-banner a:hover {
+      color: #c7d2fe;
+      text-decoration: underline;
+    }
+    .profile-url-banner .url-label {
+      color: #667eea;
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      white-space: nowrap;
+    }
     
     /* Cards */
     .section-card {
@@ -578,6 +618,11 @@
       <div class="page-header">
         <h1>Profile Card Editor</h1>
         <p>Customize your card. Live preview updates as you type.</p>
+        <div class="profile-url-banner" id="profileUrlBanner" style="display:none;">
+          <i class="fa fa-link"></i>
+          <span class="url-label">Your URL</span>
+          <a id="profileUrlLink" href="#" target="_blank"></a>
+        </div>
       </div>
 
       <!-- PROFILE INFO SECTION -->
@@ -1135,6 +1180,7 @@
 
       updatePreview();
       updateEffectPreview();
+      updateProfileUrlBanner();
     }
 
     function setupLivePreview() {
@@ -1162,7 +1208,23 @@
       preview.className = effect + ' ' + font;
     }
 
+    function updateProfileUrlBanner() {
+      const username = document.getElementById('displayUsername')?.value?.trim();
+      const banner = document.getElementById('profileUrlBanner');
+      const link = document.getElementById('profileUrlLink');
+      if (!banner || !link) return;
+      if (username) {
+        const url = 'https://the-darkside.me/' + encodeURIComponent(username);
+        link.textContent = url;
+        link.href = url;
+        banner.style.display = 'flex';
+      } else {
+        banner.style.display = 'none';
+      }
+    }
+
     function updatePreview() {
+      updateProfileUrlBanner();
       const username = document.getElementById('displayUsername')?.value || 'Your Username';
       const badge = document.getElementById('badgeText')?.value || '';
       const bio = document.getElementById('bio')?.value || '';
