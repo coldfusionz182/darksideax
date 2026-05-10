@@ -12,7 +12,7 @@
   <link href="notifications.css" rel="stylesheet">
   <script>
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/sw.js').catch(console.error);
+      navigator.serviceWorker.register('/sw.js?cb=3', { updateViaCache: 'none' }).catch(console.error);
     }
   </script>
 
