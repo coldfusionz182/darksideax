@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Edit Profile Card • Darkside</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+  <link href="styles.css" rel="stylesheet">
+  <link href="userroles.css" rel="stylesheet">
+  <style>
+    body {
+      background: #0a0a0a;
+      min-height: 100vh;
+    }
+    .editor-container {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    .editor-header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    .editor-header h1 {
+      font-size: 28px;
+      color: #fff;
+      margin-bottom: 10px;
+    }
+    .editor-header p {
+      color: #888;
+      font-size: 14px;
+    }
+    .editor-card {
+      background: #151515;
+      border: 1px solid #222;
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 20px;
+    }
+    .editor-section {
+      margin-bottom: 24px;
+    }
+    .editor-section h3 {
+      color: #fff;
+      font-size: 16px;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .form-group {
+      margin-bottom: 16px;
+    }
+    .form-group label {
+      display: block;
+      color: #aaa;
+      font-size: 13px;
+      margin-bottom: 6px;
+    }
+    .form-group input,
+    .form-group textarea,
+    .form-group select {
+      width: 100%;
+      padding: 10px 12px;
+      background: #1a1a1a;
+      border: 1px solid #2a2a2a;
+      border-radius: 6px;
+      color: #fff;
+      font-size: 14px;
+      font-family: inherit;
+    }
+    .form-group input:focus,
+    .form-group textarea:focus,
+    .form-group select:focus {
+      outline: none;
+      border-color: #7c3aed;
+    }
+    .form-group textarea {
+      min-height: 80px;
+      resize: vertical;
+    }
+    .color-picker-row {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .color-picker-group {
+      flex: 1;
+      min-width: 120px;
+    }
+    .color-picker-group label {
+      font-size: 12px;
+    }
+    .color-picker-group input[type="color"] {
+      width: 100%;
+      height: 40px;
+      padding: 4px;
+      cursor: pointer;
+    }
+    .social-links-container {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .social-link-row {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+    .social-link-row select {
+      width: 120px;
+      flex-shrink: 0;
+    }
+    .social-link-row input {
+      flex: 1;
+    }
+    .btn-remove-social {
+      padding: 10px;
+      background: #2a1a1a;
+      border: 1px solid #3a2a2a;
+      border-radius: 6px;
+      color: #ff6b6b;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+    .btn-remove-social:hover {
+      background: #3a2a2a;
+    }
+    .btn-add-social {
+      padding: 10px 16px;
+      background: #1a2a1a;
+      border: 1px solid #2a3a2a;
+      border-radius: 6px;
+      color: #6bff6b;
+      cursor: pointer;
+      font-size: 13px;
+    }
+    .btn-add-social:hover {
+      background: #2a3a2a;
+    }
+    .preview-section {
+      margin-top: 30px;
+    }
+    .preview-section h3 {
+      color: #fff;
+      font-size: 16px;
+      margin-bottom: 12px;
+    }
+    .preview-frame {
+      background: #000;
+      border: 1px solid #222;
+      border-radius: 8px;
+      overflow: hidden;
+      aspect-ratio: 16/9;
+      position: relative;
+    }
+    .preview-content {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      z-index: 1;
+    }
+    .preview-content .username {
+      font-size: 32px;
+      font-weight: 700;
+      margin-bottom: 12px;
+    }
+    .preview-content .badge {
+      font-size: 14px;
+      padding: 6px 12px;
+      border-radius: 20px;
+      margin-bottom: 16px;
+    }
+    .preview-content .social-links {
+      display: flex;
+      gap: 12px;
+    }
+    .preview-content .social-link {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(255,255,255,0.1);
+      color: #fff;
+      text-decoration: none;
+      font-size: 18px;
+    }
+    .preview-video {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      z-index: 0;
+    }
+    .preview-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.5);
+      z-index: 0;
+    }
+    .btn-save {
+      width: 100%;
+      padding: 14px;
+      background: linear-gradient(135deg, #7c3aed 0%, #5b21b6 100%);
+      border: none;
+      border-radius: 8px;
+      color: #fff;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 20px;
+    }
+    .btn-save:hover {
+      background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%);
+    }
+    .btn-save:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    .status-message {
+      text-align: center;
+      margin-top: 12px;
+      font-size: 14px;
+    }
+    .status-message.success {
+      color: #6bff6b;
+    }
+    .status-message.error {
+      color: #ff6b6b;
+    }
+    .back-link {
+      display: inline-block;
+      color: #7c3aed;
+      text-decoration: none;
+      margin-bottom: 20px;
+      font-size: 14px;
+    }
+    .back-link:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <div class="editor-container">
+    <a href="index.html" class="back-link"><i class="fa fa-arrow-left"></i> Back to Home</a>
+    
+    <div class="editor-header">
+      <h1><i class="fa fa-id-card"></i> Profile Card Editor</h1>
+      <p>Create your custom profile card. Your card will be available at the-darkside.me/yourusername</p>
+    </div>
+
+    <div class="editor-card">
+      <div class="editor-section">
+        <h3><i class="fa fa-video"></i> Video Background</h3>
+        <div class="form-group">
+          <label>Video Embed URL (YouTube, Vimeo, etc.)</label>
+          <input type="text" id="videoUrl" placeholder="https://www.youtube.com/embed/VIDEO_ID" />
+          <small style="color: #666; font-size: 12px; display: block; margin-top: 4px;">Use the embed URL (e.g., youtube.com/embed/xxx)</small>
+        </div>
+      </div>
+
+      <div class="editor-section">
+        <h3><i class="fa fa-palette"></i> Colors</h3>
+        <div class="color-picker-row">
+          <div class="color-picker-group">
+            <label>Background</label>
+            <input type="color" id="bgColor" value="#0a0a0a" />
+          </div>
+          <div class="color-picker-group">
+            <label>Text</label>
+            <input type="color" id="textColor" value="#ffffff" />
+          </div>
+          <div class="color-picker-group">
+            <label>Accent</label>
+            <input type="color" id="accentColor" value="#7c3aed" />
+          </div>
+        </div>
+      </div>
+
+      <div class="editor-section">
+        <h3><i class="fa fa-user"></i> Profile Info</h3>
+        <div class="form-group">
+          <label>Display Username</label>
+          <input type="text" id="displayUsername" placeholder="Your username" />
+        </div>
+        <div class="form-group">
+          <label>Badge Text</label>
+          <input type="text" id="badgeText" placeholder="Owner • Admin • Elite" />
+        </div>
+        <div class="form-group">
+          <label>Bio</label>
+          <textarea id="bio" placeholder="Short bio or tagline..."></textarea>
+        </div>
+      </div>
+
+      <div class="editor-section">
+        <h3><i class="fa fa-share-alt"></i> Social Links</h3>
+        <div class="social-links-container" id="socialLinksContainer">
+          <!-- Social links will be added here -->
+        </div>
+        <button class="btn-add-social" onclick="addSocialLink()"><i class="fa fa-plus"></i> Add Link</button>
+      </div>
+
+      <div class="preview-section">
+        <h3><i class="fa fa-eye"></i> Preview</h3>
+        <div class="preview-frame" id="previewFrame">
+          <div class="preview-content" id="previewContent">
+            <div class="username" id="previewUsername">Username</div>
+            <div class="badge" id="previewBadge">Badge</div>
+            <div class="social-links" id="previewSocialLinks"></div>
+          </div>
+        </div>
+      </div>
+
+      <button class="btn-save" id="saveBtn" onclick="saveCard()"><i class="fa fa-save"></i> Save Profile Card</button>
+      <div class="status-message" id="statusMessage"></div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+    import { SUPABASE_ANON_KEY } from './keys.js';
+
+    const supabase = createClient('https://ffmkkwskvjvytdddevmm.supabase.co', SUPABASE_ANON_KEY);
+
+    let socialLinks = [];
+    let existingCard = null;
+
+    // Initialize
+    async function init() {
+      // Check if user is admin/owner
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      if (!authUser) {
+        window.location.href = 'accounts.html';
+        return;
+      }
+
+      const { data: userData } = await supabase
+        .from('users')
+        .select('role')
+        .eq('id', authUser.id)
+        .maybeSingle();
+
+      if (!userData || (userData.role !== 'admin' && userData.role !== 'owner')) {
+        alert('Access denied. Admin/Owner only.');
+        window.location.href = 'index.html';
+        return;
+      }
+
+      // Load existing card data
+      await loadExistingCard(authUser.id);
+
+      // Set up live preview
+      setupLivePreview();
+    }
+
+    async function loadExistingCard(userId) {
+      const { data: card } = await supabase
+        .from('profile_cards')
+        .select('*')
+        .eq('user_id', userId)
+        .maybeSingle();
+
+      if (card) {
+        existingCard = card;
+        document.getElementById('videoUrl').value = card.video_url || '';
+        document.getElementById('bgColor').value = card.background_color || '#0a0a0a';
+        document.getElementById('textColor').value = card.text_color || '#ffffff';
+        document.getElementById('accentColor').value = card.accent_color || '#7c3aed';
+        document.getElementById('displayUsername').value = card.username || '';
+        document.getElementById('badgeText').value = card.badge || '';
+        document.getElementById('bio').value = card.bio || '';
+
+        // Load social links
+        if (card.social_links && Array.isArray(card.social_links)) {
+          socialLinks = card.social_links;
+          renderSocialLinks();
+        }
+      } else {
+        // Set default username from auth user
+        const { data: { user: authUser } } = await supabase.auth.getUser();
+        const { data: userData } = await supabase
+          .from('users')
+          .select('username')
+          .eq('id', authUser.id)
+          .maybeSingle();
+        if (userData?.username) {
+          document.getElementById('displayUsername').value = userData.username;
+        }
+      }
+
+      updatePreview();
+    }
+
+    function setupLivePreview() {
+      const inputs = ['videoUrl', 'bgColor', 'textColor', 'accentColor', 'displayUsername', 'badgeText', 'bio'];
+      inputs.forEach(id => {
+        document.getElementById(id).addEventListener('input', updatePreview);
+      });
+    }
+
+    function updatePreview() {
+      const bgColor = document.getElementById('bgColor').value;
+      const textColor = document.getElementById('textColor').value;
+      const accentColor = document.getElementById('accentColor').value;
+      const username = document.getElementById('displayUsername').value || 'Username';
+      const badge = document.getElementById('badgeText').value || '';
+      const videoUrl = document.getElementById('videoUrl').value;
+
+      const previewFrame = document.getElementById('previewFrame');
+      const previewContent = document.getElementById('previewContent');
+
+      previewFrame.style.backgroundColor = bgColor;
+
+      // Update video if provided
+      let videoHtml = '';
+      if (videoUrl) {
+        videoHtml = `<iframe class="preview-video" src="${videoUrl}?autoplay=1&mute=1&loop=1&controls=0" frameborder="0" allowfullscreen></iframe>`;
+        videoHtml += '<div class="preview-overlay"></div>';
+      }
+      previewFrame.innerHTML = videoHtml + `
+        <div class="preview-content" id="previewContent">
+          <div class="username" style="color: ${textColor};">${username}</div>
+          ${badge ? `<div class="badge" style="background: ${accentColor}; color: #fff;">${badge}</div>` : ''}
+          <div class="social-links" id="previewSocialLinks"></div>
+        </div>
+      `;
+
+      // Update social links in preview
+      const socialLinksContainer = document.getElementById('previewSocialLinks');
+      socialLinksContainer.innerHTML = '';
+      socialLinks.forEach(link => {
+        const icon = getSocialIcon(link.platform);
+        socialLinksContainer.innerHTML += `
+          <a href="${link.url}" class="social-link" style="background: ${accentColor}20;">
+            <i class="${icon}"></i>
+          </a>
+        `;
+      });
+    }
+
+    function getSocialIcon(platform) {
+      const icons = {
+        'discord': 'fab fa-discord',
+        'telegram': 'fab fa-telegram',
+        'twitter': 'fab fa-twitter',
+        'github': 'fab fa-github',
+        'youtube': 'fab fa-youtube',
+        'instagram': 'fab fa-instagram',
+        'tiktok': 'fab fa-tiktok',
+        'website': 'fa fa-globe'
+      };
+      return icons[platform] || 'fa fa-link';
+    }
+
+    window.addSocialLink = function() {
+      socialLinks.push({ platform: 'discord', url: '' });
+      renderSocialLinks();
+      updatePreview();
+    };
+
+    window.removeSocialLink = function(index) {
+      socialLinks.splice(index, 1);
+      renderSocialLinks();
+      updatePreview();
+    };
+
+    function renderSocialLinks() {
+      const container = document.getElementById('socialLinksContainer');
+      container.innerHTML = '';
+      socialLinks.forEach((link, index) => {
+        const row = document.createElement('div');
+        row.className = 'social-link-row';
+        row.innerHTML = `
+          <select onchange="updateSocialLink(${index}, 'platform', this.value)">
+            <option value="discord" ${link.platform === 'discord' ? 'selected' : ''}>Discord</option>
+            <option value="telegram" ${link.platform === 'telegram' ? 'selected' : ''}>Telegram</option>
+            <option value="twitter" ${link.platform === 'twitter' ? 'selected' : ''}>Twitter</option>
+            <option value="github" ${link.platform === 'github' ? 'selected' : ''}>GitHub</option>
+            <option value="youtube" ${link.platform === 'youtube' ? 'selected' : ''}>YouTube</option>
+            <option value="instagram" ${link.platform === 'instagram' ? 'selected' : ''}>Instagram</option>
+            <option value="tiktok" ${link.platform === 'tiktok' ? 'selected' : ''}>TikTok</option>
+            <option value="website" ${link.platform === 'website' ? 'selected' : ''}>Website</option>
+          </select>
+          <input type="text" value="${link.url}" placeholder="https://..." onchange="updateSocialLink(${index}, 'url', this.value)" />
+          <button class="btn-remove-social" onclick="removeSocialLink(${index})"><i class="fa fa-trash"></i></button>
+        `;
+        container.appendChild(row);
+      });
+    }
+
+    window.updateSocialLink = function(index, field, value) {
+      socialLinks[index][field] = value;
+      updatePreview();
+    };
+
+    window.saveCard = async function() {
+      const saveBtn = document.getElementById('saveBtn');
+      const statusMessage = document.getElementById('statusMessage');
+
+      saveBtn.disabled = true;
+      statusMessage.textContent = 'Saving...';
+      statusMessage.className = 'status-message';
+
+      try {
+        const { data: { user: authUser } } = await supabase.auth.getUser();
+        if (!authUser) throw new Error('Not logged in');
+
+        const { data: userData } = await supabase
+          .from('users')
+          .select('username')
+          .eq('id', authUser.id)
+          .maybeSingle();
+
+        const username = document.getElementById('displayUsername').value.trim() || userData?.username;
+
+        if (!username) {
+          throw new Error('Username is required');
+        }
+
+        const cardData = {
+          user_id: authUser.id,
+          username: username,
+          video_url: document.getElementById('videoUrl').value,
+          background_color: document.getElementById('bgColor').value,
+          text_color: document.getElementById('textColor').value,
+          accent_color: document.getElementById('accentColor').value,
+          badge: document.getElementById('badgeText').value,
+          bio: document.getElementById('bio').value,
+          social_links: socialLinks,
+          enabled: true,
+          updated_at: new Date().toISOString()
+        };
+
+        if (existingCard) {
+          const { error } = await supabase
+            .from('profile_cards')
+            .update(cardData)
+            .eq('id', existingCard.id);
+          if (error) throw error;
+        } else {
+          cardData.created_at = new Date().toISOString();
+          const { error } = await supabase
+            .from('profile_cards')
+            .insert(cardData);
+          if (error) throw error;
+        }
+
+        statusMessage.textContent = '✓ Profile card saved! Your card is now available at the-darkside.me/' + username;
+        statusMessage.className = 'status-message success';
+        existingCard = { ...existingCard, ...cardData };
+      } catch (err) {
+        console.error('Save error:', err);
+        statusMessage.textContent = '✗ Error: ' + err.message;
+        statusMessage.className = 'status-message error';
+      } finally {
+        saveBtn.disabled = false;
+      }
+    };
+
+    init();
+  </script>
+</body>
+</html>

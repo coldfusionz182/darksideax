@@ -153,6 +153,20 @@ document.addEventListener('DOMContentLoaded', () => {
   }
   showAdminNavIfAllowed();
 
+  // --- show Profile Card navbar link for admin/owner ---
+  async function showCardNavIfAllowed() {
+    const navCard = document.getElementById('nav-card-link');
+    if (!navCard) return;
+
+    const current = await getCurrentUserWithRole();
+    if (!current) return;
+
+    if (current.role === 'admin' || current.role === 'owner') {
+      navCard.style.display = 'inline-block';
+    }
+  }
+  showCardNavIfAllowed();
+
   // --- show Darkside Games section for logged-in users ---
   // Quick sync check to avoid flash
   (function quickGamesAuthCheck() {

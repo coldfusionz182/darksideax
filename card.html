@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Profile Card • Darkside</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      overflow: hidden;
+      background: #0a0a0a;
+    }
+    .card-container {
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .video-background {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+    }
+    .video-background iframe {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+    }
+    .card-content {
+      position: relative;
+      z-index: 2;
+      text-align: center;
+      padding: 40px;
+    }
+    .username {
+      font-size: 48px;
+      font-weight: 700;
+      margin-bottom: 16px;
+      text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+    }
+    .badge {
+      display: inline-block;
+      padding: 8px 20px;
+      border-radius: 30px;
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 20px;
+      text-shadow: 0 1px 5px rgba(0,0,0,0.3);
+    }
+    .bio {
+      font-size: 18px;
+      margin-bottom: 32px;
+      max-width: 600px;
+      line-height: 1.6;
+      text-shadow: 0 1px 5px rgba(0,0,0,0.3);
+    }
+    .social-links {
+      display: flex;
+      gap: 16px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    .social-link {
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      text-decoration: none;
+      transition: transform 0.2s, box-shadow 0.2s;
+      backdrop-filter: blur(10px);
+    }
+    .social-link:hover {
+      transform: scale(1.1);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+    }
+    .error-message {
+      position: relative;
+      z-index: 2;
+      text-align: center;
+      padding: 40px;
+    }
+    .error-message h1 {
+      font-size: 32px;
+      margin-bottom: 16px;
+    }
+    .error-message p {
+      font-size: 16px;
+      opacity: 0.7;
+    }
+    .error-message a {
+      color: inherit;
+      text-decoration: underline;
+    }
+    .loading {
+      position: relative;
+      z-index: 2;
+      text-align: center;
+    }
+    .loading i {
+      font-size: 48px;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+  <div id="cardContainer" class="card-container">
+    <div class="loading">
+      <i class="fa fa-spinner"></i>
+    </div>
+  </div>
+
+  <script type="module">
+    import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+    import { SUPABASE_ANON_KEY } from './keys.js';
+
+    const supabase = createClient('https://ffmkkwskvjvytdddevmm.supabase.co', SUPABASE_ANON_KEY);
+
+    async function loadCard() {
+      const container = document.getElementById('cardContainer');
+      const username = window.location.pathname.replace('/', '').toLowerCase();
+
+      if (!username) {
+        showError('No username specified');
+        return;
+      }
+
+      try {
+        const { data: card, error } = await supabase
+          .from('profile_cards')
+          .select('*')
+          .ilike('username', username)
+          .maybeSingle();
+
+        if (error) throw error;
+
+        if (!card || !card.enabled) {
+          showError('Profile card not found');
+          return;
+        }
+
+        renderCard(card);
+      } catch (err) {
+        console.error('Load error:', err);
+        showError('Error loading profile card');
+      }
+    }
+
+    function renderCard(card) {
+      const container = document.getElementById('cardContainer');
+
+      let videoHtml = '';
+      if (card.video_url) {
+        videoHtml = `
+          <div class="video-background">
+            <iframe src="${card.video_url}?autoplay=1&mute=1&loop=1&controls=0&playlist=${getVideoId(card.video_url)}" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+          </div>
+        `;
+      }
+
+      const overlayHtml = `<div class="overlay" style="background: ${card.background_color}${card.video_url ? 'aa' : ''}"></div>`;
+
+      const socialLinksHtml = card.social_links && card.social_links.length > 0 
+        ? card.social_links.map(link => {
+            const icon = getSocialIcon(link.platform);
+            return `<a href="${link.url}" class="social-link" style="background: ${card.accent_color}33; color: ${card.text_color};" target="_blank" rel="noopener"><i class="${icon}"></i></a>`;
+          }).join('')
+        : '';
+
+      const bioHtml = card.bio ? `<p class="bio" style="color: ${card.text_color};">${card.bio}</p>` : '';
+
+      const badgeHtml = card.badge ? `<div class="badge" style="background: ${card.accent_color}; color: #fff;">${card.badge}</div>` : '';
+
+      container.innerHTML = `
+        ${videoHtml}
+        ${overlayHtml}
+        <div class="card-content">
+          <h1 class="username" style="color: ${card.text_color};">${card.username}</h1>
+          ${badgeHtml}
+          ${bioHtml}
+          <div class="social-links">
+            ${socialLinksHtml}
+          </div>
+        </div>
+      `;
+    }
+
+    function getSocialIcon(platform) {
+      const icons = {
+        'discord': 'fab fa-discord',
+        'telegram': 'fab fa-telegram',
+        'twitter': 'fab fa-twitter',
+        'github': 'fab fa-github',
+        'youtube': 'fab fa-youtube',
+        'instagram': 'fab fa-instagram',
+        'tiktok': 'fab fa-tiktok',
+        'website': 'fa fa-globe'
+      };
+      return icons[platform] || 'fa fa-link';
+    }
+
+    function getVideoId(url) {
+      if (url.includes('youtube.com/embed/')) {
+        return url.split('/embed/')[1].split('?')[0];
+      }
+      return '';
+    }
+
+    function showError(message) {
+      const container = document.getElementById('cardContainer');
+      container.innerHTML = `
+        <div class="error-message" style="color: #fff;">
+          <h1>${message}</h1>
+          <p><a href="/">Return to Darkside</a></p>
+        </div>
+      `;
+    }
+
+    loadCard();
+  </script>
+</body>
+</html>
