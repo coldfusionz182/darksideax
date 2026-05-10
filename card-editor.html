@@ -191,6 +191,15 @@
       text-decoration: none;
       font-size: 18px;
     }
+    .preview-avatar {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 3px solid rgba(255,255,255,0.2);
+      margin-bottom: 12px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    }
     .preview-video {
       position: absolute;
       top: 0;
@@ -199,6 +208,8 @@
       height: 100%;
       object-fit: cover;
       z-index: 0;
+      pointer-events: none;
+      border: none;
     }
     .preview-overlay {
       position: absolute;
@@ -336,6 +347,7 @@
 
     let socialLinks = [];
     let existingCard = null;
+    let userAvatarUrl = null;
 
     // Initialize
     async function init() {
@@ -348,9 +360,11 @@
 
       const { data: userData } = await supabase
         .from('users')
-        .select('role')
+        .select('role, avatar_url')
         .eq('id', authUser.id)
         .maybeSingle();
+
+      userAvatarUrl = userData?.avatar_url || null;
 
       if (!userData || (userData.role !== 'admin' && userData.role !== 'owner')) {
         alert('Access denied. Admin/Owner only.');
@@ -426,11 +440,18 @@
       // Update video if provided
       let videoHtml = '';
       if (videoUrl) {
-        videoHtml = `<iframe class="preview-video" src="${videoUrl}?autoplay=1&mute=1&loop=1&controls=0" frameborder="0" allowfullscreen></iframe>`;
+        const videoId = extractYouTubeId(videoUrl);
+        if (videoId) {
+          videoHtml = `<iframe class="preview-video" src="https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&loop=1&playlist=${videoId}&controls=0&showinfo=0&rel=0&modestbranding=1&iv_load_policy=3" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>`;
+        } else {
+          videoHtml = `<iframe class="preview-video" src="${videoUrl}?autoplay=1&mute=1&loop=1&controls=0" frameborder="0" allowfullscreen></iframe>`;
+        }
         videoHtml += '<div class="preview-overlay"></div>';
       }
+      const avatarHtml = userAvatarUrl ? `<img src="${userAvatarUrl}" class="preview-avatar" alt="Avatar" style="border-color: ${accentColor};">` : '';
       previewFrame.innerHTML = videoHtml + `
         <div class="preview-content" id="previewContent">
+          ${avatarHtml}
           <div class="username" style="color: ${textColor};">${username}</div>
           ${badge ? `<div class="badge" style="background: ${accentColor}; color: #fff;">${badge}</div>` : ''}
           <div class="social-links" id="previewSocialLinks"></div>
@@ -462,6 +483,19 @@
         'website': 'fa fa-globe'
       };
       return icons[platform] || 'fa fa-link';
+    }
+
+    function extractYouTubeId(url) {
+      if (!url) return null;
+      const patterns = [
+        /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/,
+        /youtube\.com\/embed\/([a-zA-Z0-9_-]{11})/
+      ];
+      for (const pattern of patterns) {
+        const match = url.match(pattern);
+        if (match) return match[1];
+      }
+      return null;
     }
 
     window.addSocialLink = function() {
