@@ -203,20 +203,7 @@
 
       let videoHtml = '';
       if (card.video_url) {
-        const videoId = extractYouTubeId(card.video_url);
-        if (videoId) {
-          videoHtml = `
-            <div class="video-background">
-              <iframe src="https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&loop=1&playlist=${videoId}&controls=0&showinfo=0&rel=0&modestbranding=1&iv_load_policy=3" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
-            </div>
-          `;
-        } else {
-          videoHtml = `
-            <div class="video-background">
-              <iframe src="${card.video_url}?autoplay=1&mute=1&loop=1&controls=0" frameborder="0" allowfullscreen></iframe>
-            </div>
-          `;
-        }
+        videoHtml = getVideoEmbedHtml(card.video_url);
       }
 
       const overlayHtml = `<div class="overlay" style="background: ${card.background_color}${card.video_url ? 'aa' : ''}"></div>`;
@@ -262,23 +249,41 @@
       return icons[platform] || 'fa fa-link';
     }
 
-    function extractYouTubeId(url) {
-      if (!url) return null;
-      const patterns = [
-        /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/,
-        /youtube\.com\/embed\/([a-zA-Z0-9_-]{11})/
-      ];
-      for (const pattern of patterns) {
-        const match = url.match(pattern);
-        if (match) return match[1];
-      }
-      return null;
-    }
+    function getVideoEmbedHtml(url) {
+      if (!url) return '';
 
-    function getVideoId(url) {
-      if (url.includes('youtube.com/embed/')) {
-        return url.split('/embed/')[1].split('?')[0];
+      // YouTube
+      const ytMatch = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/)
+                   || url.match(/youtube\.com\/embed\/([a-zA-Z0-9_-]{11})/);
+      if (ytMatch) {
+        const id = ytMatch[1];
+        return `
+          <div class="video-background">
+            <iframe src="https://www.youtube.com/embed/${id}?autoplay=1&mute=1&loop=1&playlist=${id}&controls=0&showinfo=0&rel=0&modestbranding=1&iv_load_policy=3&fs=0&disablekb=1" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+          </div>
+        `;
       }
+
+      // Vimeo
+      const vimeoMatch = url.match(/vimeo\.com\/(?:video\/)?(\d+)/);
+      if (vimeoMatch) {
+        return `
+          <div class="video-background">
+            <iframe src="https://player.vimeo.com/video/${vimeoMatch[1]}?background=1&autoplay=1&loop=1&muted=1&transparent=0" frameborder="0" allow="autoplay; fullscreen" allowfullscreen></iframe>
+          </div>
+        `;
+      }
+
+      // Streamable
+      const streamableMatch = url.match(/streamable\.com\/([a-zA-Z0-9]+)/);
+      if (streamableMatch) {
+        return `
+          <div class="video-background">
+            <iframe src="https://streamable.com/e/${streamableMatch[1]}?autoplay=1&muted=1&loop=1" frameborder="0" allow="autoplay; fullscreen" allowfullscreen></iframe>
+          </div>
+        `;
+      }
+
       return '';
     }
 

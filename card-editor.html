@@ -275,9 +275,9 @@
       <div class="editor-section">
         <h3><i class="fa fa-video"></i> Video Background</h3>
         <div class="form-group">
-          <label>Video Embed URL (YouTube, Vimeo, etc.)</label>
-          <input type="text" id="videoUrl" placeholder="https://www.youtube.com/embed/VIDEO_ID" />
-          <small style="color: #666; font-size: 12px; display: block; margin-top: 4px;">Use the embed URL (e.g., youtube.com/embed/xxx)</small>
+          <label>Video Background URL</label>
+          <input type="text" id="videoUrl" placeholder="Paste a YouTube, Vimeo, or Streamable link" />
+          <small style="color: #666; font-size: 12px; display: block; margin-top: 4px;">Supports regular links, not just embed URLs</small>
         </div>
       </div>
 
@@ -440,13 +440,8 @@
       // Update video if provided
       let videoHtml = '';
       if (videoUrl) {
-        const videoId = extractYouTubeId(videoUrl);
-        if (videoId) {
-          videoHtml = `<iframe class="preview-video" src="https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&loop=1&playlist=${videoId}&controls=0&showinfo=0&rel=0&modestbranding=1&iv_load_policy=3" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>`;
-        } else {
-          videoHtml = `<iframe class="preview-video" src="${videoUrl}?autoplay=1&mute=1&loop=1&controls=0" frameborder="0" allowfullscreen></iframe>`;
-        }
-        videoHtml += '<div class="preview-overlay"></div>';
+        videoHtml = getVideoEmbedHtml(videoUrl);
+        if (videoHtml) videoHtml += '<div class="preview-overlay"></div>';
       }
       const avatarHtml = userAvatarUrl ? `<img src="${userAvatarUrl}" class="preview-avatar" alt="Avatar" style="border-color: ${accentColor};">` : '';
       previewFrame.innerHTML = videoHtml + `
@@ -485,17 +480,30 @@
       return icons[platform] || 'fa fa-link';
     }
 
-    function extractYouTubeId(url) {
-      if (!url) return null;
-      const patterns = [
-        /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/,
-        /youtube\.com\/embed\/([a-zA-Z0-9_-]{11})/
-      ];
-      for (const pattern of patterns) {
-        const match = url.match(pattern);
-        if (match) return match[1];
+    function getVideoEmbedHtml(url) {
+      if (!url) return '';
+
+      // YouTube
+      const ytMatch = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/)
+                   || url.match(/youtube\.com\/embed\/([a-zA-Z0-9_-]{11})/);
+      if (ytMatch) {
+        const id = ytMatch[1];
+        return `<iframe class="preview-video" src="https://www.youtube.com/embed/${id}?autoplay=1&mute=1&loop=1&playlist=${id}&controls=0&showinfo=0&rel=0&modestbranding=1&iv_load_policy=3&fs=0&disablekb=1" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>`;
       }
-      return null;
+
+      // Vimeo
+      const vimeoMatch = url.match(/vimeo\.com\/(?:video\/)?(\d+)/);
+      if (vimeoMatch) {
+        return `<iframe class="preview-video" src="https://player.vimeo.com/video/${vimeoMatch[1]}?background=1&autoplay=1&loop=1&muted=1&transparent=0" frameborder="0" allow="autoplay; fullscreen" allowfullscreen></iframe>`;
+      }
+
+      // Streamable
+      const streamableMatch = url.match(/streamable\.com\/([a-zA-Z0-9]+)/);
+      if (streamableMatch) {
+        return `<iframe class="preview-video" src="https://streamable.com/e/${streamableMatch[1]}?autoplay=1&muted=1&loop=1" frameborder="0" allow="autoplay; fullscreen" allowfullscreen></iframe>`;
+      }
+
+      return '';
     }
 
     window.addSocialLink = function() {
