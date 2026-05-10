@@ -493,7 +493,7 @@
                    || url.match(/youtube\.com\/embed\/([a-zA-Z0-9_-]{11})/);
       if (ytMatch) {
         const id = ytMatch[1];
-        return `<iframe class="preview-video" src="https://www.youtube.com/embed/${id}?autoplay=1&loop=1&playlist=${id}&controls=0&showinfo=0&rel=0&modestbranding=1&iv_load_policy=3&fs=0&disablekb=1&autohide=1&playsinline=1&cc_load_policy=0&enablejsapi=0" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen title=" "></iframe>`;
+        return `<iframe class="preview-video" src="https://www.youtube.com/embed/${id}?autoplay=1&mute=1&loop=1&playlist=${id}&controls=0&showinfo=0&rel=0&modestbranding=1&iv_load_policy=3&fs=0&disablekb=1&autohide=1&playsinline=1&cc_load_policy=0&enablejsapi=0" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen title=" "></iframe>`;
       }
 
       // Vimeo
@@ -505,7 +505,7 @@
       // Streamable
       const streamableMatch = url.match(/streamable\.com\/([a-zA-Z0-9]+)/);
       if (streamableMatch) {
-        return `<iframe class="preview-video" src="https://streamable.com/e/${streamableMatch[1]}?autoplay=1&loop=1" frameborder="0" allow="autoplay; fullscreen" allowfullscreen></iframe>`;
+        return `<iframe class="preview-video" src="https://streamable.com/e/${streamableMatch[1]}?autoplay=1&muted=1&loop=1" frameborder="0" allow="autoplay; fullscreen" allowfullscreen></iframe>`;
       }
 
       return '';

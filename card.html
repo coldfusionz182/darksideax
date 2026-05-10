@@ -147,6 +147,32 @@
       margin-bottom: 16px;
       box-shadow: 0 4px 20px rgba(0,0,0,0.3);
     }
+    .unmute-btn {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      z-index: 10;
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: rgba(0,0,0,0.6);
+      border: 1px solid rgba(255,255,255,0.2);
+      color: #fff;
+      font-size: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      backdrop-filter: blur(10px);
+      transition: background 0.2s, transform 0.2s;
+    }
+    .unmute-btn:hover {
+      background: rgba(255,255,255,0.15);
+      transform: scale(1.1);
+    }
+    .unmute-btn.hidden {
+      display: none;
+    }
   </style>
 </head>
 <body>
@@ -225,6 +251,7 @@
       const badgeHtml = card.badge ? `<div class="badge" style="background: ${card.accent_color}; color: #fff;">${card.badge}</div>` : '';
       const avatarHtml = avatarUrl ? `<img src="${avatarUrl}" class="card-avatar" alt="Avatar" style="border-color: ${card.accent_color || '#7c3aed'};">` : '';
 
+      const unmuteBtnHtml = videoHtml ? `<button class="unmute-btn" id="unmuteBtn" title="Click to unmute"><i class="fa fa-volume-mute"></i></button>` : '';
       container.innerHTML = `
         ${videoHtml}
         ${overlayHtml}
@@ -237,7 +264,27 @@
             ${socialLinksHtml}
           </div>
         </div>
+        ${unmuteBtnHtml}
       `;
+
+      const unmuteBtn = document.getElementById('unmuteBtn');
+      if (unmuteBtn) {
+        unmuteBtn.addEventListener('click', () => {
+          const vb = document.querySelector('.video-background');
+          const iframe = vb?.querySelector('iframe');
+          if (!iframe) return;
+          const platform = vb.dataset.platform;
+          const id = vb.dataset.id;
+          if (platform === 'youtube') {
+            iframe.src = `https://www.youtube.com/embed/${id}?autoplay=1&loop=1&playlist=${id}&controls=0&showinfo=0&rel=0&modestbranding=1&iv_load_policy=3&fs=0&disablekb=1&autohide=1&playsinline=1&cc_load_policy=0&enablejsapi=0`;
+          } else if (platform === 'vimeo') {
+            iframe.src = `https://player.vimeo.com/video/${id}?background=1&autoplay=1&loop=1&transparent=0`;
+          } else if (platform === 'streamable') {
+            iframe.src = `https://streamable.com/e/${id}?autoplay=1&loop=1`;
+          }
+          unmuteBtn.classList.add('hidden');
+        });
+      }
     }
 
     function getSocialIcon(platform) {
@@ -263,8 +310,8 @@
       if (ytMatch) {
         const id = ytMatch[1];
         return `
-          <div class="video-background">
-            <iframe src="https://www.youtube.com/embed/${id}?autoplay=1&loop=1&playlist=${id}&controls=0&showinfo=0&rel=0&modestbranding=1&iv_load_policy=3&fs=0&disablekb=1&autohide=1&playsinline=1&cc_load_policy=0&enablejsapi=0" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen title=" "></iframe>
+          <div class="video-background" data-platform="youtube" data-id="${id}">
+            <iframe src="https://www.youtube.com/embed/${id}?autoplay=1&mute=1&loop=1&playlist=${id}&controls=0&showinfo=0&rel=0&modestbranding=1&iv_load_policy=3&fs=0&disablekb=1&autohide=1&playsinline=1&cc_load_policy=0&enablejsapi=0" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen title=" "></iframe>
           </div>
         `;
       }
@@ -273,7 +320,7 @@
       const vimeoMatch = url.match(/vimeo\.com\/(?:video\/)?(\d+)/);
       if (vimeoMatch) {
         return `
-          <div class="video-background">
+          <div class="video-background" data-platform="vimeo" data-id="${vimeoMatch[1]}">
             <iframe src="https://player.vimeo.com/video/${vimeoMatch[1]}?background=1&autoplay=1&loop=1&muted=1&transparent=0" frameborder="0" allow="autoplay; fullscreen" allowfullscreen></iframe>
           </div>
         `;
@@ -283,8 +330,8 @@
       const streamableMatch = url.match(/streamable\.com\/([a-zA-Z0-9]+)/);
       if (streamableMatch) {
         return `
-          <div class="video-background">
-            <iframe src="https://streamable.com/e/${streamableMatch[1]}?autoplay=1&loop=1" frameborder="0" allow="autoplay; fullscreen" allowfullscreen></iframe>
+          <div class="video-background" data-platform="streamable" data-id="${streamableMatch[1]}">
+            <iframe src="https://streamable.com/e/${streamableMatch[1]}?autoplay=1&muted=1&loop=1" frameborder="0" allow="autoplay; fullscreen" allowfullscreen></iframe>
           </div>
         `;
       }
