@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Database Migration</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; background: #f5f5f5; }
+        .container { max-width: 600px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .success { color: green; }
+        .error { color: red; }
+        .sql-block { background: #f8f8f8; padding: 15px; border-radius: 4px; margin: 15px 0; font-family: monospace; white-space: pre-wrap; }
+        button { background: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Database Migration Required</h1>
+        <p>The profile cards table needs new columns for text effects and audio settings.</p>
+        
+        <h3>Instructions:</h3>
+        <ol>
+            <li>Go to your <a href="https://supabase.com/dashboard" target="_blank">Supabase Dashboard</a></li>
+            <li>Navigate to your project</li>
+            <li>Click on "SQL Editor" in the sidebar</li>
+            <li>Click "New query"</li>
+            <li>Copy and paste the SQL below</li>
+            <li>Click "Run" to execute the migration</li>
+        </ol>
+        
+        <h3>SQL Migration Script:</h3>
+        <div class="sql-block">-- Add text effects and audio columns to profile_cards table
+-- Run this in your Supabase SQL editor
+
+-- Text effect columns
+ALTER TABLE profile_cards ADD COLUMN username_effect TEXT DEFAULT 'none';
+ALTER TABLE profile_cards ADD COLUMN username_font TEXT DEFAULT 'default';
+ALTER TABLE profile_cards ADD COLUMN badge_effect TEXT DEFAULT 'none';
+ALTER TABLE profile_cards ADD COLUMN badge_font TEXT DEFAULT 'default';
+ALTER TABLE profile_cards ADD COLUMN bio_effect TEXT DEFAULT 'none';
+ALTER TABLE profile_cards ADD COLUMN bio_font TEXT DEFAULT 'default';
+
+-- Audio settings columns
+ALTER TABLE profile_cards ADD COLUMN enable_audio_player BOOLEAN DEFAULT false;
+ALTER TABLE profile_cards ADD COLUMN audio_url TEXT;
+ALTER TABLE profile_cards ADD COLUMN audio_title TEXT DEFAULT 'Background Music';
+
+-- Add indexes for better performance
+CREATE INDEX IF NOT EXISTS idx_profile_cards_username_effect ON profile_cards(username_effect);
+CREATE INDEX IF NOT EXISTS idx_profile_cards_enable_audio_player ON profile_cards(enable_audio_player);</div>
+        
+        <button onclick="copySQL()">Copy SQL to Clipboard</button>
+        <div id="copyStatus"></div>
+        
+        <h3>After Running Migration:</h3>
+        <p>Once you've run the SQL migration, refresh your card editor page and the error should be resolved.</p>
+    </div>
+
+    <script>
+        function copySQL() {
+            const sqlText = document.querySelector('.sql-block').textContent;
+            navigator.clipboard.writeText(sqlText).then(() => {
+                document.getElementById('copyStatus').innerHTML = '<div class="success">✓ SQL copied to clipboard!</div>';
+                setTimeout(() => {
+                    document.getElementById('copyStatus').innerHTML = '';
+                }, 3000);
+            }).catch(err => {
+                document.getElementById('copyStatus').innerHTML = '<div class="error">✗ Failed to copy. Please copy manually.</div>';
+            });
+        }
+    </script>
+</body>
+</html>
