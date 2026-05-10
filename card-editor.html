@@ -5,7 +5,7 @@
   <title>Edit Profile Card • Darkside</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Orbitron:wght@900&family=Playfair+Display:ital,wght@0,300;1,400&family=Rajdhani:wght@700&family=Press+Start+2P&family=Pacifico&family=Cinzel:wght@700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Orbitron:wght@900&family=Playfair+Display:ital,wght@0,300;1,400&family=Rajdhani:wght@700&family=Press+Start+2P&family=Pacifico&family=Cinzel:wght@700&family=Bebas+Neue&family=Lobster&family=Montserrat:wght@700;900&family=Roboto+Mono:wght@700&family=Dancing+Script:wght@700&family=Black+Ops+One&display=swap" rel="stylesheet">
   <link href="styles.css" rel="stylesheet">
   <link href="userroles.css" rel="stylesheet">
   <style>
@@ -517,6 +517,12 @@
     .font-retro { font-family: 'Press Start 2P', monospace; font-weight: 400; }
     .font-brush { font-family: 'Pacifico', cursive; font-weight: 400; }
     .font-gothic { font-family: 'Cinzel', serif; font-weight: 700; text-transform: uppercase; }
+    .font-bebas { font-family: 'Bebas Neue', sans-serif; font-weight: 400; letter-spacing: 3px; }
+    .font-lobster { font-family: 'Lobster', cursive; font-weight: 400; }
+    .font-montserrat { font-family: 'Montserrat', sans-serif; font-weight: 900; text-transform: uppercase; }
+    .font-mono { font-family: 'Roboto Mono', monospace; font-weight: 700; }
+    .font-script { font-family: 'Dancing Script', cursive; font-weight: 700; }
+    .font-military { font-family: 'Black Ops One', cursive; font-weight: 400; text-transform: uppercase; }
     
     @media (max-width: 768px) {
       .sidebar { display: none; }
@@ -667,6 +673,12 @@
                 <option value="font-retro" style="font-family:'Press Start 2P',monospace;font-size:10px;">🎮 Retro</option>
                 <option value="font-brush" style="font-family:Pacifico,cursive;">🎨 Brush</option>
                 <option value="font-gothic" style="font-family:Cinzel,serif;font-weight:700;">🏰 Gothic</option>
+                <option value="font-bebas" style="font-family:'Bebas Neue',sans-serif;letter-spacing:2px;">📢 Bebas Neue</option>
+                <option value="font-lobster" style="font-family:Lobster,cursive;">🦞 Lobster</option>
+                <option value="font-montserrat" style="font-family:Montserrat,sans-serif;font-weight:900;">🔠 Montserrat</option>
+                <option value="font-mono" style="font-family:'Roboto Mono',monospace;">⌨️ Mono</option>
+                <option value="font-script" style="font-family:'Dancing Script',cursive;">✍️ Script</option>
+                <option value="font-military" style="font-family:'Black Ops One',cursive;">🎖️ Military</option>
               </select>
             </div>
             <div class="effect-group">
@@ -694,6 +706,12 @@
                 <option value="font-retro" style="font-family:'Press Start 2P',monospace;font-size:10px;">🎮 Retro</option>
                 <option value="font-brush" style="font-family:Pacifico,cursive;">🎨 Brush</option>
                 <option value="font-gothic" style="font-family:Cinzel,serif;font-weight:700;">🏰 Gothic</option>
+                <option value="font-bebas" style="font-family:'Bebas Neue',sans-serif;letter-spacing:2px;">📢 Bebas Neue</option>
+                <option value="font-lobster" style="font-family:Lobster,cursive;">🦞 Lobster</option>
+                <option value="font-montserrat" style="font-family:Montserrat,sans-serif;font-weight:900;">🔠 Montserrat</option>
+                <option value="font-mono" style="font-family:'Roboto Mono',monospace;">⌨️ Mono</option>
+                <option value="font-script" style="font-family:'Dancing Script',cursive;">✍️ Script</option>
+                <option value="font-military" style="font-family:'Black Ops One',cursive;">🎖️ Military</option>
               </select>
             </div>
             <div class="effect-group">
@@ -721,6 +739,12 @@
                 <option value="font-retro" style="font-family:'Press Start 2P',monospace;font-size:10px;">🎮 Retro</option>
                 <option value="font-brush" style="font-family:Pacifico,cursive;">🎨 Brush</option>
                 <option value="font-gothic" style="font-family:Cinzel,serif;font-weight:700;">🏰 Gothic</option>
+                <option value="font-bebas" style="font-family:'Bebas Neue',sans-serif;letter-spacing:2px;">📢 Bebas Neue</option>
+                <option value="font-lobster" style="font-family:Lobster,cursive;">🦞 Lobster</option>
+                <option value="font-montserrat" style="font-family:Montserrat,sans-serif;font-weight:900;">🔠 Montserrat</option>
+                <option value="font-mono" style="font-family:'Roboto Mono',monospace;">⌨️ Mono</option>
+                <option value="font-script" style="font-family:'Dancing Script',cursive;">✍️ Script</option>
+                <option value="font-military" style="font-family:'Black Ops One',cursive;">🎖️ Military</option>
               </select>
             </div>
           </div>
@@ -893,6 +917,49 @@
             <span class="form-hint">Buttons pop in with bounce animation on hover</span>
           </div>
         </div>
+
+        <div class="section-card">
+          <div class="section-header">
+            <i class="fa fa-fingerprint"></i>
+            <div>
+              <h3>Click to Enter Overlay</h3>
+              <span class="subtitle">Customize the entry screen text and style</span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Overlay Text</label>
+            <input type="text" id="enterText" placeholder="Click to Enter" maxlength="50">
+            <span class="form-hint">Text shown on the blurred overlay before entering</span>
+          </div>
+          <div class="form-row">
+            <div class="effect-group">
+              <label>Text Effect</label>
+              <select id="enterTextEffect">
+                <option value="rainbow-text">🌈 Rainbow</option>
+                <option value="text-glow">💫 Glow</option>
+                <option value="text-neon">💡 Neon</option>
+                <option value="text-fire">🔥 Fire</option>
+                <option value="text-ice">❄️ Ice</option>
+                <option value="text-galaxy">🌌 Galaxy</option>
+                <option value="text-matrix">💻 Matrix</option>
+                <option value="text-holographic">🎆 Holographic</option>
+                <option value="none">Plain</option>
+              </select>
+            </div>
+            <div class="effect-group">
+              <label>Text Font</label>
+              <select id="enterTextFont">
+                <option value="font-cyberpunk">🤖 Cyberpunk</option>
+                <option value="font-elegant">🎩 Elegant</option>
+                <option value="font-futuristic">🚀 Futuristic</option>
+                <option value="font-retro">🎮 Retro</option>
+                <option value="font-brush">🎨 Brush</option>
+                <option value="font-gothic">🏰 Gothic</option>
+                <option value="default">Default</option>
+              </select>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- SOCIAL SECTION -->
@@ -1026,6 +1093,9 @@
         // Set audio player settings
         safeSetValue('audioPlayerPosition', card.audio_player_position || 'bottom-right');
         safeSetValue('audioPlayerStyle', card.audio_player_style || 'full');
+        safeSetValue('enterText', card.enter_text || 'Click to Enter');
+        safeSetValue('enterTextEffect', card.enter_text_effect || 'rainbow-text');
+        safeSetValue('enterTextFont', card.enter_text_font || 'font-cyberpunk');
         safeSetValue('audioPlayerTheme', card.audio_player_theme || 'accent');
         safeSetValue('audioVisualizer', card.audio_visualizer || 'none');
         const showCoverElement = document.getElementById('audioShowCover');
@@ -1073,7 +1143,8 @@
                       'enableAudioPlayer', 'audioUrl', 'audioTitle', 'audioCover',
                       'audioPlayerPosition', 'audioPlayerStyle', 'audioPlayerTheme', 'audioVisualizer',
                       'audioShowCover', 'audioAutohide',
-                      'profileLayout', 'enableTypewriter', 'enableParticles', 'enableGlitch', 'animatedSocialButtons'];
+                      'profileLayout', 'enableTypewriter', 'enableParticles', 'enableGlitch', 'animatedSocialButtons',
+                      'enterText', 'enterTextEffect', 'enterTextFont'];
       inputs.forEach(id => {
         const element = document.getElementById(id);
         if (element) {
@@ -1324,6 +1395,9 @@
           enable_particles: document.getElementById('enableParticles').checked,
           enable_glitch: document.getElementById('enableGlitch').checked,
           animated_social_buttons: document.getElementById('animatedSocialButtons').checked,
+          enter_text: document.getElementById('enterText').value || 'Click to Enter',
+          enter_text_effect: document.getElementById('enterTextEffect').value,
+          enter_text_font: document.getElementById('enterTextFont').value,
           enabled: true,
           updated_at: new Date().toISOString()
         };

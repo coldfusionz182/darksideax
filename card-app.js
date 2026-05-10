@@ -54,8 +54,10 @@ async function loadCard() {
 function renderCard(card, avatarUrl) {
   const container = document.getElementById('cardContainer');
   let videoHtml = '';
-  let audioHtml = '';
+  let audioPlayerHtml = '';
+  let hiddenAudioHtml = '';
   const layout = card.profile_layout || 'default';
+  const hasAudio = card.video_url || card.audio_url;
 
   if (card.video_url) {
     videoHtml += '<video class="video-background" autoplay muted loop playsinline>';
@@ -63,8 +65,23 @@ function renderCard(card, avatarUrl) {
     videoHtml += '</video><div class="overlay"></div>';
   }
 
-  if (card.enable_audio_player && (card.video_url || card.audio_url)) {
-    audioHtml = buildAudioPlayer(card);
+  // Always create hidden audio element for "Click to Enter" to work
+  if (hasAudio) {
+    const audioSource = card.audio_url || card.video_url;
+    let audioType = 'audio/mp4';
+    if (audioSource.includes('.mp3')) audioType = 'audio/mpeg';
+    else if (audioSource.includes('.wav')) audioType = 'audio/wav';
+    else if (audioSource.includes('.ogg')) audioType = 'audio/ogg';
+
+    hiddenAudioHtml = '<audio id="bgAudio" loop style="display:none;">';
+    hiddenAudioHtml += '<source src="' + audioSource + '" type="' + audioType + '">';
+    hiddenAudioHtml += '<source src="' + audioSource + '" type="audio/mpeg">';
+    hiddenAudioHtml += '</audio>';
+
+    // Only show player UI if enabled
+    if (card.enable_audio_player) {
+      audioPlayerHtml = buildAudioPlayer(card);
+    }
   }
 
   const overlayColor = '<div class="overlay" style="background: ' + card.background_color + (card.video_url ? 'aa' : '') + '"></div>';
@@ -107,7 +124,7 @@ function renderCard(card, avatarUrl) {
   else if (layout === 'right') layoutClass = 'layout-right ';
   else if (layout === 'compact') layoutClass = 'layout-compact ';
 
-  container.innerHTML = videoHtml + audioHtml + overlayColor + particlesHtml
+  container.innerHTML = videoHtml + hiddenAudioHtml + audioPlayerHtml + overlayColor + particlesHtml
     + '<div class="card-content ' + layoutClass + '">'
     + avatarHtml
     + '<h1 class="username ' + usernameEffect + ' ' + usernameFont + '" style="color: ' + card.text_color + ';' + (card.enable_glitch ? ' animation:glitch 2s infinite;' : '') + '">' + card.username + '</h1>'
@@ -116,9 +133,10 @@ function renderCard(card, avatarUrl) {
     + '<div class="social-links">' + socialHtml + '</div>'
     + '</div>';
 
-  if (card.enable_audio_player && (card.video_url || card.audio_url)) {
+  // Setup audio - always if source exists (for click-to-enter)
+  if (hasAudio) {
     setupAudioPlayer(card);
-    createEnterOverlay(avatarUrl, card.video_url);
+    createEnterOverlay(card, avatarUrl, card.video_url);
   }
 
   if (card.enable_typewriter && card.bio) {
@@ -141,11 +159,6 @@ function buildAudioPlayer(card) {
   const showCover = card.audio_show_cover !== false;
   const autohide = card.audio_autohide || false;
 
-  let audioType = 'audio/mp4';
-  if (audioSource.includes('.mp3')) audioType = 'audio/mpeg';
-  else if (audioSource.includes('.wav')) audioType = 'audio/wav';
-  else if (audioSource.includes('.ogg')) audioType = 'audio/ogg';
-
   let coverHtml = '';
   if (showCover && coverUrl) {
     coverHtml = '<div class="audio-cover"><img src="' + coverUrl + '" alt="Cover" style="width:44px;height:44px;border-radius:8px;object-fit:cover;"></div>';
@@ -163,10 +176,6 @@ function buildAudioPlayer(card) {
   const classes = 'audio-player pos-' + position + ' theme-' + theme + ' style-' + style + (autohide ? ' autohide' : '');
 
   let html = '<div class="' + classes + '" id="audioPlayer">';
-  html += '<audio id="bgAudio" loop>';
-  html += '<source src="' + audioSource + '" type="' + audioType + '">';
-  html += '<source src="' + audioSource + '" type="audio/mpeg">';
-  html += '</audio>';
   html += '<div class="audio-controls">';
   html += coverHtml;
   html += '<button id="playPauseBtn" class="audio-btn"><i class="fa fa-play"></i></button>';
@@ -183,36 +192,40 @@ function setupAudioPlayer(card) {
   const playPauseBtn = document.getElementById('playPauseBtn');
   const volumeSlider = document.getElementById('volumeSlider');
   const player = document.getElementById('audioPlayer');
-  if (!audio || !playPauseBtn || !volumeSlider) return;
+  if (!audio) return;
 
   audio.volume = 0.5;
 
-  playPauseBtn.addEventListener('click', () => {
-    if (audio.paused) {
-      audio.play().then(() => {
-        playPauseBtn.innerHTML = '<i class="fa fa-pause"></i>';
-        if (player) player.classList.add('playing');
-      }).catch(err => {
-        console.error('Audio play failed:', err);
-      });
-    } else {
-      audio.pause();
-      playPauseBtn.innerHTML = '<i class="fa fa-play"></i>';
-      if (player) player.classList.remove('playing');
-    }
-  });
+  if (playPauseBtn) {
+    playPauseBtn.addEventListener('click', () => {
+      if (audio.paused) {
+        audio.play().then(() => {
+          playPauseBtn.innerHTML = '<i class="fa fa-pause"></i>';
+          if (player) player.classList.add('playing');
+        }).catch(err => {
+          console.error('Audio play failed:', err);
+        });
+      } else {
+        audio.pause();
+        playPauseBtn.innerHTML = '<i class="fa fa-play"></i>';
+        if (player) player.classList.remove('playing');
+      }
+    });
+  }
 
-  volumeSlider.addEventListener('input', (e) => {
-    audio.volume = e.target.value / 100;
-  });
+  if (volumeSlider) {
+    volumeSlider.addEventListener('input', (e) => {
+      audio.volume = e.target.value / 100;
+    });
+  }
 
   audio.addEventListener('ended', () => {
-    playPauseBtn.innerHTML = '<i class="fa fa-play"></i>';
+    if (playPauseBtn) playPauseBtn.innerHTML = '<i class="fa fa-play"></i>';
     if (player) player.classList.remove('playing');
   });
 }
 
-function createEnterOverlay(avatarUrl, videoUrl) {
+function createEnterOverlay(card, avatarUrl, videoUrl) {
   const audio = document.getElementById('bgAudio');
   if (!audio) return;
 
@@ -226,8 +239,12 @@ function createEnterOverlay(avatarUrl, videoUrl) {
     bgStyle = 'background-image:url(' + videoUrl + ');background-size:cover;background-position:center;';
   }
 
+  const enterText = card.enter_text || 'Click to Enter';
+  const enterEffect = card.enter_text_effect || 'rainbow-text';
+  const enterFont = card.enter_text_font || 'font-cyberpunk';
+
   overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;z-index:9999;cursor:pointer;transition:opacity 0.6s ease;' + bgStyle;
-  overlay.innerHTML = '<div style="position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);backdrop-filter:blur(15px);-webkit-backdrop-filter:blur(15px);display:flex;align-items:center;justify-content:center;"><div style="text-align:center;pointer-events:none;"><h1 class="rainbow-text" style="font-size:56px;font-weight:900;font-family:\'Orbitron\',sans-serif;text-transform:uppercase;letter-spacing:8px;margin:0;">Click to Enter</h1></div></div>';
+  overlay.innerHTML = '<div style="position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);backdrop-filter:blur(15px);-webkit-backdrop-filter:blur(15px);display:flex;align-items:center;justify-content:center;"><div style="text-align:center;pointer-events:none;"><h1 class="' + enterEffect + ' ' + enterFont + '" style="font-size:56px;font-weight:900;text-transform:uppercase;letter-spacing:8px;margin:0;">' + enterText + '</h1></div></div>';
   document.body.appendChild(overlay);
 
   const handleClick = () => {

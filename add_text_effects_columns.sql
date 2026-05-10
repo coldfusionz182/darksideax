@@ -24,5 +24,10 @@ ALTER TABLE profile_cards ADD COLUMN IF NOT EXISTS audio_visualizer TEXT DEFAULT
 ALTER TABLE profile_cards ADD COLUMN IF NOT EXISTS audio_show_cover BOOLEAN DEFAULT true;
 ALTER TABLE profile_cards ADD COLUMN IF NOT EXISTS audio_autohide BOOLEAN DEFAULT false;
 
+-- NEW: Click to Enter text customization
+ALTER TABLE profile_cards ADD COLUMN IF NOT EXISTS enter_text TEXT DEFAULT 'Click to Enter';
+ALTER TABLE profile_cards ADD COLUMN IF NOT EXISTS enter_text_effect TEXT DEFAULT 'rainbow-text';
+ALTER TABLE profile_cards ADD COLUMN IF NOT EXISTS enter_text_font TEXT DEFAULT 'font-cyberpunk';
+
 -- Add index for better performance
 CREATE INDEX IF NOT EXISTS idx_profile_cards_profile_layout ON profile_cards(profile_layout);
