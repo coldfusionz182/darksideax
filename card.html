@@ -509,9 +509,24 @@
       if (card.enable_audio_player && (card.video_url || card.audio_url)) {
         const audioSource = card.audio_url || card.video_url;
         const audioTitle = card.audio_title || 'Background Music';
+        
+        // Determine audio type based on file extension
+        let audioType = 'audio/mp4';
+        if (audioSource.includes('.mp3')) {
+          audioType = 'audio/mpeg';
+        } else if (audioSource.includes('.wav')) {
+          audioType = 'audio/wav';
+        } else if (audioSource.includes('.ogg')) {
+          audioType = 'audio/ogg';
+        }
+        
         audioHtml = `
           <div class="audio-player">
-            <audio id="bgAudio" loop><source src="${audioSource}" type="audio/mp4"></audio>
+            <audio id="bgAudio" loop>
+              <source src="${audioSource}" type="${audioType}">
+              <source src="${audioSource}" type="audio/mpeg">
+              <source src="${audioSource}" type="audio/mp4">
+            </audio>
             <div class="audio-controls">
               <button id="playPauseBtn" class="audio-btn">
                 <i class="fa fa-play"></i>
@@ -583,16 +598,34 @@
       const playPauseBtn = document.getElementById('playPauseBtn');
       const volumeSlider = document.getElementById('volumeSlider');
 
-      if (!audio || !playPauseBtn || !volumeSlider) return;
+      if (!audio || !playPauseBtn || !volumeSlider) {
+        console.log('Audio player elements not found');
+        return;
+      }
 
       // Set initial volume
       audio.volume = 0.5;
+      
+      // Debug: Log audio source
+      console.log('Audio source:', audio.querySelector('source').src);
 
       // Play/Pause functionality
       playPauseBtn.addEventListener('click', () => {
         if (audio.paused) {
-          audio.play();
-          playPauseBtn.innerHTML = '<i class="fa fa-pause"></i>';
+          audio.play().then(() => {
+            console.log('Audio playing successfully');
+            playPauseBtn.innerHTML = '<i class="fa fa-pause"></i>';
+          }).catch(err => {
+            console.error('Audio play failed:', err);
+            // Try alternative play method
+            audio.load();
+            audio.play().then(() => {
+              console.log('Audio playing on second attempt');
+              playPauseBtn.innerHTML = '<i class="fa fa-pause"></i>';
+            }).catch(err2 => {
+              console.error('Audio still failed:', err2);
+            });
+          });
         } else {
           audio.pause();
           playPauseBtn.innerHTML = '<i class="fa fa-play"></i>';
@@ -608,6 +641,11 @@
       audio.addEventListener('ended', () => {
         playPauseBtn.innerHTML = '<i class="fa fa-play"></i>';
       });
+      
+      // Log audio events for debugging
+      audio.addEventListener('loadstart', () => console.log('Audio loading started'));
+      audio.addEventListener('canplay', () => console.log('Audio can play'));
+      audio.addEventListener('error', (e) => console.error('Audio error:', e));
     }
 
     function getSocialIcon(platform) {
