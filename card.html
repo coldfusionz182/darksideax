@@ -38,8 +38,8 @@
       z-index: 0;
     }
     .video-background iframe {
-      width: 140%;
-      height: 140%;
+      width: 300%;
+      height: 300%;
       object-fit: cover;
       position: absolute;
       top: 50%;
@@ -264,7 +264,7 @@
         const id = ytMatch[1];
         return `
           <div class="video-background">
-            <iframe src="https://www.youtube.com/embed/${id}?autoplay=1&mute=1&loop=1&playlist=${id}&controls=0&showinfo=0&rel=0&modestbranding=1&iv_load_policy=3&fs=0&disablekb=1&autohide=1&playsinline=1&cc_load_policy=0&enablejsapi=0" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen title=" "></iframe>
+            <iframe src="https://www.youtube.com/embed/${id}?autoplay=1&loop=1&playlist=${id}&controls=0&showinfo=0&rel=0&modestbranding=1&iv_load_policy=3&fs=0&disablekb=1&autohide=1&playsinline=1&cc_load_policy=0&enablejsapi=0" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen title=" "></iframe>
           </div>
         `;
       }
@@ -284,7 +284,7 @@
       if (streamableMatch) {
         return `
           <div class="video-background">
-            <iframe src="https://streamable.com/e/${streamableMatch[1]}?autoplay=1&muted=1&loop=1" frameborder="0" allow="autoplay; fullscreen" allowfullscreen></iframe>
+            <iframe src="https://streamable.com/e/${streamableMatch[1]}?autoplay=1&loop=1" frameborder="0" allow="autoplay; fullscreen" allowfullscreen></iframe>
           </div>
         `;
       }
