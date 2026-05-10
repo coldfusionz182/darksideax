@@ -202,13 +202,8 @@
 
       let videoHtml = '';
       if (card.video_url) {
-        videoHtml = `
-          <div class="video-background">
-            <video autoplay muted loop playsinline>
-              <source src="${card.video_url}" type="video/mp4">
-            </video>
-          </div>
-        `;
+        videoHtml = `<video class="video-background" autoplay loop playsinline><source src="${card.video_url}" type="video/mp4"></video>`;
+        videoHtml += '<div class="overlay"></div>';
       }
 
       const overlayHtml = `<div class="overlay" style="background: ${card.background_color}${card.video_url ? 'aa' : ''}"></div>`;
@@ -238,32 +233,6 @@
           </div>
         </div>
       `;
-
-      // Try to click video with XPath for sound
-      if (card.video_url) {
-        setTimeout(clickVideoForSound, 500);
-      }
-    }
-
-    function clickVideoForSound() {
-      try {
-        // Find video using XPath
-        const video = document.evaluate('/html/body/video', document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-        
-        if (video) {
-          // Click the video 3 times to establish user interaction
-          for (let i = 0; i < 3; i++) {
-            setTimeout(() => {
-              video.click();
-              // Try to unmute and play with sound
-              video.muted = false;
-              video.play().catch(err => console.log('Play with sound failed:', err));
-            }, i * 100);
-          }
-        }
-      } catch (err) {
-        console.log('XPath video click failed:', err);
-      }
     }
 
     function getSocialIcon(platform) {
