@@ -754,15 +754,16 @@
           <div class="section-header">
             <i class="fa fa-music"></i>
             <div>
-              <h3>Audio</h3>
-              <span class="subtitle">Background music with cover art</span>
+              <h3>Music Player</h3>
+              <span class="subtitle">Customize your audio experience</span>
             </div>
           </div>
           <div class="form-group">
             <label class="checkbox-label">
               <input type="checkbox" id="enableAudioPlayer">
-              <span class="checkbox-text">Enable Audio Player</span>
+              <span class="checkbox-text">Enable Music Player</span>
             </label>
+            <span class="form-hint">Uncheck to completely hide the music player</span>
           </div>
           <div class="form-row">
             <div class="form-group">
@@ -770,14 +771,76 @@
               <input type="url" id="audioUrl" placeholder="https://files.catbox.moe/audio.mp3">
             </div>
             <div class="form-group">
-              <label>Audio Title</label>
+              <label>Song Title</label>
               <input type="text" id="audioTitle" placeholder="Song Name" maxlength="50">
             </div>
           </div>
           <div class="form-group">
-            <label>Cover Image URL</label>
+            <label>Cover Art URL</label>
             <input type="url" id="audioCover" placeholder="https://files.catbox.moe/cover.jpg">
-            <span class="form-hint">Album art shown in the audio player</span>
+            <span class="form-hint">Album art displayed in the player</span>
+          </div>
+        </div>
+
+        <div class="section-card">
+          <div class="section-header">
+            <i class="fa fa-sliders"></i>
+            <div>
+              <h3>Player Settings</h3>
+              <span class="subtitle">Appearance and behaviour</span>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Player Position</label>
+              <select id="audioPlayerPosition">
+                <option value="bottom-right">Bottom Right</option>
+                <option value="bottom-left">Bottom Left</option>
+                <option value="top-right">Top Right</option>
+                <option value="top-left">Top Left</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Player Style</label>
+              <select id="audioPlayerStyle">
+                <option value="full">Full - Cover + Title</option>
+                <option value="minimal">Minimal - Just Play Button</option>
+                <option value="compact">Compact - Title + Button</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Color Theme</label>
+              <select id="audioPlayerTheme">
+                <option value="accent">Accent Color</option>
+                <option value="rainbow">Rainbow Gradient</option>
+                <option value="neon">Neon Glow</option>
+                <option value="dark">Dark Minimal</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Visualizer</label>
+              <select id="audioVisualizer">
+                <option value="none">None</option>
+                <option value="bars">Animated Bars</option>
+                <option value="pulse">Pulse Ring</option>
+                <option value="wave">Waveform</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="checkbox-label">
+              <input type="checkbox" id="audioShowCover">
+              <span class="checkbox-text">Show Cover Art</span>
+            </label>
+          </div>
+          <div class="form-group">
+            <label class="checkbox-label">
+              <input type="checkbox" id="audioAutohide">
+              <span class="checkbox-text">Auto-hide When Paused</span>
+            </label>
+            <span class="form-hint">Player fades out when music is stopped</span>
           </div>
         </div>
       </div>
@@ -960,6 +1023,16 @@
         safeSetValue('audioTitle', card.audio_title);
         safeSetValue('audioCover', card.audio_cover);
         
+        // Set audio player settings
+        safeSetValue('audioPlayerPosition', card.audio_player_position || 'bottom-right');
+        safeSetValue('audioPlayerStyle', card.audio_player_style || 'full');
+        safeSetValue('audioPlayerTheme', card.audio_player_theme || 'accent');
+        safeSetValue('audioVisualizer', card.audio_visualizer || 'none');
+        const showCoverElement = document.getElementById('audioShowCover');
+        if (showCoverElement) showCoverElement.checked = card.audio_show_cover !== false;
+        const autohideElement = document.getElementById('audioAutohide');
+        if (autohideElement) autohideElement.checked = card.audio_autohide || false;
+        
         // Set profile effects
         safeSetValue('profileLayout', card.profile_layout || 'default');
         const typewriterElement = document.getElementById('enableTypewriter');
@@ -998,6 +1071,8 @@
       const inputs = ['videoUrl', 'bgColor', 'textColor', 'accentColor', 'displayUsername', 'badgeText', 'cardAvatarUrl', 'bio', 
                       'usernameEffect', 'usernameFont', 'badgeEffect', 'badgeFont', 'bioEffect', 'bioFont',
                       'enableAudioPlayer', 'audioUrl', 'audioTitle', 'audioCover',
+                      'audioPlayerPosition', 'audioPlayerStyle', 'audioPlayerTheme', 'audioVisualizer',
+                      'audioShowCover', 'audioAutohide',
                       'profileLayout', 'enableTypewriter', 'enableParticles', 'enableGlitch', 'animatedSocialButtons'];
       inputs.forEach(id => {
         const element = document.getElementById(id);
@@ -1238,6 +1313,12 @@
           audio_url: document.getElementById('audioUrl').value,
           audio_title: document.getElementById('audioTitle').value,
           audio_cover: document.getElementById('audioCover').value,
+          audio_player_position: document.getElementById('audioPlayerPosition').value,
+          audio_player_style: document.getElementById('audioPlayerStyle').value,
+          audio_player_theme: document.getElementById('audioPlayerTheme').value,
+          audio_visualizer: document.getElementById('audioVisualizer').value,
+          audio_show_cover: document.getElementById('audioShowCover').checked,
+          audio_autohide: document.getElementById('audioAutohide').checked,
           profile_layout: document.getElementById('profileLayout').value,
           enable_typewriter: document.getElementById('enableTypewriter').checked,
           enable_particles: document.getElementById('enableParticles').checked,

@@ -3,7 +3,6 @@ import { SUPABASE_ANON_KEY } from './keys.js';
 
 const supabase = createClient('https://ffmkkwskvjvytdddevmm.supabase.co', SUPABASE_ANON_KEY);
 
-// Normalize social URLs - ensure https:// prefix
 function normalizeUrl(url) {
   if (!url) return url;
   url = url.trim();
@@ -35,7 +34,6 @@ async function loadCard() {
       return;
     }
 
-    // Get avatar - prefer card_avatar_url, fallback to user avatar
     let avatarUrl = card.card_avatar_url || null;
     if (!avatarUrl && card.user_id) {
       const { data: userData } = await supabase
@@ -59,47 +57,18 @@ function renderCard(card, avatarUrl) {
   let audioHtml = '';
   const layout = card.profile_layout || 'default';
 
-  // Video background
   if (card.video_url) {
     videoHtml += '<video class="video-background" autoplay muted loop playsinline>';
     videoHtml += '<source src="' + card.video_url + '" type="video/mp4">';
     videoHtml += '</video><div class="overlay"></div>';
   }
 
-  // Audio player
   if (card.enable_audio_player && (card.video_url || card.audio_url)) {
-    const audioSource = card.audio_url || card.video_url;
-    const audioTitle = card.audio_title || 'Background Music';
-    const coverUrl = card.audio_cover || '';
-    
-    let audioType = 'audio/mp4';
-    if (audioSource.includes('.mp3')) audioType = 'audio/mpeg';
-    else if (audioSource.includes('.wav')) audioType = 'audio/wav';
-    else if (audioSource.includes('.ogg')) audioType = 'audio/ogg';
-
-    let coverHtml = '';
-    if (coverUrl) {
-      coverHtml = '<div class="audio-cover" style="margin-right:10px;">';
-      coverHtml += '<img src="' + coverUrl + '" alt="Cover" style="width:40px;height:40px;border-radius:4px;object-fit:cover;">';
-      coverHtml += '</div>';
-    }
-
-    audioHtml = '<div class="audio-player">';
-    audioHtml += '<audio id="bgAudio" loop>';
-    audioHtml += '<source src="' + audioSource + '" type="' + audioType + '">';
-    audioHtml += '<source src="' + audioSource + '" type="audio/mpeg">';
-    audioHtml += '<source src="' + audioSource + '" type="audio/mp4">';
-    audioHtml += '</audio>';
-    audioHtml += '<div class="audio-controls">' + coverHtml;
-    audioHtml += '<button id="playPauseBtn" class="audio-btn"><i class="fa fa-play"></i></button>';
-    audioHtml += '<div class="audio-info"><span class="audio-title">' + audioTitle + '</span></div>';
-    audioHtml += '<input type="range" id="volumeSlider" class="volume-slider" min="0" max="100" value="50">';
-    audioHtml += '</div></div>';
+    audioHtml = buildAudioPlayer(card);
   }
 
   const overlayColor = '<div class="overlay" style="background: ' + card.background_color + (card.video_url ? 'aa' : '') + '"></div>';
-  
-  // Social links - normalize URLs
+
   const animatedSocial = card.animated_social_buttons || false;
   const socialHtml = card.social_links && card.social_links.length > 0
     ? card.social_links.map(link => {
@@ -147,21 +116,142 @@ function renderCard(card, avatarUrl) {
     + '<div class="social-links">' + socialHtml + '</div>'
     + '</div>';
 
-  // Setup audio
   if (card.enable_audio_player && (card.video_url || card.audio_url)) {
-    setupAudioPlayer();
+    setupAudioPlayer(card);
     createEnterOverlay(avatarUrl, card.video_url);
   }
 
-  // Typewriter
   if (card.enable_typewriter && card.bio) {
     typewriterEffect(card.bio);
   }
 
-  // Particles
   if (card.enable_particles) {
     createParticles();
   }
+}
+
+function buildAudioPlayer(card) {
+  const audioSource = card.audio_url || card.video_url;
+  const audioTitle = card.audio_title || 'Background Music';
+  const coverUrl = card.audio_cover || '';
+  const position = card.audio_player_position || 'bottom-right';
+  const style = card.audio_player_style || 'full';
+  const theme = card.audio_player_theme || 'accent';
+  const visualizer = card.audio_visualizer || 'none';
+  const showCover = card.audio_show_cover !== false;
+  const autohide = card.audio_autohide || false;
+
+  let audioType = 'audio/mp4';
+  if (audioSource.includes('.mp3')) audioType = 'audio/mpeg';
+  else if (audioSource.includes('.wav')) audioType = 'audio/wav';
+  else if (audioSource.includes('.ogg')) audioType = 'audio/ogg';
+
+  let coverHtml = '';
+  if (showCover && coverUrl) {
+    coverHtml = '<div class="audio-cover"><img src="' + coverUrl + '" alt="Cover" style="width:44px;height:44px;border-radius:8px;object-fit:cover;"></div>';
+  }
+
+  let vizHtml = '';
+  if (visualizer === 'bars') {
+    vizHtml = '<div class="audio-visualizer"><div class="viz-bar"></div><div class="viz-bar"></div><div class="viz-bar"></div><div class="viz-bar"></div><div class="viz-bar"></div></div>';
+  } else if (visualizer === 'pulse') {
+    vizHtml = '<div class="viz-pulse"></div>';
+  } else if (visualizer === 'wave') {
+    vizHtml = '<div class="viz-wave"><span></span><span></span><span></span><span></span><span></span></div>';
+  }
+
+  const classes = 'audio-player pos-' + position + ' theme-' + theme + ' style-' + style + (autohide ? ' autohide' : '');
+
+  let html = '<div class="' + classes + '" id="audioPlayer">';
+  html += '<audio id="bgAudio" loop>';
+  html += '<source src="' + audioSource + '" type="' + audioType + '">';
+  html += '<source src="' + audioSource + '" type="audio/mpeg">';
+  html += '</audio>';
+  html += '<div class="audio-controls">';
+  html += coverHtml;
+  html += '<button id="playPauseBtn" class="audio-btn"><i class="fa fa-play"></i></button>';
+  html += '<div class="audio-info"><span class="audio-title">' + audioTitle + '</span></div>';
+  html += vizHtml;
+  html += '<input type="range" id="volumeSlider" class="volume-slider" min="0" max="100" value="50">';
+  html += '</div></div>';
+
+  return html;
+}
+
+function setupAudioPlayer(card) {
+  const audio = document.getElementById('bgAudio');
+  const playPauseBtn = document.getElementById('playPauseBtn');
+  const volumeSlider = document.getElementById('volumeSlider');
+  const player = document.getElementById('audioPlayer');
+  if (!audio || !playPauseBtn || !volumeSlider) return;
+
+  audio.volume = 0.5;
+
+  playPauseBtn.addEventListener('click', () => {
+    if (audio.paused) {
+      audio.play().then(() => {
+        playPauseBtn.innerHTML = '<i class="fa fa-pause"></i>';
+        if (player) player.classList.add('playing');
+      }).catch(err => {
+        console.error('Audio play failed:', err);
+      });
+    } else {
+      audio.pause();
+      playPauseBtn.innerHTML = '<i class="fa fa-play"></i>';
+      if (player) player.classList.remove('playing');
+    }
+  });
+
+  volumeSlider.addEventListener('input', (e) => {
+    audio.volume = e.target.value / 100;
+  });
+
+  audio.addEventListener('ended', () => {
+    playPauseBtn.innerHTML = '<i class="fa fa-play"></i>';
+    if (player) player.classList.remove('playing');
+  });
+}
+
+function createEnterOverlay(avatarUrl, videoUrl) {
+  const audio = document.getElementById('bgAudio');
+  if (!audio) return;
+
+  const overlay = document.createElement('div');
+  overlay.id = 'enterOverlay';
+
+  let bgStyle = '';
+  if (avatarUrl) {
+    bgStyle = 'background-image:url(' + avatarUrl + ');background-size:cover;background-position:center;';
+  } else if (videoUrl) {
+    bgStyle = 'background-image:url(' + videoUrl + ');background-size:cover;background-position:center;';
+  }
+
+  overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;z-index:9999;cursor:pointer;transition:opacity 0.6s ease;' + bgStyle;
+  overlay.innerHTML = '<div style="position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);backdrop-filter:blur(15px);-webkit-backdrop-filter:blur(15px);display:flex;align-items:center;justify-content:center;"><div style="text-align:center;pointer-events:none;"><h1 class="rainbow-text" style="font-size:56px;font-weight:900;font-family:\'Orbitron\',sans-serif;text-transform:uppercase;letter-spacing:8px;margin:0;">Click to Enter</h1></div></div>';
+  document.body.appendChild(overlay);
+
+  const handleClick = () => {
+    const el = document.getElementById('enterOverlay');
+    if (el) {
+      el.style.opacity = '0';
+      setTimeout(() => el.remove(), 600);
+    }
+    try {
+      audio.play().then(() => {
+        const btn = document.getElementById('playPauseBtn');
+        const player = document.getElementById('audioPlayer');
+        if (btn) btn.innerHTML = '<i class="fa fa-pause"></i>';
+        if (player) player.classList.add('playing');
+      }).catch(err => {
+        console.error('Audio play failed:', err);
+      });
+    } catch (err) {
+      console.error('Audio error:', err);
+    }
+  };
+
+  overlay.addEventListener('click', handleClick);
+  overlay.addEventListener('touchstart', handleClick);
 }
 
 function typewriterEffect(text) {
@@ -190,72 +280,6 @@ function createParticles() {
   const style = document.createElement('style');
   style.textContent = '@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-100px) translateX(' + (Math.random() * 20 - 10) + 'px)}}';
   document.head.appendChild(style);
-}
-
-function setupAudioPlayer() {
-  const audio = document.getElementById('bgAudio');
-  const playPauseBtn = document.getElementById('playPauseBtn');
-  const volumeSlider = document.getElementById('volumeSlider');
-  if (!audio || !playPauseBtn || !volumeSlider) return;
-  audio.volume = 0.5;
-  playPauseBtn.addEventListener('click', () => {
-    if (audio.paused) {
-      audio.play().then(() => {
-        playPauseBtn.innerHTML = '<i class="fa fa-pause"></i>';
-      }).catch(err => {
-        console.error('Audio play failed:', err);
-      });
-    } else {
-      audio.pause();
-      playPauseBtn.innerHTML = '<i class="fa fa-play"></i>';
-    }
-  });
-  volumeSlider.addEventListener('input', (e) => {
-    audio.volume = e.target.value / 100;
-  });
-  audio.addEventListener('ended', () => {
-    playPauseBtn.innerHTML = '<i class="fa fa-play"></i>';
-  });
-}
-
-function createEnterOverlay(avatarUrl, videoUrl) {
-  const audio = document.getElementById('bgAudio');
-  if (!audio) return;
-  
-  const overlay = document.createElement('div');
-  overlay.id = 'enterOverlay';
-  
-  let bgStyle = '';
-  if (avatarUrl) {
-    bgStyle = 'background-image:url(' + avatarUrl + ');background-size:cover;background-position:center;';
-  } else if (videoUrl) {
-    bgStyle = 'background-image:url(' + videoUrl + ');background-size:cover;background-position:center;';
-  }
-  
-  overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;z-index:9999;cursor:pointer;transition:opacity 0.6s ease;' + bgStyle;
-  overlay.innerHTML = '<div style="position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);backdrop-filter:blur(15px);-webkit-backdrop-filter:blur(15px);display:flex;align-items:center;justify-content:center;"><div style="text-align:center;pointer-events:none;"><h1 class="rainbow-text" style="font-size:56px;font-weight:900;font-family:\'Orbitron\',sans-serif;text-transform:uppercase;letter-spacing:8px;margin:0;">Click to Enter</h1></div></div>';
-  document.body.appendChild(overlay);
-
-  const handleClick = () => {
-    const el = document.getElementById('enterOverlay');
-    if (el) {
-      el.style.opacity = '0';
-      setTimeout(() => el.remove(), 600);
-    }
-    try {
-      audio.play().then(() => {
-        const btn = document.getElementById('playPauseBtn');
-        if (btn) btn.innerHTML = '<i class="fa fa-pause"></i>';
-      }).catch(err => {
-        console.error('Audio play failed:', err);
-      });
-    } catch (err) {
-      console.error('Audio error:', err);
-    }
-  };
-  
-  overlay.addEventListener('click', handleClick);
-  overlay.addEventListener('touchstart', handleClick);
 }
 
 function getSocialIcon(platform) {

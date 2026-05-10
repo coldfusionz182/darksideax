@@ -16,5 +16,13 @@ ALTER TABLE profile_cards ADD COLUMN IF NOT EXISTS card_avatar_url TEXT;
 -- NEW: Animated social buttons
 ALTER TABLE profile_cards ADD COLUMN IF NOT EXISTS animated_social_buttons BOOLEAN DEFAULT false;
 
+-- NEW: Audio player customization
+ALTER TABLE profile_cards ADD COLUMN IF NOT EXISTS audio_player_position TEXT DEFAULT 'bottom-right';
+ALTER TABLE profile_cards ADD COLUMN IF NOT EXISTS audio_player_style TEXT DEFAULT 'full';
+ALTER TABLE profile_cards ADD COLUMN IF NOT EXISTS audio_player_theme TEXT DEFAULT 'accent';
+ALTER TABLE profile_cards ADD COLUMN IF NOT EXISTS audio_visualizer TEXT DEFAULT 'none';
+ALTER TABLE profile_cards ADD COLUMN IF NOT EXISTS audio_show_cover BOOLEAN DEFAULT true;
+ALTER TABLE profile_cards ADD COLUMN IF NOT EXISTS audio_autohide BOOLEAN DEFAULT false;
+
 -- Add index for better performance
 CREATE INDEX IF NOT EXISTS idx_profile_cards_profile_layout ON profile_cards(profile_layout);
