@@ -109,6 +109,7 @@
     .overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; }
     /* Amazing Text Effects */
     .text-rainbow {
+      display: inline-block;
       background: linear-gradient(45deg, #ff0000, #ff7f00, #ffff00, #00ff00, #0000ff, #4b0082, #9400d3, #ff0000);
       background-size: 400% 400%; -webkit-background-clip: text; background-clip: text;
       -webkit-text-fill-color: transparent; animation: rainbow 3s ease infinite;
@@ -149,18 +150,21 @@
     }
     @keyframes neon-flicker { 0%, 100% { opacity: 1; } 50% { opacity: 0.8; } }
     .text-fire {
+      display: inline-block;
       background: linear-gradient(to top, #ff0000, #ff7f00, #ffff00, #ffffff);
       -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
       animation: fire-dance 1.5s ease-in-out infinite alternate;
     }
     @keyframes fire-dance { 0% { transform: scale(1) translateY(0); } 100% { transform: scale(1.05) translateY(-2px); } }
     .text-ice {
+      display: inline-block;
       background: linear-gradient(45deg, #00d4ff, #0099cc, #006699, #00d4ff);
       background-size: 200% 200%; -webkit-background-clip: text; background-clip: text;
       -webkit-text-fill-color: transparent; animation: ice-shimmer 3s ease-in-out infinite;
     }
     @keyframes ice-shimmer { 0%, 100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
     .text-galaxy {
+      display: inline-block;
       background: linear-gradient(45deg, #667eea 0%, #764ba2 25%, #f093fb 50%, #c471f5 75%, #667eea 100%);
       background-size: 400% 400%; -webkit-background-clip: text; background-clip: text;
       -webkit-text-fill-color: transparent; animation: galaxy-rotate 8s linear infinite;
@@ -169,6 +173,7 @@
     .text-matrix { color: #0f0; text-shadow: 0 0 5px #0f0, 0 0 10px #0f0; font-family: 'Courier New', monospace; animation: matrix-rain 2s linear infinite; }
     @keyframes matrix-rain { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; text-shadow: 0 0 5px #0f0, 0 0 15px #0f0, 0 0 25px #0f0; } }
     .text-holographic {
+      display: inline-block;
       background: linear-gradient(45deg, #ff0080, #ff8c00, #40e0d0, #ff0080);
       background-size: 300% 300%; -webkit-background-clip: text; background-clip: text;
       -webkit-text-fill-color: transparent; animation: holographic-shift 4s ease-in-out infinite;
@@ -278,6 +283,7 @@
     
     /* Rainbow Text Animation */
     .rainbow-text {
+      display: inline-block;
       background: linear-gradient(90deg, #ff0000, #ff7f00, #ffff00, #00ff00, #0000ff, #4b0082, #9400d3, #ff0000);
       background-size: 400% 400%;
       -webkit-background-clip: text;
@@ -323,6 +329,6 @@
     <div class="loading"><i class="fa fa-spinner"></i></div>
   </div>
 
-  <script type="module" src="./card-app.js?v=4"></script>
+  <script type="module" src="./card-app.js?v=6"></script>
 </body>
 </html>

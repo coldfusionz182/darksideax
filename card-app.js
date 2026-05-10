@@ -125,27 +125,16 @@ function renderCard(card, avatarUrl) {
   else if (layout === 'compact') layoutClass = 'layout-compact ';
 
   const visibleName = card.display_name || card.username || '';
-  console.log('Rendering card with:', {
-    display_name: card.display_name,
-    username: card.username,
-    visibleName: visibleName,
-    text_color: card.text_color,
-    username_effect: card.username_effect
-  });
   
   // Don't apply inline color for gradient effects (they use text-fill-color: transparent)
   const gradientEffects = ['text-rainbow', 'text-fire', 'text-ice', 'text-galaxy', 'text-holographic', 'rainbow-text'];
   const isGradientEffect = gradientEffects.includes(card.username_effect);
   const colorStyle = isGradientEffect ? '' : 'color: ' + card.text_color + ';';
   
-  const usernameHtml = '<h1 class="username ' + usernameEffect + ' ' + usernameFont + '" style="' + colorStyle + (card.enable_glitch ? ' animation:glitch 2s infinite;' : '') + '">' + visibleName + '</h1>';
-  console.log('Username HTML:', usernameHtml);
-  console.log('Classes applied:', usernameEffect, usernameFont);
-  
   container.innerHTML = videoHtml + hiddenAudioHtml + audioPlayerHtml + overlayColor + particlesHtml
     + '<div class="card-content ' + layoutClass + '">'
     + avatarHtml
-    + usernameHtml
+    + '<h1 class="username ' + usernameEffect + ' ' + usernameFont + '" style="' + colorStyle + (card.enable_glitch ? ' animation:glitch 2s infinite;' : '') + '">' + visibleName + '</h1>'
     + (badgeHtml ? '<div class="badge ' + badgeEffect + ' ' + badgeFont + '" style="background: ' + card.accent_color + '; color: #fff;">' + card.badge + '</div>' : '')
     + (bioHtml ? '<p class="bio ' + bioEffect + ' ' + bioFont + '" style="color: ' + card.text_color + ';" id="typewriterBio">' + card.bio + '</p>' : '')
     + '<div class="social-links">' + socialHtml + '</div>'
