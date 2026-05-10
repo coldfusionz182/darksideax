@@ -157,6 +157,19 @@
     const supabase = createClient('https://ffmkkwskvjvytdddevmm.supabase.co', SUPABASE_ANON_KEY);
 
     async function loadCard() {
+      // Simulate user interaction for autoplay
+      document.body.addEventListener('click', function establishInteraction() {
+        window.userHasInteracted = true;
+        document.body.removeEventListener('click', establishInteraction);
+      }, { once: true });
+      
+      // Auto-click after short delay to establish interaction
+      setTimeout(() => {
+        if (!window.userHasInteracted) {
+          document.body.click();
+        }
+      }, 100);
+
       const container = document.getElementById('cardContainer');
       const username = window.location.pathname.replace('/', '').toLowerCase();
 
@@ -204,7 +217,7 @@
       if (card.video_url) {
         videoHtml = `
           <div class="video-background">
-            <video autoplay muted loop playsinline>
+            <video autoplay loop playsinline id="profileVideo">
               <source src="${card.video_url}" type="video/mp4">
             </video>
           </div>
@@ -238,6 +251,25 @@
           </div>
         </div>
       `;
+
+      // Try to play with sound after user interaction
+      if (card.video_url) {
+        setTimeout(attemptUnmutedPlay, 100);
+      }
+    }
+
+    function attemptUnmutedPlay() {
+      const video = document.getElementById('profileVideo');
+      if (video && window.userHasInteracted) {
+        video.play().then(() => {
+          video.muted = false;
+        }).catch(err => {
+          console.log('Autoplay with sound blocked, will play muted');
+        });
+      } else if (video) {
+        // Try again after a delay if interaction hasn't been established yet
+        setTimeout(attemptUnmutedPlay, 200);
+      }
     }
 
     function getSocialIcon(platform) {
