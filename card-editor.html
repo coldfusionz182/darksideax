@@ -505,7 +505,7 @@
       </div>
       
       <div class="editor-section">
-        <h3><i class="fa fa-music"></i> Audio Settings</h3>
+        <h3><i class="fa fa-music"></i> Audio Manager</h3>
         <div class="form-group">
           <label>
             <input type="checkbox" id="enableAudioPlayer"> Enable Audio Player
@@ -513,14 +513,50 @@
           <small style="color: #666; font-size: 12px; display: block; margin-top: 4px;">Show audio controls on profile page</small>
         </div>
         <div class="form-group">
-          <label>Audio File URL (Optional)</label>
+          <label>Audio File URL</label>
           <input type="url" id="audioUrl" placeholder="https://files.catbox.moe/youraudio.mp3">
-          <small style="color: #666; font-size: 12px; display: block; margin-top: 4px;">Separate audio file or leave empty to use video audio</small>
+          <small style="color: #666; font-size: 12px; display: block; margin-top: 4px;">Upload MP3 to catbox.moe and paste link</small>
         </div>
         <div class="form-group">
           <label>Audio Title</label>
-          <input type="text" id="audioTitle" placeholder="Background Music" maxlength="50">
+          <input type="text" id="audioTitle" placeholder="Song Name" maxlength="50">
           <small style="color: #666; font-size: 12px; display: block; margin-top: 4px;">Display name for the audio track</small>
+        </div>
+        <div class="form-group">
+          <label>Audio Cover Image URL</label>
+          <input type="url" id="audioCover" placeholder="https://files.catbox.moe/cover.jpg">
+          <small style="color: #666; font-size: 12px; display: block; margin-top: 4px;">Album art or cover image (optional)</small>
+        </div>
+      </div>
+
+      <div class="editor-section">
+        <h3><i class="fa fa-paint-brush"></i> Profile Effects</h3>
+        <div class="form-group">
+          <label>Profile Layout</label>
+          <select id="profileLayout">
+            <option value="default">Default Centered</option>
+            <option value="left">Left Aligned</option>
+            <option value="right">Right Aligned</option>
+            <option value="compact">Compact Minimal</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>
+            <input type="checkbox" id="enableTypewriter"> Typewriter Animation
+          </label>
+          <small style="color: #666; font-size: 12px; display: block; margin-top: 4px;">Type out bio text character by character</small>
+        </div>
+        <div class="form-group">
+          <label>
+            <input type="checkbox" id="enableParticles"> Particle Effects
+          </label>
+          <small style="color: #666; font-size: 12px; display: block; margin-top: 4px;">Floating particles in background</small>
+        </div>
+        <div class="form-group">
+          <label>
+            <input type="checkbox" id="enableGlitch"> Glitch Effect
+          </label>
+          <small style="color: #666; font-size: 12px; display: block; margin-top: 4px;">Cyberpunk glitch effect on text</small>
         </div>
       </div>
       
@@ -750,6 +786,16 @@
         if (audioPlayerElement) audioPlayerElement.checked = card.enable_audio_player || false;
         safeSetValue('audioUrl', card.audio_url);
         safeSetValue('audioTitle', card.audio_title);
+        safeSetValue('audioCover', card.audio_cover);
+        
+        // Set profile effects
+        safeSetValue('profileLayout', card.profile_layout || 'default');
+        const typewriterElement = document.getElementById('enableTypewriter');
+        if (typewriterElement) typewriterElement.checked = card.enable_typewriter || false;
+        const particlesElement = document.getElementById('enableParticles');
+        if (particlesElement) particlesElement.checked = card.enable_particles || false;
+        const glitchElement = document.getElementById('enableGlitch');
+        if (glitchElement) glitchElement.checked = card.enable_glitch || false;
 
         // Load social links
         if (card.social_links && Array.isArray(card.social_links)) {
@@ -776,7 +822,8 @@
     function setupLivePreview() {
       const inputs = ['videoUrl', 'bgColor', 'textColor', 'accentColor', 'displayUsername', 'badgeText', 'bio', 
                       'usernameEffect', 'usernameFont', 'badgeEffect', 'badgeFont', 'bioEffect', 'bioFont',
-                      'enableAudioPlayer', 'audioUrl', 'audioTitle'];
+                      'enableAudioPlayer', 'audioUrl', 'audioTitle', 'audioCover',
+                      'profileLayout', 'enableTypewriter', 'enableParticles', 'enableGlitch'];
       inputs.forEach(id => {
         const element = document.getElementById(id);
         if (element) {
@@ -982,6 +1029,11 @@
           enable_audio_player: document.getElementById('enableAudioPlayer').checked,
           audio_url: document.getElementById('audioUrl').value,
           audio_title: document.getElementById('audioTitle').value,
+          audio_cover: document.getElementById('audioCover').value,
+          profile_layout: document.getElementById('profileLayout').value,
+          enable_typewriter: document.getElementById('enableTypewriter').checked,
+          enable_particles: document.getElementById('enableParticles').checked,
+          enable_glitch: document.getElementById('enableGlitch').checked,
           enabled: true,
           updated_at: new Date().toISOString()
         };

@@ -1,19 +1,14 @@
--- Add text effects and audio columns to profile_cards table
--- Run this in your Supabase SQL editor
+-- Add NEW columns only (old ones already exist)
+-- If you get "column already exists" errors, run only the lines that fail
 
--- Text effect columns
-ALTER TABLE profile_cards ADD COLUMN username_effect TEXT DEFAULT 'none';
-ALTER TABLE profile_cards ADD COLUMN username_font TEXT DEFAULT 'default';
-ALTER TABLE profile_cards ADD COLUMN badge_effect TEXT DEFAULT 'none';
-ALTER TABLE profile_cards ADD COLUMN badge_font TEXT DEFAULT 'default';
-ALTER TABLE profile_cards ADD COLUMN bio_effect TEXT DEFAULT 'none';
-ALTER TABLE profile_cards ADD COLUMN bio_font TEXT DEFAULT 'default';
+-- NEW: Audio cover image
+ALTER TABLE profile_cards ADD COLUMN IF NOT EXISTS audio_cover TEXT;
 
--- Audio settings columns
-ALTER TABLE profile_cards ADD COLUMN enable_audio_player BOOLEAN DEFAULT false;
-ALTER TABLE profile_cards ADD COLUMN audio_url TEXT;
-ALTER TABLE profile_cards ADD COLUMN audio_title TEXT DEFAULT 'Background Music';
+-- NEW: Profile effects
+ALTER TABLE profile_cards ADD COLUMN IF NOT EXISTS profile_layout TEXT DEFAULT 'default';
+ALTER TABLE profile_cards ADD COLUMN IF NOT EXISTS enable_typewriter BOOLEAN DEFAULT false;
+ALTER TABLE profile_cards ADD COLUMN IF NOT EXISTS enable_particles BOOLEAN DEFAULT false;
+ALTER TABLE profile_cards ADD COLUMN IF NOT EXISTS enable_glitch BOOLEAN DEFAULT false;
 
 -- Add indexes for better performance
-CREATE INDEX IF NOT EXISTS idx_profile_cards_username_effect ON profile_cards(username_effect);
-CREATE INDEX IF NOT EXISTS idx_profile_cards_enable_audio_player ON profile_cards(enable_audio_player);
+CREATE INDEX IF NOT EXISTS idx_profile_cards_profile_layout ON profile_cards(profile_layout);
