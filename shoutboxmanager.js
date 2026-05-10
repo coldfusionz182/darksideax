@@ -153,10 +153,12 @@ async function renderShout(row, currentUser, isOptimistic = false) {
   const topBar = document.createElement('div');
   topBar.className = 'ds-line-top';
 
-  const userLink = document.createElement('span');
+  const userLink = document.createElement('a');
   userLink.className = 'ds-shout-user ds-user-member'; // default
   userLink.textContent = row.username;
+  userLink.href = `profile.html?user=${encodeURIComponent(row.username)}`;
   userLink.style.cursor = 'contextmenu';
+  userLink.style.textDecoration = 'none';
 
   // Load Real Data for Branding + Socials
   fetchUserDataWithCache(row.username).then(res => {

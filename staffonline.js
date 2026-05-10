@@ -153,7 +153,7 @@ const activeStaff = users.filter((u) => {
 
       line.innerHTML = `
         <span class="staff-name">
-          <span class="staff-name-text ${roleClass}">${displayName}</span>
+          <a href="profile.html?user=${encodeURIComponent(displayName)}" class="staff-name-text ${roleClass}" style="text-decoration:none;">${displayName}</a>
           <div class="staff-rank" style="font-size:10px; color:#888;">${rankText}</div>
         </span>
       `;

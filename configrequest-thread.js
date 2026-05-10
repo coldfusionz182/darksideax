@@ -164,7 +164,7 @@ function renderThread(thread) {
         <div>
           <div class="cr-detail-title">${thread.title}</div>
           <div class="cr-detail-meta">
-            Requested by <strong>${thread.author}</strong>
+            Requested by <a href="profile.html?user=${encodeURIComponent(thread.author)}" style="color:inherit; text-decoration:none; font-weight:700;">${thread.author}</a>
             · ${new Date(thread.created_at).toLocaleDateString()}
             · ${new Date(thread.created_at).toLocaleTimeString()}
           </div>
@@ -192,12 +192,12 @@ function renderThread(thread) {
         </div>
         <div class="cr-info-item">
           <div class="cr-info-label">Requested by</div>
-          <div class="cr-info-value">${thread.author}</div>
+          <div class="cr-info-value"><a href="profile.html?user=${encodeURIComponent(thread.author)}" style="color:inherit; text-decoration:none;">${thread.author}</a></div>
         </div>
         ${isCompleted && thread.completed_by ? `
         <div class="cr-info-item">
           <div class="cr-info-label">Completed by</div>
-          <div class="cr-info-value">${thread.completed_by}</div>
+          <div class="cr-info-value"><a href="profile.html?user=${encodeURIComponent(thread.completed_by)}" style="color:inherit; text-decoration:none;">${thread.completed_by}</a></div>
         </div>` : ''}
       </div>`;
 

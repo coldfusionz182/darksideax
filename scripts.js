@@ -319,7 +319,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const metaDiv = document.createElement('div');
       metaDiv.className = 'thread-meta';
       const created = t.created_at || t.createdAt;
-      metaDiv.textContent = `Started by ${t.author} • ${formatDateShort(created)}`;
+      metaDiv.innerHTML = `Started by <a href="profile.html?user=${encodeURIComponent(t.author)}" style="color:inherit; text-decoration:none; font-weight:500;">${t.author}</a> • ${formatDateShort(created)}`;
       tdMain.appendChild(titleDiv);
       tdMain.appendChild(metaDiv);
 
@@ -337,7 +337,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const lastTime = t.last_post_time || t.lastPostTime || created;
       tdLast.innerHTML = `
         <div class="last-title"><a href="thread.html?id=${t.id}">${t.title}</a></div>
-        <div class="last-meta">by <a href="#">${lastUser}</a> · ${formatDateShort(lastTime)}</div>
+        <div class="last-meta">by <a href="profile.html?user=${encodeURIComponent(lastUser)}">${lastUser}</a> · ${formatDateShort(lastTime)}</div>
       `;
 
       tr.appendChild(tdIcon);
@@ -504,10 +504,10 @@ document.addEventListener('DOMContentLoaded', () => {
         window.dispatchEvent(new CustomEvent('ds-thread-loaded', { detail: { thread: t } }));
 
         threadTitleDisplay.textContent = t.title;
-        threadMetaDisplay.textContent = `[${t.tag}] Started by ${t.author} • ${formatDateShort(
+        threadMetaDisplay.innerHTML = `[${t.tag}] Started by <a href="profile.html?user=${encodeURIComponent(t.author)}" style="color:inherit; text-decoration:none; font-weight:500;">${t.author}</a> • ${formatDateShort(
           t.created_at,
         )}`;
-        threadAuthorName.textContent = t.author;
+        threadAuthorName.innerHTML = `<a href="profile.html?user=${encodeURIComponent(t.author)}" style="color:inherit; text-decoration:none;">${t.author}</a>`;
         threadCreatedAt.textContent = `Posted ${formatDateShort(t.created_at)}`;
 
         if (t.tag) {
@@ -646,7 +646,7 @@ if (!rawUser) {
 
             div.innerHTML = `
               <div class="reply-meta">
-                <strong>${r.author}</strong> • ${formatDateShort(r.created_at)}
+                <a href="profile.html?user=${encodeURIComponent(r.author)}" style="color:inherit; text-decoration:none; font-weight:700;">${r.author}</a> • ${formatDateShort(r.created_at)}
                 ${
                   canDelete
                     ? '<button class="btn btn-small btn-outline reply-delete-btn" style="float:right;"><i class="fa fa-trash"></i></button>'

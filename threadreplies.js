@@ -101,7 +101,7 @@ async function initThreadReplies() {
 
       const meta = document.createElement('div');
       meta.className = 'reply-meta';
-      meta.textContent = `${r.author} • ${formatDateShort(r.created_at)}`;
+      meta.innerHTML = `<a href="profile.html?user=${encodeURIComponent(r.author)}" style="color:inherit; text-decoration:none; font-weight:600;">${r.author}</a> • ${formatDateShort(r.created_at)}`;
 
       const body = document.createElement('div');
       body.className = 'reply-body';

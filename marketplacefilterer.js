@@ -155,7 +155,7 @@ async function loadMarketplaceThreads() {
           ${row.price ? `<span class="marketplace-price">$${row.price}</span>` : ''}
         </div>
         <div class="thread-meta">
-          by <span class="rank-member">${row.author}</span>
+          by <a href="profile.html?user=${encodeURIComponent(row.author)}" class="rank-member" style="text-decoration:none;">${row.author}</a>
           · ${new Date(row.created_at).toLocaleDateString()}
           ${row.tag ? ` · <span class="badge-pill">${row.tag}</span>` : ''}
         </div>
