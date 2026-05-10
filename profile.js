@@ -83,59 +83,33 @@ async function loadProfile() {
   const usernameEl = document.getElementById('profile-username');
   if (!usernameEl) return;
 
-  // 1. Resolve Identity (Own or Other Profile via ?user=USERNAME)
-  const urlUser = getParam('user');
-  console.log('Profile query param user=', urlUser, 'location=', window.location.search);
+  // 1. Resolve Identity (Strictly Own Profile)
   const { data: { user: authUser } } = await supabase.auth.getUser();
+  if (!authUser) {
+    usernameEl.textContent = 'Please Login';
+    return;
+  }
 
   let targetUser = null;
-  let isOwner = false;
-
   try {
-    if (urlUser) {
-      // Viewing another user's profile by username
-      // Username is in users table
-      const { data: userData, error: uErr } = await supabase
-        .from('users')
-        .select('id, email, username, role, avatar_url, userrank, created_at, discord, telegram')
-        .ilike('username', urlUser)
-        .maybeSingle();
+    const { data: userData, error: uErr } = await supabase
+      .from('users')
+      .select('id, email, username, role, avatar_url, userrank, created_at, discord, telegram')
+      .eq('id', authUser.id)
+      .maybeSingle();
 
-      if (uErr) console.warn('Supabase users table error:', uErr);
-      if (!userData) {
-        usernameEl.textContent = 'User not found';
-        return;
-      }
-      targetUser = userData;
-      isOwner = authUser ? authUser.id === targetUser.id : false;
-    } else {
-      // Viewing own profile
-      if (!authUser) {
-        usernameEl.textContent = 'Please Login';
-        return;
-      }
-      const { data: userData, error: uErr } = await supabase
-        .from('users')
-        .select('id, email, username, role, avatar_url, userrank, created_at, discord, telegram')
-        .eq('id', authUser.id)
-        .maybeSingle();
+    if (uErr) console.warn('Supabase users table error:', uErr);
+    if (!userData) throw new Error('Data not found');
 
-      if (uErr) console.warn('Supabase users table error:', uErr);
-      if (!userData) throw new Error('Data not found');
-
-      targetUser = userData;
-      isOwner = true;
-    }
+    targetUser = userData;
   } catch (err) {
     console.error('Profile Load Error:', err);
     usernameEl.textContent = 'Profile Error';
     return;
   }
 
+  const isOwner = true;
   const isStaff = targetUser.role === 'admin' || targetUser.role === 'owner';
-
-  // Update page title
-  document.title = `${targetUser.username}'s Profile • Darkside`;
 
   // 2. Populate UI
   usernameEl.textContent = targetUser.username;
@@ -167,9 +141,6 @@ async function loadProfile() {
     document.getElementById('profile-email').textContent = targetUser.email;
     document.getElementById('profile-uid-row').style.display = 'flex';
     if (document.getElementById('avatar-url-input')) document.getElementById('avatar-url-input').value = targetUser.avatar_url || '';
-  } else {
-    const settingsSection = document.getElementById('profile-settings-section');
-    if (settingsSection) settingsSection.style.display = 'none';
   }
 
   if (isStaff && !isOwner) {

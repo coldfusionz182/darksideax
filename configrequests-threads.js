@@ -237,7 +237,7 @@ function renderThreads(list, sortMode) {
         <a href="configrequest-thread.html?id=${row.id}">${row.title}</a>
       </div>
       <div class="thread-meta">
-        by <a href="profile.html?user=${encodeURIComponent(row.author)}" class="rank-member" style="text-decoration:none;">${row.author}</a>
+        by <span class="rank-member">${row.author}</span>
         · ${new Date(row.created_at).toLocaleDateString()}
         ${row.tag ? ` · <span class="badge-pill">${row.tag}</span>` : ''}
       </div>

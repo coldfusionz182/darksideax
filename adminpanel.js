@@ -239,7 +239,7 @@ function renderThreadsTable(currentUser) {
     tdTitle.innerHTML = `<a href="thread.html?id=${t.id}" target="_blank">${t.title}</a>`;
 
     const tdAuthor = document.createElement('td');
-    tdAuthor.innerHTML = `<a href="profile.html?user=${encodeURIComponent(t.author || 'unknown')}" style="color:inherit; text-decoration:none;">${t.author || 'unknown'}</a>`;
+    tdAuthor.textContent = t.author || 'unknown';
 
     const tdTag = document.createElement('td');
     tdTag.textContent = t.tag || '-';
@@ -720,7 +720,7 @@ async function loadPendingThreads() {
     tbody.innerHTML = threads.map(t => `
       <tr>
         <td>${t.title}</td>
-        <td><a href="profile.html?user=${encodeURIComponent(t.author)}" style="color:inherit; text-decoration:none;">${t.author}</a></td>
+        <td>${t.author}</td>
         <td>${t.section}</td>
         <td>${new Date(t.created_at).toLocaleDateString()}</td>
         <td style="text-align:right;">
