@@ -25,6 +25,10 @@
       position: relative;
       overflow: hidden;
     }
+    .card-container .video-background,
+    .card-container .video-background iframe {
+      pointer-events: none !important;
+    }
     .video-background {
       position: absolute;
       top: 0;
@@ -34,8 +38,8 @@
       z-index: 0;
     }
     .video-background iframe {
-      width: 100%;
-      height: 100%;
+      width: 140%;
+      height: 140%;
       object-fit: cover;
       position: absolute;
       top: 50%;
@@ -43,6 +47,7 @@
       transform: translate(-50%, -50%);
       pointer-events: none;
       border: none;
+      user-select: none;
     }
     .overlay {
       position: absolute;
@@ -259,7 +264,7 @@
         const id = ytMatch[1];
         return `
           <div class="video-background">
-            <iframe src="https://www.youtube.com/embed/${id}?autoplay=1&mute=1&loop=1&playlist=${id}&controls=0&showinfo=0&rel=0&modestbranding=1&iv_load_policy=3&fs=0&disablekb=1" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+            <iframe src="https://www.youtube.com/embed/${id}?autoplay=1&mute=1&loop=1&playlist=${id}&controls=0&showinfo=0&rel=0&modestbranding=1&iv_load_policy=3&fs=0&disablekb=1&autohide=1&playsinline=1&cc_load_policy=0&enablejsapi=0" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen title=" "></iframe>
           </div>
         `;
       }
