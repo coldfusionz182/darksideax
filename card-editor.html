@@ -723,13 +723,33 @@
 
       if (card) {
         existingCard = card;
-        document.getElementById('videoUrl').value = card.video_url || '';
-        document.getElementById('bgColor').value = card.background_color || '#0a0a0a';
-        document.getElementById('textColor').value = card.text_color || '#ffffff';
-        document.getElementById('accentColor').value = card.accent_color || '#7c3aed';
-        document.getElementById('displayUsername').value = card.username || '';
-        document.getElementById('badgeText').value = card.badge || '';
-        document.getElementById('bio').value = card.bio || '';
+        // Helper function to safely set element values
+        const safeSetValue = (id, value) => {
+          const element = document.getElementById(id);
+          if (element) element.value = value || '';
+        };
+        
+        safeSetValue('videoUrl', card.video_url);
+        safeSetValue('bgColor', card.background_color);
+        safeSetValue('textColor', card.text_color);
+        safeSetValue('accentColor', card.accent_color);
+        safeSetValue('displayUsername', card.username);
+        safeSetValue('badgeText', card.badge);
+        safeSetValue('bio', card.bio);
+        
+        // Set text effects and fonts
+        safeSetValue('usernameEffect', card.username_effect);
+        safeSetValue('usernameFont', card.username_font);
+        safeSetValue('badgeEffect', card.badge_effect);
+        safeSetValue('badgeFont', card.badge_font);
+        safeSetValue('bioEffect', card.bio_effect);
+        safeSetValue('bioFont', card.bio_font);
+        
+        // Set audio settings
+        const audioPlayerElement = document.getElementById('enableAudioPlayer');
+        if (audioPlayerElement) audioPlayerElement.checked = card.enable_audio_player || false;
+        safeSetValue('audioUrl', card.audio_url);
+        safeSetValue('audioTitle', card.audio_title);
 
         // Load social links
         if (card.social_links && Array.isArray(card.social_links)) {
@@ -745,7 +765,8 @@
           .eq('id', authUser.id)
           .maybeSingle();
         if (userData?.username) {
-          document.getElementById('displayUsername').value = userData.username;
+          const usernameElement = document.getElementById('displayUsername');
+          if (usernameElement) usernameElement.value = userData.username;
         }
       }
 
@@ -766,28 +787,30 @@
     }
 
     function updatePreview() {
-      const username = document.getElementById('username').value || 'Your Username';
-      const badge = document.getElementById('badge').value;
-      const bio = document.getElementById('bio').value;
-      const videoUrl = document.getElementById('videoUrl').value;
-      const bgColor = document.getElementById('bgColor').value;
-      const textColor = document.getElementById('textColor').value;
-      const accentColor = document.getElementById('accentColor').value;
+      const username = document.getElementById('username')?.value || 'Your Username';
+      const badge = document.getElementById('badge')?.value || '';
+      const bio = document.getElementById('bio')?.value || '';
+      const videoUrl = document.getElementById('videoUrl')?.value || '';
+      const bgColor = document.getElementById('bgColor')?.value || '#0a0a0a';
+      const textColor = document.getElementById('textColor')?.value || '#ffffff';
+      const accentColor = document.getElementById('accentColor')?.value || '#7c3aed';
       
-      // Get text effects and fonts
-      const usernameEffect = document.getElementById('usernameEffect').value;
-      const usernameFont = document.getElementById('usernameFont').value;
-      const badgeEffect = document.getElementById('badgeEffect').value;
-      const badgeFont = document.getElementById('badgeFont').value;
-      const bioEffect = document.getElementById('bioEffect').value;
-      const bioFont = document.getElementById('bioFont').value;
+      // Get text effects and fonts with null checks
+      const usernameEffect = document.getElementById('usernameEffect')?.value || 'none';
+      const usernameFont = document.getElementById('usernameFont')?.value || 'default';
+      const badgeEffect = document.getElementById('badgeEffect')?.value || 'none';
+      const badgeFont = document.getElementById('badgeFont')?.value || 'default';
+      const bioEffect = document.getElementById('bioEffect')?.value || 'none';
+      const bioFont = document.getElementById('bioFont')?.value || 'default';
       
-      // Get audio settings
-      const enableAudioPlayer = document.getElementById('enableAudioPlayer').checked;
-      const audioUrl = document.getElementById('audioUrl').value;
-      const audioTitle = document.getElementById('audioTitle').value || 'Background Music';
+      // Get audio settings with null checks
+      const enableAudioPlayer = document.getElementById('enableAudioPlayer')?.checked || false;
+      const audioUrl = document.getElementById('audioUrl')?.value || '';
+      const audioTitle = document.getElementById('audioTitle')?.value || 'Background Music';
       const previewFrame = document.getElementById('previewFrame');
       const previewContent = document.getElementById('previewContent');
+
+      if (!previewFrame) return; // Exit if preview frame doesn't exist
 
       previewFrame.style.backgroundColor = bgColor;
 
