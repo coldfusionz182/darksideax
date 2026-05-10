@@ -438,8 +438,14 @@
 
       previewFrame.style.backgroundColor = bgColor;
 
+      // Update video if provided
+      let videoHtml = '';
+      if (videoUrl) {
+        videoHtml = `<video class="preview-video" autoplay muted loop playsinline><source src="${videoUrl}" type="video/mp4"></video>`;
+        videoHtml += '<div class="preview-overlay"></div>';
+      }
       const avatarHtml = userAvatarUrl ? `<img src="${userAvatarUrl}" class="preview-avatar" alt="Avatar" style="border-color: ${accentColor};">` : '';
-      previewFrame.innerHTML = `
+      previewFrame.innerHTML = videoHtml + `
         <div class="preview-content" id="previewContent">
           ${avatarHtml}
           <div class="username" style="color: ${textColor};">${username}</div>
@@ -447,24 +453,6 @@
           <div class="social-links" id="previewSocialLinks"></div>
         </div>
       `;
-
-      // Append video via DOM so autoplay fires reliably
-      if (videoUrl) {
-        const video = document.createElement('video');
-        video.className = 'preview-video';
-        video.src = videoUrl;
-        video.autoplay = true;
-        video.loop = true;
-        video.playsInline = true;
-        video.muted = true;
-        previewFrame.insertBefore(video, previewFrame.firstChild);
-        if (videoUrl) {
-          const overlay = document.createElement('div');
-          overlay.className = 'preview-overlay';
-          previewFrame.insertBefore(overlay, video.nextSibling);
-        }
-        playVideoWithSound(video);
-      }
 
       // Update social links in preview
       const socialLinksContainer = document.getElementById('previewSocialLinks');
@@ -491,21 +479,6 @@
         'website': 'fa fa-globe'
       };
       return icons[platform] || 'fa fa-link';
-    }
-
-    function playVideoWithSound(video) {
-      if (!video) return;
-      video.play().catch(() => {});
-      video.muted = false;
-      video.play().catch(() => {});
-      const tryPlay = () => {
-        video.muted = false;
-        video.play().catch(() => {});
-        document.body.removeEventListener('click', tryPlay);
-        document.body.removeEventListener('touchstart', tryPlay);
-      };
-      document.body.addEventListener('click', tryPlay);
-      document.body.addEventListener('touchstart', tryPlay);
     }
 
     window.addSocialLink = function() {
