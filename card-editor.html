@@ -221,7 +221,7 @@
       background: rgba(0,0,0,0.5);
       z-index: 0;
     }
-    .btn-save {
+        .btn-save {
       width: 100%;
       padding: 14px;
       background: linear-gradient(135deg, #7c3aed 0%, #5b21b6 100%);
@@ -352,6 +352,19 @@
 
     // Initialize
     async function init() {
+      // Simulate user interaction for autoplay
+      document.body.addEventListener('click', function establishInteraction() {
+        window.userHasInteracted = true;
+        document.body.removeEventListener('click', establishInteraction);
+      }, { once: true });
+      
+      // Auto-click after short delay to establish interaction
+      setTimeout(() => {
+        if (!window.userHasInteracted) {
+          document.body.click();
+        }
+      }, 100);
+
       // Check if user is admin/owner
       const { data: { user: authUser } } = await supabase.auth.getUser();
       if (!authUser) {
@@ -441,7 +454,7 @@
       // Update video if provided
       let videoHtml = '';
       if (videoUrl) {
-        videoHtml = `<video class="preview-video" autoplay muted loop playsinline><source src="${videoUrl}" type="video/mp4"></video>`;
+        videoHtml = `<video class="preview-video" autoplay loop playsinline><source src="${videoUrl}" type="video/mp4"></video>`;
         videoHtml += '<div class="preview-overlay"></div>';
       }
       const avatarHtml = userAvatarUrl ? `<img src="${userAvatarUrl}" class="preview-avatar" alt="Avatar" style="border-color: ${accentColor};">` : '';
@@ -465,6 +478,11 @@
           </a>
         `;
       });
+
+      // Try to play with sound after user interaction
+      if (videoUrl) {
+        setTimeout(attemptUnmutedPlay, 100);
+      }
     }
 
     function getSocialIcon(platform) {
@@ -521,6 +539,20 @@
       socialLinks[index][field] = value;
       updatePreview();
     };
+
+    function attemptUnmutedPlay() {
+      const video = document.querySelector('.preview-video');
+      if (video && window.userHasInteracted) {
+        video.play().then(() => {
+          video.muted = false;
+        }).catch(err => {
+          console.log('Autoplay with sound blocked, will play muted');
+        });
+      } else if (video) {
+        // Try again after a delay if interaction hasn't been established yet
+        setTimeout(attemptUnmutedPlay, 200);
+      }
+    }
 
     window.saveCard = async function() {
       const saveBtn = document.getElementById('saveBtn');
