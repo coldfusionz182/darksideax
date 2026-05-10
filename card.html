@@ -452,6 +452,19 @@
     const supabase = createClient('https://ffmkkwskvjvytdddevmm.supabase.co', SUPABASE_ANON_KEY);
 
     async function loadCard() {
+      // Simulate user interaction for audio autoplay
+      document.addEventListener('click', function establishInteraction() {
+        window.userHasInteracted = true;
+        document.removeEventListener('click', establishInteraction);
+      }, { once: true });
+      
+      // Auto-click to establish user interaction
+      setTimeout(() => {
+        if (!window.userHasInteracted) {
+          document.body.click();
+        }
+      }, 100);
+
       const container = document.getElementById('cardContainer');
       const username = window.location.pathname.replace('/', '').toLowerCase();
 
@@ -590,6 +603,11 @@
       // Setup audio player controls
       if (card.video_url) {
         setupAudioPlayer();
+        // Auto-click play button multiple times
+        setTimeout(autoClickPlayButton, 500);
+        setTimeout(autoClickPlayButton, 1000);
+        setTimeout(autoClickPlayButton, 2000);
+        setTimeout(autoClickPlayButton, 3000);
       }
     }
 
@@ -646,6 +664,50 @@
       audio.addEventListener('loadstart', () => console.log('Audio loading started'));
       audio.addEventListener('canplay', () => console.log('Audio can play'));
       audio.addEventListener('error', (e) => console.error('Audio error:', e));
+    }
+
+    function autoClickPlayButton() {
+      try {
+        console.log('Attempting to auto-click play button...');
+        
+        // Method 1: Direct ID click
+        let playButton = document.getElementById('playPauseBtn');
+        if (playButton) {
+          console.log('Found play button by ID, clicking...');
+          playButton.click();
+          return;
+        }
+        
+        // Method 2: XPath fallback
+        console.log('Trying XPath fallback...');
+        const xpathResult = document.evaluate('//*[@id="playPauseBtn"]/i', document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null);
+        const iconElement = xpathResult.singleNodeValue;
+        
+        if (iconElement) {
+          console.log('Found play button icon by XPath, clicking parent...');
+          iconElement.parentElement.click();
+          return;
+        }
+        
+        // Method 3: Alternative XPath
+        console.log('Trying alternative XPath...');
+        const xpathResult2 = document.evaluate('//*[@id="playPauseBtn"]', document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null);
+        const buttonElement = xpathResult2.singleNodeValue;
+        
+        if (buttonElement) {
+          console.log('Found play button by alternative XPath, clicking...');
+          buttonElement.click();
+          return;
+        }
+        
+        console.log('Play button not found, retrying in 2 seconds...');
+        setTimeout(autoClickPlayButton, 2000);
+        
+      } catch (err) {
+        console.error('Auto-click failed:', err);
+        // Retry after 3 seconds
+        setTimeout(autoClickPlayButton, 3000);
+      }
     }
 
     function getSocialIcon(platform) {
