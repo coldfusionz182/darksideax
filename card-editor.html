@@ -5,6 +5,7 @@
   <title>Edit Profile Card • Darkside</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@900&family=Playfair+Display:ital,wght@0,300;1,400&family=Rajdhani:wght@700&family=Press+Start+2P&family=Pacifico&family=Cinzel:wght@700&display=swap" rel="stylesheet">
   <link href="styles.css" rel="stylesheet">
   <link href="userroles.css" rel="stylesheet">
   <style>
@@ -261,6 +262,227 @@
     .back-link:hover {
       text-decoration: underline;
     }
+    
+    /* Amazing Text Effects - Same as card.html */
+    .text-rainbow {
+      background: linear-gradient(45deg, #ff0000, #ff7f00, #ffff00, #00ff00, #0000ff, #4b0082, #9400d3, #ff0000);
+      background-size: 400% 400%;
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      animation: rainbow 3s ease infinite;
+    }
+    
+    @keyframes rainbow {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+    
+    .text-sparkle {
+      position: relative;
+      color: #fff;
+      animation: sparkle 2s linear infinite;
+    }
+    
+    .text-sparkle::before {
+      content: attr(data-text);
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(45deg, transparent 30%, rgba(255,255,255,0.5) 50%, transparent 70%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      animation: shimmer 3s infinite;
+    }
+    
+    @keyframes sparkle {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.8; }
+    }
+    
+    @keyframes shimmer {
+      0% { background-position: -200% center; }
+      100% { background-position: 200% center; }
+    }
+    
+    .text-glow {
+      color: #fff;
+      text-shadow: 0 0 10px currentColor, 0 0 20px currentColor, 0 0 30px currentColor, 0 0 40px currentColor;
+      animation: glow-pulse 2s ease-in-out infinite alternate;
+    }
+    
+    @keyframes glow-pulse {
+      from { text-shadow: 0 0 10px currentColor, 0 0 20px currentColor, 0 0 30px currentColor; }
+      to { text-shadow: 0 0 20px currentColor, 0 0 30px currentColor, 0 0 40px currentColor, 0 0 50px currentColor; }
+    }
+    
+    .text-neon {
+      color: #fff;
+      text-shadow: 
+        0 0 7px #fff,
+        0 0 10px #fff,
+        0 0 21px #fff,
+        0 0 42px #0fa,
+        0 0 82px #0fa,
+        0 0 92px #0fa,
+        0 0 102px #0fa,
+        0 0 151px #0fa;
+      animation: neon-flicker 1.5s infinite alternate;
+    }
+    
+    @keyframes neon-flicker {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.8; }
+    }
+    
+    .text-fire {
+      background: linear-gradient(to top, #ff0000, #ff7f00, #ffff00, #ffffff);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      animation: fire-dance 1.5s ease-in-out infinite alternate;
+    }
+    
+    @keyframes fire-dance {
+      0% { transform: scale(1) translateY(0); }
+      100% { transform: scale(1.05) translateY(-2px); }
+    }
+    
+    .text-ice {
+      background: linear-gradient(45deg, #00d4ff, #0099cc, #006699, #00d4ff);
+      background-size: 200% 200%;
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      animation: ice-shimmer 3s ease-in-out infinite;
+    }
+    
+    @keyframes ice-shimmer {
+      0%, 100% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+    }
+    
+    .text-galaxy {
+      background: linear-gradient(45deg, #667eea 0%, #764ba2 25%, #f093fb 50%, #c471f5 75%, #667eea 100%);
+      background-size: 400% 400%;
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      animation: galaxy-rotate 8s linear infinite;
+    }
+    
+    @keyframes galaxy-rotate {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+    
+    .text-matrix {
+      color: #0f0;
+      text-shadow: 0 0 5px #0f0, 0 0 10px #0f0;
+      font-family: 'Courier New', monospace;
+      animation: matrix-rain 2s linear infinite;
+    }
+    
+    @keyframes matrix-rain {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.7; text-shadow: 0 0 5px #0f0, 0 0 15px #0f0, 0 0 25px #0f0; }
+    }
+    
+    .text-holographic {
+      background: linear-gradient(45deg, #ff0080, #ff8c00, #40e0d0, #ff0080);
+      background-size: 300% 300%;
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      animation: holographic-shift 4s ease-in-out infinite;
+    }
+    
+    @keyframes holographic-shift {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+    
+    /* Font Styles */
+    .font-cyberpunk {
+      font-family: 'Orbitron', 'Courier New', monospace;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+    }
+    
+    .font-elegant {
+      font-family: 'Playfair Display', 'Georgia', serif;
+      font-weight: 300;
+      font-style: italic;
+    }
+    
+    .font-futuristic {
+      font-family: 'Rajdhani', 'Arial', sans-serif;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 3px;
+    }
+    
+    .font-retro {
+      font-family: 'Press Start 2P', 'Courier New', monospace;
+      font-weight: 400;
+    }
+    
+    .font-brush {
+      font-family: 'Pacifico', 'cursive', sans-serif;
+      font-weight: 400;
+    }
+    
+    .font-gothic {
+      font-family: 'Cinzel', 'Georgia', serif;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+    
+    .text-effects-section {
+      margin-bottom: 24px;
+    }
+    
+    .text-effects-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+    
+    .effect-select-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    
+    .effect-select-group label {
+      color: #aaa;
+      font-size: 13px;
+      margin-bottom: 4px;
+    }
+    
+    .effect-select-group select {
+      width: 100%;
+      padding: 8px 12px;
+      background: #1a1a1a;
+      border: 1px solid #2a2a2a;
+      border-radius: 6px;
+      color: #fff;
+      font-size: 14px;
+      font-family: inherit;
+    }
+    
+    .effect-select-group select:focus {
+      outline: none;
+      border-color: #7c3aed;
+    }
   </style>
 </head>
 <body>
@@ -276,9 +498,101 @@
       <div class="editor-section">
         <h3><i class="fa fa-video"></i> Video Background</h3>
         <div class="form-group">
-          <label>Video Background URL</label>
-          <input type="text" id="videoUrl" placeholder="Paste your catbox.moe video link" />
+          <label>Catbox.moe Video URL</label>
+          <input type="url" id="videoUrl" placeholder="https://files.catbox.moe/yourvideo.mp4">
           <small style="color: #666; font-size: 12px; display: block; margin-top: 4px;">Upload to catbox.moe and paste the direct link here</small>
+        </div>
+      </div>
+      
+      <div class="text-effects-section">
+        <h3><i class="fa fa-magic"></i> Text Effects & Fonts</h3>
+        <div class="text-effects-grid">
+          <div class="effect-select-group">
+            <label>Username Effect</label>
+            <select id="usernameEffect">
+              <option value="none">None</option>
+              <option value="text-rainbow">🌈 Rainbow</option>
+              <option value="text-sparkle">✨ Sparkle</option>
+              <option value="text-glow">💫 Glow</option>
+              <option value="text-neon">💡 Neon</option>
+              <option value="text-fire">🔥 Fire</option>
+              <option value="text-ice">❄️ Ice</option>
+              <option value="text-galaxy">🌌 Galaxy</option>
+              <option value="text-matrix">💻 Matrix</option>
+              <option value="text-holographic">🎆 Holographic</option>
+            </select>
+          </div>
+          
+          <div class="effect-select-group">
+            <label>Username Font</label>
+            <select id="usernameFont">
+              <option value="default">Default</option>
+              <option value="font-cyberpunk">🤖 Cyberpunk</option>
+              <option value="font-elegant">🎩 Elegant</option>
+              <option value="font-futuristic">🚀 Futuristic</option>
+              <option value="font-retro">🎮 Retro</option>
+              <option value="font-brush">🎨 Brush</option>
+              <option value="font-gothic">🏰 Gothic</option>
+            </select>
+          </div>
+          
+          <div class="effect-select-group">
+            <label>Badge Effect</label>
+            <select id="badgeEffect">
+              <option value="none">None</option>
+              <option value="text-rainbow">🌈 Rainbow</option>
+              <option value="text-sparkle">✨ Sparkle</option>
+              <option value="text-glow">💫 Glow</option>
+              <option value="text-neon">💡 Neon</option>
+              <option value="text-fire">🔥 Fire</option>
+              <option value="text-ice">❄️ Ice</option>
+              <option value="text-galaxy">🌌 Galaxy</option>
+              <option value="text-matrix">💻 Matrix</option>
+              <option value="text-holographic">🎆 Holographic</option>
+            </select>
+          </div>
+          
+          <div class="effect-select-group">
+            <label>Badge Font</label>
+            <select id="badgeFont">
+              <option value="default">Default</option>
+              <option value="font-cyberpunk">🤖 Cyberpunk</option>
+              <option value="font-elegant">🎩 Elegant</option>
+              <option value="font-futuristic">🚀 Futuristic</option>
+              <option value="font-retro">🎮 Retro</option>
+              <option value="font-brush">🎨 Brush</option>
+              <option value="font-gothic">🏰 Gothic</option>
+            </select>
+          </div>
+          
+          <div class="effect-select-group">
+            <label>Bio Effect</label>
+            <select id="bioEffect">
+              <option value="none">None</option>
+              <option value="text-rainbow">🌈 Rainbow</option>
+              <option value="text-sparkle">✨ Sparkle</option>
+              <option value="text-glow">💫 Glow</option>
+              <option value="text-neon">💡 Neon</option>
+              <option value="text-fire">🔥 Fire</option>
+              <option value="text-ice">❄️ Ice</option>
+              <option value="text-galaxy">🌌 Galaxy</option>
+              <option value="text-matrix">💻 Matrix</option>
+              <option value="text-holographic">🎆 Holographic</option>
+            </select>
+          </div>
+          
+          <div class="effect-select-group">
+            <label>Bio Font</label>
+            <select id="bioFont">
+              <option value="default">Default</option>
+              <option value="font-cyberpunk">🤖 Cyberpunk</option>
+              <option value="font-elegant">🎩 Elegant</option>
+              <option value="font-futuristic">🚀 Futuristic</option>
+              <option value="font-retro">🎮 Retro</option>
+              <option value="font-brush">🎨 Brush</option>
+              <option value="font-gothic">🏰 Gothic</option>
+            </select>
+          </div>
         </div>
       </div>
 
@@ -419,20 +733,29 @@
     }
 
     function setupLivePreview() {
-      const inputs = ['videoUrl', 'bgColor', 'textColor', 'accentColor', 'displayUsername', 'badgeText', 'bio'];
+      const inputs = ['videoUrl', 'bgColor', 'textColor', 'accentColor', 'displayUsername', 'badgeText', 'bio', 
+                      'usernameEffect', 'usernameFont', 'badgeEffect', 'badgeFont', 'bioEffect', 'bioFont'];
       inputs.forEach(id => {
         document.getElementById(id).addEventListener('input', updatePreview);
       });
     }
 
     function updatePreview() {
+      const username = document.getElementById('username').value || 'Your Username';
+      const badge = document.getElementById('badge').value;
+      const bio = document.getElementById('bio').value;
+      const videoUrl = document.getElementById('videoUrl').value;
       const bgColor = document.getElementById('bgColor').value;
       const textColor = document.getElementById('textColor').value;
       const accentColor = document.getElementById('accentColor').value;
-      const username = document.getElementById('displayUsername').value || 'Username';
-      const badge = document.getElementById('badgeText').value || '';
-      const videoUrl = document.getElementById('videoUrl').value;
-
+      
+      // Get text effects and fonts
+      const usernameEffect = document.getElementById('usernameEffect').value;
+      const usernameFont = document.getElementById('usernameFont').value;
+      const badgeEffect = document.getElementById('badgeEffect').value;
+      const badgeFont = document.getElementById('badgeFont').value;
+      const bioEffect = document.getElementById('bioEffect').value;
+      const bioFont = document.getElementById('bioFont').value;
       const previewFrame = document.getElementById('previewFrame');
       const previewContent = document.getElementById('previewContent');
 
@@ -448,8 +771,9 @@
       previewFrame.innerHTML = videoHtml + `
         <div class="preview-content" id="previewContent">
           ${avatarHtml}
-          <div class="username" style="color: ${textColor};">${username}</div>
-          ${badge ? `<div class="badge" style="background: ${accentColor}; color: #fff;">${badge}</div>` : ''}
+          <div class="username ${usernameEffect} ${usernameFont}" style="color: ${textColor};">${username}</div>
+          ${badge ? `<div class="badge ${badgeEffect} ${badgeFont}" style="background: ${accentColor}; color: #fff;">${badge}</div>` : ''}
+          ${bio ? `<p class="bio ${bioEffect} ${bioFont}" style="color: ${textColor};">${bio}</p>` : ''}
           <div class="social-links" id="previewSocialLinks"></div>
         </div>
       `;
@@ -582,6 +906,12 @@
           badge: document.getElementById('badgeText').value,
           bio: document.getElementById('bio').value,
           social_links: socialLinks,
+          username_effect: document.getElementById('usernameEffect').value,
+          username_font: document.getElementById('usernameFont').value,
+          badge_effect: document.getElementById('badgeEffect').value,
+          badge_font: document.getElementById('badgeFont').value,
+          bio_effect: document.getElementById('bioEffect').value,
+          bio_font: document.getElementById('bioFont').value,
           enabled: true,
           updated_at: new Date().toISOString()
         };

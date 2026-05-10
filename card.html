@@ -5,6 +5,7 @@
   <title>Profile Card • Darkside</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@900&family=Playfair+Display:ital,wght@0,300;1,400&family=Rajdhani:wght@700&family=Press+Start+2P&family=Pacifico&family=Cinzel:wght@700&display=swap" rel="stylesheet">
   <style>
     * {
       margin: 0;
@@ -141,6 +142,188 @@
       margin-bottom: 16px;
       box-shadow: 0 4px 20px rgba(0,0,0,0.3);
     }
+    
+    /* Amazing Text Effects */
+    .text-rainbow {
+      background: linear-gradient(45deg, #ff0000, #ff7f00, #ffff00, #00ff00, #0000ff, #4b0082, #9400d3, #ff0000);
+      background-size: 400% 400%;
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      animation: rainbow 3s ease infinite;
+    }
+    
+    @keyframes rainbow {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+    
+    .text-sparkle {
+      position: relative;
+      color: #fff;
+      animation: sparkle 2s linear infinite;
+    }
+    
+    .text-sparkle::before {
+      content: attr(data-text);
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(45deg, transparent 30%, rgba(255,255,255,0.5) 50%, transparent 70%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      animation: shimmer 3s infinite;
+    }
+    
+    @keyframes sparkle {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.8; }
+    }
+    
+    @keyframes shimmer {
+      0% { background-position: -200% center; }
+      100% { background-position: 200% center; }
+    }
+    
+    .text-glow {
+      color: #fff;
+      text-shadow: 0 0 10px currentColor, 0 0 20px currentColor, 0 0 30px currentColor, 0 0 40px currentColor;
+      animation: glow-pulse 2s ease-in-out infinite alternate;
+    }
+    
+    @keyframes glow-pulse {
+      from { text-shadow: 0 0 10px currentColor, 0 0 20px currentColor, 0 0 30px currentColor; }
+      to { text-shadow: 0 0 20px currentColor, 0 0 30px currentColor, 0 0 40px currentColor, 0 0 50px currentColor; }
+    }
+    
+    .text-neon {
+      color: #fff;
+      text-shadow: 
+        0 0 7px #fff,
+        0 0 10px #fff,
+        0 0 21px #fff,
+        0 0 42px #0fa,
+        0 0 82px #0fa,
+        0 0 92px #0fa,
+        0 0 102px #0fa,
+        0 0 151px #0fa;
+      animation: neon-flicker 1.5s infinite alternate;
+    }
+    
+    @keyframes neon-flicker {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.8; }
+    }
+    
+    .text-fire {
+      background: linear-gradient(to top, #ff0000, #ff7f00, #ffff00, #ffffff);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      animation: fire-dance 1.5s ease-in-out infinite alternate;
+    }
+    
+    @keyframes fire-dance {
+      0% { transform: scale(1) translateY(0); }
+      100% { transform: scale(1.05) translateY(-2px); }
+    }
+    
+    .text-ice {
+      background: linear-gradient(45deg, #00d4ff, #0099cc, #006699, #00d4ff);
+      background-size: 200% 200%;
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      animation: ice-shimmer 3s ease-in-out infinite;
+    }
+    
+    @keyframes ice-shimmer {
+      0%, 100% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+    }
+    
+    .text-galaxy {
+      background: linear-gradient(45deg, #667eea 0%, #764ba2 25%, #f093fb 50%, #c471f5 75%, #667eea 100%);
+      background-size: 400% 400%;
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      animation: galaxy-rotate 8s linear infinite;
+    }
+    
+    @keyframes galaxy-rotate {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+    
+    .text-matrix {
+      color: #0f0;
+      text-shadow: 0 0 5px #0f0, 0 0 10px #0f0;
+      font-family: 'Courier New', monospace;
+      animation: matrix-rain 2s linear infinite;
+    }
+    
+    @keyframes matrix-rain {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.7; text-shadow: 0 0 5px #0f0, 0 0 15px #0f0, 0 0 25px #0f0; }
+    }
+    
+    .text-holographic {
+      background: linear-gradient(45deg, #ff0080, #ff8c00, #40e0d0, #ff0080);
+      background-size: 300% 300%;
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      animation: holographic-shift 4s ease-in-out infinite;
+    }
+    
+    @keyframes holographic-shift {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+    
+    /* Font Styles */
+    .font-cyberpunk {
+      font-family: 'Orbitron', 'Courier New', monospace;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+    }
+    
+    .font-elegant {
+      font-family: 'Playfair Display', 'Georgia', serif;
+      font-weight: 300;
+      font-style: italic;
+    }
+    
+    .font-futuristic {
+      font-family: 'Rajdhani', 'Arial', sans-serif;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 3px;
+    }
+    
+    .font-retro {
+      font-family: 'Press Start 2P', 'Courier New', monospace;
+      font-weight: 400;
+    }
+    
+    .font-brush {
+      font-family: 'Pacifico', 'cursive', sans-serif;
+      font-weight: 400;
+    }
+    
+    .font-gothic {
+      font-family: 'Cinzel', 'Georgia', serif;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
   </style>
 </head>
 <body>
@@ -157,6 +340,16 @@
     const supabase = createClient('https://ffmkkwskvjvytdddevmm.supabase.co', SUPABASE_ANON_KEY);
 
     async function loadCard() {
+      // Set up user interaction listener for audio
+      document.addEventListener('click', function enableAudio() {
+        const audio = document.getElementById('bgAudio');
+        if (audio && audio.paused) {
+          audio.play().then(() => {
+            console.log('Audio started by user interaction');
+          }).catch(err => console.log('Audio still failed:', err));
+        }
+      }, { once: true });
+
       const container = document.getElementById('cardContainer');
       const username = window.location.pathname.replace('/', '').toLowerCase();
 
@@ -179,7 +372,7 @@
           return;
         }
 
-        // Fetch user's avatar from users table
+        // Fetch user's avatar from users table (no auth required)
         let avatarUrl = null;
         if (card.user_id) {
           const { data: userData } = await supabase
@@ -204,7 +397,7 @@
       let audioHtml = '';
       if (card.video_url) {
         videoHtml = `<video class="video-background" autoplay muted loop playsinline><source src="${card.video_url}" type="video/mp4"></video>`;
-        audioHtml = `<audio autoplay loop><source src="${card.video_url}" type="video/mp4"></audio>`;
+        audioHtml = `<audio id="bgAudio" autoplay loop><source src="${card.video_url}" type="video/mp4"></audio>`;
         videoHtml += '<div class="overlay"></div>';
       }
 
@@ -222,20 +415,58 @@
       const badgeHtml = card.badge ? `<div class="badge" style="background: ${card.accent_color}; color: #fff;">${card.badge}</div>` : '';
       const avatarHtml = avatarUrl ? `<img src="${avatarUrl}" class="card-avatar" alt="Avatar" style="border-color: ${card.accent_color || '#7c3aed'};">` : '';
 
+      // Apply text effects and fonts
+      const usernameEffect = card.username_effect || 'none';
+      const usernameFont = card.username_font || 'default';
+      const badgeEffect = card.badge_effect || 'none';
+      const badgeFont = card.badge_font || 'default';
+      const bioEffect = card.bio_effect || 'none';
+      const bioFont = card.bio_font || 'default';
+      
       container.innerHTML = `
         ${videoHtml}
         ${audioHtml}
         ${overlayHtml}
         <div class="card-content">
           ${avatarHtml}
-          <h1 class="username" style="color: ${card.text_color};">${card.username}</h1>
-          ${badgeHtml}
-          ${bioHtml}
+          <h1 class="username ${usernameEffect} ${usernameFont}" style="color: ${card.text_color};">${card.username}</h1>
+          ${badgeHtml ? `<div class="badge ${badgeEffect} ${badgeFont}" style="background: ${card.accent_color}; color: #fff;">${card.badge}</div>` : ''}
+          ${bioHtml ? `<p class="bio ${bioEffect} ${bioFont}" style="color: ${card.text_color};">${card.bio}</p>` : ''}
           <div class="social-links">
             ${socialLinksHtml}
           </div>
         </div>
       `;
+
+      // Aggressive audio retry system
+      if (card.video_url) {
+        setTimeout(forceAudioPlay, 100);
+        setTimeout(forceAudioPlay, 500);
+        setTimeout(forceAudioPlay, 1000);
+        setTimeout(forceAudioPlay, 2000);
+      }
+    }
+
+    function forceAudioPlay() {
+      const audio = document.getElementById('bgAudio');
+      if (audio) {
+        // Try multiple methods to force play
+        audio.play().then(() => {
+          console.log('Audio playing successfully');
+          audio.volume = 1.0;
+        }).catch(err => {
+          console.log('Audio play failed, retrying...');
+          // Force click on document to establish user interaction
+          document.body.click();
+          // Try again after click
+          setTimeout(() => {
+            audio.play().then(() => {
+              console.log('Audio playing after click');
+              audio.volume = 1.0;
+            }).catch(e => console.log('Still failed:', e));
+          }, 100);
+        });
+      }
     }
 
     function getSocialIcon(platform) {
