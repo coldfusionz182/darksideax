@@ -13,6 +13,67 @@
       width: 100vw; height: 100vh; display: flex; flex-direction: column;
       align-items: center; justify-content: center; position: relative; overflow: hidden;
     }
+    /* Card entrance animation */
+    .card-content {
+      position: relative; z-index: 2; text-align: center; padding: 40px;
+      animation: cardEnter 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      opacity: 0;
+      transform: translateY(30px) scale(0.95);
+    }
+    @keyframes cardEnter {
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    .card-content > * {
+      animation: fadeInUp 0.6s ease forwards;
+      opacity: 0;
+    }
+    .card-content .card-avatar { animation-delay: 0.1s; }
+    .card-content .username { animation-delay: 0.2s; }
+    .card-content .badge { animation-delay: 0.3s; }
+    .card-content .bio { animation-delay: 0.4s; }
+    .card-content .social-links { animation-delay: 0.5s; }
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    /* Avatar hover */
+    .card-avatar {
+      width: 100px; height: 100px; border-radius: 50%; object-fit: cover;
+      border: 3px solid rgba(255,255,255,0.2); margin-bottom: 16px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+      transition: all 0.3s ease;
+    }
+    .card-avatar:hover {
+      transform: scale(1.05);
+      box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+    }
+    /* Enhanced username */
+    .username { font-size: 52px; font-weight: 700; margin-bottom: 16px; text-shadow: 0 2px 10px rgba(0,0,0,0.5); }
+    /* Badge glow */
+    .badge {
+      display: inline-block; padding: 8px 20px; border-radius: 30px;
+      font-size: 14px; font-weight: 600; margin-bottom: 20px;
+      text-shadow: 0 1px 5px rgba(0,0,0,0.3);
+      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    }
+    /* Bio */
+    .bio { font-size: 18px; margin-bottom: 32px; max-width: 600px; line-height: 1.6; text-shadow: 0 1px 5px rgba(0,0,0,0.3); }
+    /* Social links enhanced */
+    .social-links { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; }
+    .social-link {
+      width: 56px; height: 56px; border-radius: 50%; display: flex;
+      align-items: center; justify-content: center; font-size: 24px;
+      text-decoration: none; transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); backdrop-filter: blur(10px);
+    }
+    .social-link:hover { transform: scale(1.15) translateY(-3px); box-shadow: 0 8px 25px rgba(0,0,0,0.4); }
+    /* Loading */
+    .loading { position: relative; z-index: 2; text-align: center; }
+    .loading i { font-size: 48px; animation: spin 1s linear infinite; }
+    @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+    .error-message { position: relative; z-index: 2; text-align: center; padding: 40px; }
+    .error-message h1 { font-size: 32px; margin-bottom: 16px; }
+    .error-message p { font-size: 16px; opacity: 0.7; }
+    .error-message a { color: inherit; text-decoration: underline; }
     .video-background {
       position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 0;
     }
@@ -21,33 +82,6 @@
       top: 0; left: 0; pointer-events: none; border: none;
     }
     .overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; }
-    .card-content { position: relative; z-index: 2; text-align: center; padding: 40px; }
-    .username { font-size: 48px; font-weight: 700; margin-bottom: 16px; text-shadow: 0 2px 10px rgba(0,0,0,0.5); }
-    .badge {
-      display: inline-block; padding: 8px 20px; border-radius: 30px;
-      font-size: 14px; font-weight: 600; margin-bottom: 20px;
-      text-shadow: 0 1px 5px rgba(0,0,0,0.3);
-    }
-    .bio { font-size: 18px; margin-bottom: 32px; max-width: 600px; line-height: 1.6; text-shadow: 0 1px 5px rgba(0,0,0,0.3); }
-    .social-links { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; }
-    .social-link {
-      width: 56px; height: 56px; border-radius: 50%; display: flex;
-      align-items: center; justify-content: center; font-size: 24px;
-      text-decoration: none; transition: transform 0.2s, box-shadow 0.2s; backdrop-filter: blur(10px);
-    }
-    .social-link:hover { transform: scale(1.1); box-shadow: 0 4px 20px rgba(0,0,0,0.4); }
-    .error-message { position: relative; z-index: 2; text-align: center; padding: 40px; }
-    .error-message h1 { font-size: 32px; margin-bottom: 16px; }
-    .error-message p { font-size: 16px; opacity: 0.7; }
-    .error-message a { color: inherit; text-decoration: underline; }
-    .loading { position: relative; z-index: 2; text-align: center; }
-    .loading i { font-size: 48px; animation: spin 1s linear infinite; }
-    @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-    .card-avatar {
-      width: 100px; height: 100px; border-radius: 50%; object-fit: cover;
-      border: 3px solid rgba(255,255,255,0.2); margin-bottom: 16px;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-    }
     /* Amazing Text Effects */
     .text-rainbow {
       background: linear-gradient(45deg, #ff0000, #ff7f00, #ffff00, #00ff00, #0000ff, #4b0082, #9400d3, #ff0000);
