@@ -1079,6 +1079,13 @@ async function handleRemoveRank(currentUser) {
 function switchTab(tab) {
   const adminCardsContainer = document.getElementById('admin-cards-container');
   const pendingTabContent = document.getElementById('pending-tab-content');
+  const creditsTabContent = document.getElementById('credits-tab-content');
+  const rankTabContent = document.getElementById('rank-tab-content');
+  const banTabContent = document.getElementById('ban-tab-content');
+  const createUserTabContent = document.getElementById('create-user-tab-content');
+  const resetPasswordTabContent = document.getElementById('reset-password-tab-content');
+  const statsRow = document.getElementById('admin-stats-row');
+  const threadsCard = document.getElementById('admin-threads-card');
   const menuItems = document.querySelectorAll('.admin-menu li[data-tab]');
 
   // Update active menu item
@@ -1090,14 +1097,35 @@ function switchTab(tab) {
     }
   });
 
-  // Show/hide content
+  // Hide all tab contents first
+  if (adminCardsContainer) adminCardsContainer.style.display = 'none';
+  if (pendingTabContent) pendingTabContent.style.display = 'none';
+  if (creditsTabContent) creditsTabContent.style.display = 'none';
+  if (rankTabContent) rankTabContent.style.display = 'none';
+  if (banTabContent) banTabContent.style.display = 'none';
+  if (createUserTabContent) createUserTabContent.style.display = 'none';
+  if (resetPasswordTabContent) resetPasswordTabContent.style.display = 'none';
+  if (statsRow) statsRow.style.display = 'none';
+  if (threadsCard) threadsCard.style.display = 'none';
+
+  // Show selected tab content
   if (tab === 'admins') {
     if (adminCardsContainer) adminCardsContainer.style.display = 'block';
-    if (pendingTabContent) pendingTabContent.style.display = 'none';
+    if (statsRow) statsRow.style.display = 'grid';
+    if (threadsCard) threadsCard.style.display = 'block';
   } else if (tab === 'pending') {
-    if (adminCardsContainer) adminCardsContainer.style.display = 'none';
     if (pendingTabContent) pendingTabContent.style.display = 'block';
     loadPendingThreads();
+  } else if (tab === 'credits') {
+    if (creditsTabContent) creditsTabContent.style.display = 'block';
+  } else if (tab === 'rank') {
+    if (rankTabContent) rankTabContent.style.display = 'block';
+  } else if (tab === 'ban') {
+    if (banTabContent) banTabContent.style.display = 'block';
+  } else if (tab === 'create-user') {
+    if (createUserTabContent) createUserTabContent.style.display = 'block';
+  } else if (tab === 'reset-password') {
+    if (resetPasswordTabContent) resetPasswordTabContent.style.display = 'block';
   }
 }
 
@@ -1120,7 +1148,6 @@ async function initAdminPanel() {
   const btnResetPassword = document.getElementById('btn-reset-password');
   const btnGenerateResetPassword = document.getElementById('btn-generate-reset-password');
   const btnRefreshPending = document.getElementById('btn-refresh-pending');
-  const creditsCard = document.getElementById('admin-credits-card');
   const btnSearchRankUser = document.getElementById('btn-search-rank-user');
   const btnSetRank = document.getElementById('btn-set-rank');
   const btnRemoveRank = document.getElementById('btn-remove-rank');
@@ -1135,11 +1162,6 @@ async function initAdminPanel() {
   }
 
   if (deniedSection) deniedSection.style.display = 'none';
-
-  // Show credits card by default
-  if (creditsCard) {
-    creditsCard.style.display = 'block';
-  }
 
   if (userInfo) {
     const roleLabel =
