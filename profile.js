@@ -83,6 +83,13 @@ async function loadProfile() {
   const usernameEl = document.getElementById('profile-username');
   if (!usernameEl) return;
 
+  // Show skeleton loading state
+  usernameEl.innerHTML = '<div class="skeleton skeleton-text-lg" style="width:200px;"></div>';
+  const joinedEl = document.getElementById('profile-joined');
+  if (joinedEl) joinedEl.innerHTML = '<div class="skeleton skeleton-text-sm" style="width:100px;"></div>';
+  const avatarEl = document.getElementById('profile-avatar');
+  if (avatarEl) avatarEl.innerHTML = '<div class="skeleton skeleton-avatar" style="width:120px;height:120px;"></div>';
+
   // 1. Resolve Identity (Strictly Own Profile)
   const { data: { user: authUser } } = await supabase.auth.getUser();
   if (!authUser) {

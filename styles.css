@@ -3,6 +3,62 @@
   box-sizing: border-box;
 }
 
+/* Shimmer Skeleton Loading Effect */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.skeleton {
+  background: linear-gradient(90deg, #1a1a1a 25%, #252525 50%, #1a1a1a 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 4px;
+}
+
+.skeleton-text {
+  height: 16px;
+  margin-bottom: 8px;
+}
+
+.skeleton-text-sm {
+  height: 12px;
+  margin-bottom: 6px;
+}
+
+.skeleton-text-lg {
+  height: 24px;
+  margin-bottom: 10px;
+}
+
+.skeleton-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+}
+
+.skeleton-row {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 12px;
+  border-bottom: 1px solid #1a1a1a;
+}
+
+.skeleton-row .skeleton-avatar {
+  flex-shrink: 0;
+}
+
+.skeleton-row .skeleton-content {
+  flex: 1;
+}
+
+.skeleton-box {
+  height: 100px;
+  border-radius: 8px;
+  margin-bottom: 12px;
+}
+
 body {
   margin: 0;
   padding: 0;
@@ -1027,4 +1083,4 @@ a:hover {
   animation: fadeInSlide 0.4s ease forwards;
   opacity: 0;
 }
-
+

@@ -270,6 +270,26 @@ async function renderShout(row, currentUser, isOptimistic = false) {
 
 async function loadShouts(currentUser) {
   if (!shoutBox || !window.supabaseClient) return;
+
+  // Show skeleton loading state
+  shoutBox.innerHTML = '';
+  for (let i = 0; i < 5; i++) {
+    const item = document.createElement('div');
+    item.className = 'ds-line skeleton-row';
+    item.innerHTML = `
+      <div class="ds-avatar skeleton skeleton-avatar"></div>
+      <div class="ds-shout-content">
+        <div class="ds-line-top">
+          <div class="skeleton skeleton-text" style="width:100px;"></div>
+          <div class="skeleton skeleton-text-sm" style="width:60px;"></div>
+        </div>
+        <div class="skeleton skeleton-text" style="width:80%;margin-top:8px;"></div>
+        <div class="skeleton skeleton-text" style="width:60%;"></div>
+      </div>
+    `;
+    shoutBox.appendChild(item);
+  }
+
   const { data, error } = await window.supabaseClient.from('shouts').select('*').order('created_at', { ascending: false }).limit(50);
   if (error) return;
   shoutBox.innerHTML = '';

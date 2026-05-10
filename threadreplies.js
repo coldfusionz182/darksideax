@@ -85,7 +85,18 @@ async function initThreadReplies() {
       return;
     }
 
+    // Show skeleton loading state
     repliesList.innerHTML = '';
+    for (let i = 0; i < 3; i++) {
+      const div = document.createElement('div');
+      div.className = 'reply-item skeleton-row';
+      div.innerHTML = `
+        <div class="skeleton skeleton-text-sm" style="width:100px;margin-bottom:8px;"></div>
+        <div class="skeleton skeleton-text" style="width:80%;margin-bottom:6px;"></div>
+        <div class="skeleton skeleton-text" style="width:60%;"></div>
+      `;
+      repliesList.appendChild(div);
+    }
 
     if (!replies || !replies.length) {
       const div = document.createElement('div');

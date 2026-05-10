@@ -61,7 +61,19 @@ async function loadCurrentStaffOnline() {
   const container = document.getElementById('current-staff-list');
   if (!container) return;
 
-  container.innerHTML = '<div style="font-size:11px; color:#555; padding:4px 0;">Checking for staff...</div>';
+  // Show skeleton loading state
+  container.innerHTML = '';
+  for (let i = 0; i < 3; i++) {
+    const line = document.createElement('div');
+    line.className = 'staff-line skeleton-row';
+    line.innerHTML = `
+      <span class="staff-name">
+        <span class="skeleton skeleton-text" style="width:120px;"></span>
+        <div class="skeleton skeleton-text-sm" style="width:60px;margin-top:4px;"></div>
+      </span>
+    `;
+    container.appendChild(line);
+  }
 
   try {
     // 1) get staff users (admin/owner) from public.users

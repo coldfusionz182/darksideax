@@ -409,6 +409,28 @@ document.addEventListener('DOMContentLoaded', () => {
 
   async function loadThreads() {
     if (!threadListBody) return;
+
+    // Show skeleton loading state
+    threadListBody.innerHTML = '';
+    for (let i = 0; i < 5; i++) {
+      const tr = document.createElement('tr');
+      tr.className = 'forum-row skeleton-row';
+      tr.innerHTML = `
+        <td class="col-icon"><div class="skeleton skeleton-avatar" style="width:32px;height:32px;"></div></td>
+        <td class="col-thread-main">
+          <div class="skeleton skeleton-text-lg" style="width:60%;margin-bottom:8px;"></div>
+          <div class="skeleton skeleton-text-sm" style="width:40%;"></div>
+        </td>
+        <td class="col-stats"><div class="skeleton skeleton-text" style="width:40px;"></div></td>
+        <td class="col-stats"><div class="skeleton skeleton-text" style="width:40px;"></div></td>
+        <td class="col-last">
+          <div class="skeleton skeleton-text-sm" style="width:50%;margin-bottom:4px;"></div>
+          <div class="skeleton skeleton-text-sm" style="width:30%;"></div>
+        </td>
+      `;
+      threadListBody.appendChild(tr);
+    }
+
     try {
       const res = await fetch('/api/list-threads');
       if (!res.ok) throw new Error('Failed to load threads');
@@ -416,6 +438,7 @@ document.addEventListener('DOMContentLoaded', () => {
       sortThreads(sortSelect ? sortSelect.value : 'newest');
     } catch (e) {
       console.error('loadThreads error', e);
+      threadListBody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:20px;">Failed to load threads</td></tr>';
     }
   }
 
