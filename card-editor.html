@@ -595,6 +595,11 @@
             </div>
           </div>
           <div class="form-group">
+            <label>Profile Photo / GIF URL</label>
+            <input type="url" id="cardAvatarUrl" placeholder="https://files.catbox.moe/avatar.gif" />
+            <span class="form-hint">Direct link to your avatar image or GIF. Leave empty to use your account avatar.</span>
+          </div>
+          <div class="form-group">
             <label>Bio / Tagline</label>
             <textarea id="bio" placeholder="Short bio or tagline..."></textarea>
             <span class="form-hint">This appears below your username on the card</span>
@@ -656,12 +661,12 @@
               <label>Username Font</label>
               <select id="usernameFont">
                 <option value="default">Default</option>
-                <option value="font-cyberpunk">🤖 Cyberpunk</option>
-                <option value="font-elegant">🎩 Elegant</option>
-                <option value="font-futuristic">🚀 Futuristic</option>
-                <option value="font-retro">🎮 Retro</option>
-                <option value="font-brush">🎨 Brush</option>
-                <option value="font-gothic">🏰 Gothic</option>
+                <option value="font-cyberpunk" style="font-family:Orbitron,sans-serif;font-weight:900;">🤖 Cyberpunk</option>
+                <option value="font-elegant" style="font-family:'Playfair Display',serif;font-style:italic;">🎩 Elegant</option>
+                <option value="font-futuristic" style="font-family:Rajdhani,sans-serif;font-weight:700;letter-spacing:2px;">🚀 Futuristic</option>
+                <option value="font-retro" style="font-family:'Press Start 2P',monospace;font-size:10px;">🎮 Retro</option>
+                <option value="font-brush" style="font-family:Pacifico,cursive;">🎨 Brush</option>
+                <option value="font-gothic" style="font-family:Cinzel,serif;font-weight:700;">🏰 Gothic</option>
               </select>
             </div>
             <div class="effect-group">
@@ -683,12 +688,12 @@
               <label>Badge Font</label>
               <select id="badgeFont">
                 <option value="default">Default</option>
-                <option value="font-cyberpunk">🤖 Cyberpunk</option>
-                <option value="font-elegant">🎩 Elegant</option>
-                <option value="font-futuristic">🚀 Futuristic</option>
-                <option value="font-retro">🎮 Retro</option>
-                <option value="font-brush">🎨 Brush</option>
-                <option value="font-gothic">🏰 Gothic</option>
+                <option value="font-cyberpunk" style="font-family:Orbitron,sans-serif;font-weight:900;">🤖 Cyberpunk</option>
+                <option value="font-elegant" style="font-family:'Playfair Display',serif;font-style:italic;">🎩 Elegant</option>
+                <option value="font-futuristic" style="font-family:Rajdhani,sans-serif;font-weight:700;letter-spacing:2px;">🚀 Futuristic</option>
+                <option value="font-retro" style="font-family:'Press Start 2P',monospace;font-size:10px;">🎮 Retro</option>
+                <option value="font-brush" style="font-family:Pacifico,cursive;">🎨 Brush</option>
+                <option value="font-gothic" style="font-family:Cinzel,serif;font-weight:700;">🏰 Gothic</option>
               </select>
             </div>
             <div class="effect-group">
@@ -710,13 +715,19 @@
               <label>Bio Font</label>
               <select id="bioFont">
                 <option value="default">Default</option>
-                <option value="font-cyberpunk">🤖 Cyberpunk</option>
-                <option value="font-elegant">🎩 Elegant</option>
-                <option value="font-futuristic">🚀 Futuristic</option>
-                <option value="font-retro">🎮 Retro</option>
-                <option value="font-brush">🎨 Brush</option>
-                <option value="font-gothic">🏰 Gothic</option>
+                <option value="font-cyberpunk" style="font-family:Orbitron,sans-serif;font-weight:900;">🤖 Cyberpunk</option>
+                <option value="font-elegant" style="font-family:'Playfair Display',serif;font-style:italic;">🎩 Elegant</option>
+                <option value="font-futuristic" style="font-family:Rajdhani,sans-serif;font-weight:700;letter-spacing:2px;">🚀 Futuristic</option>
+                <option value="font-retro" style="font-family:'Press Start 2P',monospace;font-size:10px;">🎮 Retro</option>
+                <option value="font-brush" style="font-family:Pacifico,cursive;">🎨 Brush</option>
+                <option value="font-gothic" style="font-family:Cinzel,serif;font-weight:700;">🏰 Gothic</option>
               </select>
+            </div>
+          </div>
+          <div class="form-group" style="margin-top:24px;">
+            <label>Preview</label>
+            <div style="background:#0a0a0a;border:1px solid #222;border-radius:12px;padding:20px;text-align:center;">
+              <div id="effectPreview" style="font-size:24px;font-weight:700;">Preview Text</div>
             </div>
           </div>
         </div>
@@ -810,6 +821,13 @@
               <span class="checkbox-text">Glitch Effect</span>
             </label>
             <span class="form-hint">Cyberpunk glitch on username and bio</span>
+          </div>
+          <div class="form-group">
+            <label class="checkbox-label">
+              <input type="checkbox" id="animatedSocialButtons">
+              <span class="checkbox-text">Animated Social Buttons</span>
+            </label>
+            <span class="form-hint">Buttons pop in with bounce animation on hover</span>
           </div>
         </div>
       </div>
@@ -915,6 +933,7 @@
         safeSetValue('accentColor', card.accent_color);
         safeSetValue('displayUsername', card.username);
         safeSetValue('badgeText', card.badge);
+        safeSetValue('cardAvatarUrl', card.card_avatar_url);
         safeSetValue('bio', card.bio);
         
         // Set text effects and fonts
@@ -940,6 +959,8 @@
         if (particlesElement) particlesElement.checked = card.enable_particles || false;
         const glitchElement = document.getElementById('enableGlitch');
         if (glitchElement) glitchElement.checked = card.enable_glitch || false;
+        const animatedSocialElement = document.getElementById('animatedSocialButtons');
+        if (animatedSocialElement) animatedSocialElement.checked = card.animated_social_buttons || false;
 
         // Load social links
         if (card.social_links && Array.isArray(card.social_links)) {
@@ -961,25 +982,34 @@
       }
 
       updatePreview();
+      updateEffectPreview();
     }
 
     function setupLivePreview() {
-      const inputs = ['videoUrl', 'bgColor', 'textColor', 'accentColor', 'displayUsername', 'badgeText', 'bio', 
+      const inputs = ['videoUrl', 'bgColor', 'textColor', 'accentColor', 'displayUsername', 'badgeText', 'cardAvatarUrl', 'bio', 
                       'usernameEffect', 'usernameFont', 'badgeEffect', 'badgeFont', 'bioEffect', 'bioFont',
                       'enableAudioPlayer', 'audioUrl', 'audioTitle', 'audioCover',
-                      'profileLayout', 'enableTypewriter', 'enableParticles', 'enableGlitch'];
+                      'profileLayout', 'enableTypewriter', 'enableParticles', 'enableGlitch', 'animatedSocialButtons'];
       inputs.forEach(id => {
         const element = document.getElementById(id);
         if (element) {
-          element.addEventListener('input', updatePreview);
-          element.addEventListener('change', updatePreview);
+          element.addEventListener('input', () => { updatePreview(); updateEffectPreview(); });
+          element.addEventListener('change', () => { updatePreview(); updateEffectPreview(); });
         }
       });
     }
 
+    function updateEffectPreview() {
+      const preview = document.getElementById('effectPreview');
+      if (!preview) return;
+      const effect = document.getElementById('usernameEffect')?.value || 'none';
+      const font = document.getElementById('usernameFont')?.value || 'default';
+      preview.className = effect + ' ' + font;
+    }
+
     function updatePreview() {
-      const username = document.getElementById('username')?.value || 'Your Username';
-      const badge = document.getElementById('badge')?.value || '';
+      const username = document.getElementById('displayUsername')?.value || 'Your Username';
+      const badge = document.getElementById('badgeText')?.value || '';
       const bio = document.getElementById('bio')?.value || '';
       const videoUrl = document.getElementById('videoUrl')?.value || '';
       const bgColor = document.getElementById('bgColor')?.value || '#0a0a0a';
@@ -1008,10 +1038,11 @@
       // Update video if provided
       let videoHtml = '';
       if (videoUrl) {
-        videoHtml = `<video class="preview-video" autoplay loop playsinline><source src="${videoUrl}" type="video/mp4"></video>`;
-        videoHtml += '<div class="preview-overlay"></div>';
+        videoHtml = `<video class="preview-video" id="previewVideo" loop playsinline muted><source src="${videoUrl}" type="video/mp4"></video>`;
+        videoHtml += '<div class="preview-overlay" id="videoOverlay" style="display:flex;align-items:center;justify-content:center;cursor:pointer;"><div style="width:60px;height:60px;background:rgba(255,255,255,0.15);backdrop-filter:blur(10px);border-radius:50%;display:flex;align-items:center;justify-content:center;transition:all 0.3s;"><i class="fa fa-play" style="color:#fff;font-size:24px;margin-left:4px;"></i></div></div>';
       }
-      const avatarHtml = userAvatarUrl ? `<img src="${userAvatarUrl}" class="preview-avatar" alt="Avatar" style="border-color: ${accentColor};">` : '';
+      const cardAvatar = document.getElementById('cardAvatarUrl')?.value;
+      const avatarHtml = (cardAvatar || userAvatarUrl) ? `<img src="${cardAvatar || userAvatarUrl}" class="preview-avatar" alt="Avatar" style="border-color: ${accentColor};">` : '';
       
       // Add audio player to preview if enabled
       let audioPlayerHtml = '';
@@ -1048,9 +1079,21 @@
         `;
       });
 
-      // Try to click video with XPath for sound
+      // Add play button click handler
       if (videoUrl) {
-        setTimeout(clickVideoForSound, 500);
+        setTimeout(() => {
+          const overlay = document.getElementById('videoOverlay');
+          const video = document.getElementById('previewVideo');
+          if (overlay && video) {
+            overlay.addEventListener('click', () => {
+              video.muted = false;
+              video.play().then(() => {
+                overlay.style.opacity = '0';
+                setTimeout(() => overlay.style.display = 'none', 300);
+              }).catch(err => console.log('Video play failed:', err));
+            });
+          }
+        }, 100);
       }
     }
 
@@ -1169,6 +1212,7 @@
           text_color: document.getElementById('textColor').value,
           accent_color: document.getElementById('accentColor').value,
           badge: document.getElementById('badgeText').value,
+          card_avatar_url: document.getElementById('cardAvatarUrl').value,
           bio: document.getElementById('bio').value,
           social_links: socialLinks,
           username_effect: document.getElementById('usernameEffect').value,
@@ -1185,6 +1229,7 @@
           enable_typewriter: document.getElementById('enableTypewriter').checked,
           enable_particles: document.getElementById('enableParticles').checked,
           enable_glitch: document.getElementById('enableGlitch').checked,
+          animated_social_buttons: document.getElementById('animatedSocialButtons').checked,
           enabled: true,
           updated_at: new Date().toISOString()
         };

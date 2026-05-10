@@ -1,5 +1,5 @@
 -- Add NEW columns only (old ones already exist)
--- If you get "column already exists" errors, run only the lines that fail
+-- If you get "column already exists" errors, that's okay - skip those lines
 
 -- NEW: Audio cover image
 ALTER TABLE profile_cards ADD COLUMN IF NOT EXISTS audio_cover TEXT;
@@ -10,5 +10,11 @@ ALTER TABLE profile_cards ADD COLUMN IF NOT EXISTS enable_typewriter BOOLEAN DEF
 ALTER TABLE profile_cards ADD COLUMN IF NOT EXISTS enable_particles BOOLEAN DEFAULT false;
 ALTER TABLE profile_cards ADD COLUMN IF NOT EXISTS enable_glitch BOOLEAN DEFAULT false;
 
--- Add indexes for better performance
+-- NEW: Custom card avatar
+ALTER TABLE profile_cards ADD COLUMN IF NOT EXISTS card_avatar_url TEXT;
+
+-- NEW: Animated social buttons
+ALTER TABLE profile_cards ADD COLUMN IF NOT EXISTS animated_social_buttons BOOLEAN DEFAULT false;
+
+-- Add index for better performance
 CREATE INDEX IF NOT EXISTS idx_profile_cards_profile_layout ON profile_cards(profile_layout);
