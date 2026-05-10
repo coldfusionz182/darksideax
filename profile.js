@@ -94,6 +94,7 @@ async function loadProfile() {
   try {
     if (urlUser) {
       // Viewing another user's profile by username
+      // Username is in users table
       const { data: userData, error: uErr } = await supabase
         .from('users')
         .select('id, email, username, role, avatar_url, userrank, created_at, discord, telegram')
