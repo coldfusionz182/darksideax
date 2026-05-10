@@ -371,23 +371,30 @@ async function handleDeleteThread(threadId, title, currentUser) {
 
 let selectedUserForCredits = null;
 
+let _usernamesCache = null;
+
 async function loadUsernamesForAutocomplete() {
+  if (_usernamesCache !== null) return _usernamesCache;
+
   try {
     const { data, error } = await supabaseClient
       .from('users')
       .select('username')
       .not('username', 'is', null)
       .order('username', { ascending: true });
-    
+
     if (error) {
       console.error('loadUsernamesForAutocomplete error', error);
-      return [];
+      _usernamesCache = [];
+      return _usernamesCache;
     }
-    
-    return (data || []).map(p => p.username);
+
+    _usernamesCache = (data || []).map(p => p.username);
+    return _usernamesCache;
   } catch (err) {
     console.error('loadUsernamesForAutocomplete catch', err);
-    return [];
+    _usernamesCache = [];
+    return _usernamesCache;
   }
 }
 

@@ -827,7 +827,7 @@
   // Poster
   const infoPosterEl = document.getElementById('watchInfoPoster');
   if (poster) {
-    infoPosterEl.innerHTML = `<img src="${esc(poster)}" alt="${esc(title)}" onerror="this.parentElement.innerHTML='<div class=\\'watch-poster-placeholder\\'><i class=\\'fa fa-film\\'></i></div>';">`;
+    infoPosterEl.innerHTML = `<img src="${esc(poster)}" alt="${esc(title)}" loading="lazy" onerror="this.parentElement.innerHTML='<div class=\\'watch-poster-placeholder\\'><i class=\\'fa fa-film\\'></i></div>';">`;
   }
 
   // Populate info section

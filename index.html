@@ -10,6 +10,11 @@
   <link href="styles.css" rel="stylesheet">
   <link href="userroles.css" rel="stylesheet">
   <link href="notifications.css" rel="stylesheet">
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js').catch(console.error);
+    }
+  </script>
 
   <style>
     /* Glowing purple logo/title */
