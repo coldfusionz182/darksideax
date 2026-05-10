@@ -85,6 +85,7 @@ async function loadProfile() {
 
   // 1. Resolve Identity (Own or Other Profile via ?user=USERNAME)
   const urlUser = getParam('user');
+  console.log('Profile query param user=', urlUser, 'location=', window.location.search);
   const { data: { user: authUser } } = await supabase.auth.getUser();
 
   let targetUser = null;
