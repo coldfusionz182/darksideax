@@ -112,6 +112,16 @@
       background: linear-gradient(45deg, #ff0000, #ff7f00, #ffff00, #00ff00, #0000ff, #4b0082, #9400d3, #ff0000);
       background-size: 400% 400%; -webkit-background-clip: text; background-clip: text;
       -webkit-text-fill-color: transparent; animation: rainbow 3s ease infinite;
+      text-shadow: none !important;
+    }
+    .rainbow-text {
+      background: linear-gradient(90deg, #ff0000, #ff7f00, #ffff00, #00ff00, #0000ff, #4b0082, #9400d3, #ff0000);
+      background-size: 400% 400%;
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      animation: rainbow-shift 3s ease infinite;
+      text-shadow: none !important;
     }
     @keyframes rainbow {
       0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; }
@@ -313,6 +323,6 @@
     <div class="loading"><i class="fa fa-spinner"></i></div>
   </div>
 
-  <script type="module" src="./card-app.js?v=3"></script>
+  <script type="module" src="./card-app.js?v=4"></script>
 </body>
 </html>
