@@ -154,10 +154,6 @@
       aspect-ratio: 16/9;
       position: relative;
     }
-    .preview-frame,
-    .preview-frame iframe {
-      pointer-events: none !important;
-    }
     .preview-content {
       width: 100%;
       height: 100%;
@@ -208,8 +204,8 @@
       position: absolute;
       top: 0;
       left: 0;
-      width: 300%;
-      height: 300%;
+      width: 100%;
+      height: 100%;
       object-fit: cover;
       z-index: 0;
       pointer-events: none;
@@ -281,8 +277,8 @@
         <h3><i class="fa fa-video"></i> Video Background</h3>
         <div class="form-group">
           <label>Video Background URL</label>
-          <input type="text" id="videoUrl" placeholder="YouTube, Vimeo, Streamable, or catbox.moe direct link" />
-          <small style="color: #666; font-size: 12px; display: block; margin-top: 4px;">Supports YouTube/Vimeo/Streamable and direct MP4 links (e.g. catbox.moe)</small>
+          <input type="text" id="videoUrl" placeholder="Paste your catbox.moe video link" />
+          <small style="color: #666; font-size: 12px; display: block; margin-top: 4px;">Upload to catbox.moe and paste the direct link here</small>
         </div>
       </div>
 
@@ -487,33 +483,7 @@
 
     function getVideoEmbedHtml(url) {
       if (!url) return '';
-
-      // YouTube
-      const ytMatch = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/)
-                   || url.match(/youtube\.com\/embed\/([a-zA-Z0-9_-]{11})/);
-      if (ytMatch) {
-        const id = ytMatch[1];
-        return `<iframe class="preview-video" src="https://www.youtube.com/embed/${id}?autoplay=1&loop=1&playlist=${id}&controls=0&showinfo=0&rel=0&modestbranding=1&iv_load_policy=3&fs=0&disablekb=1&autohide=1&playsinline=1&cc_load_policy=0&enablejsapi=0" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen title=" "></iframe>`;
-      }
-
-      // Vimeo
-      const vimeoMatch = url.match(/vimeo\.com\/(?:video\/)?(\d+)/);
-      if (vimeoMatch) {
-        return `<iframe class="preview-video" src="https://player.vimeo.com/video/${vimeoMatch[1]}?background=1&autoplay=1&loop=1&transparent=0" frameborder="0" allow="autoplay; fullscreen" allowfullscreen></iframe>`;
-      }
-
-      // Streamable
-      const streamableMatch = url.match(/streamable\.com\/([a-zA-Z0-9]+)/);
-      if (streamableMatch) {
-        return `<iframe class="preview-video" src="https://streamable.com/e/${streamableMatch[1]}?autoplay=1&loop=1" frameborder="0" allow="autoplay; fullscreen" allowfullscreen></iframe>`;
-      }
-
-      // Direct MP4 / WebM / MOV (e.g. catbox.moe)
-      if (/\.(mp4|webm|mov)(\?.*)?$/i.test(url) || /catbox\.moe/.test(url)) {
-        return `<video class="preview-video" autoplay loop playsinline><source src="${url}" type="video/mp4"></video>`;
-      }
-
-      return '';
+      return `<video class="preview-video" autoplay loop playsinline><source src="${url}" type="video/mp4"></video>`;
     }
 
     window.addSocialLink = function() {

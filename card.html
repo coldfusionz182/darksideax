@@ -25,10 +25,6 @@
       position: relative;
       overflow: hidden;
     }
-    .card-container .video-background,
-    .card-container .video-background iframe {
-      pointer-events: none !important;
-    }
     .video-background {
       position: absolute;
       top: 0;
@@ -36,18 +32,6 @@
       width: 100%;
       height: 100%;
       z-index: 0;
-    }
-    .video-background iframe {
-      width: 300%;
-      height: 300%;
-      object-fit: cover;
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      pointer-events: none;
-      border: none;
-      user-select: none;
     }
     .video-background video {
       width: 100%;
@@ -266,51 +250,13 @@
 
     function getVideoEmbedHtml(url) {
       if (!url) return '';
-
-      // YouTube
-      const ytMatch = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/)
-                   || url.match(/youtube\.com\/embed\/([a-zA-Z0-9_-]{11})/);
-      if (ytMatch) {
-        const id = ytMatch[1];
-        return `
-          <div class="video-background" data-platform="youtube" data-id="${id}">
-            <iframe src="https://www.youtube.com/embed/${id}?autoplay=1&loop=1&playlist=${id}&controls=0&showinfo=0&rel=0&modestbranding=1&iv_load_policy=3&fs=0&disablekb=1&autohide=1&playsinline=1&cc_load_policy=0&enablejsapi=0" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen title=" "></iframe>
-          </div>
-        `;
-      }
-
-      // Vimeo
-      const vimeoMatch = url.match(/vimeo\.com\/(?:video\/)?(\d+)/);
-      if (vimeoMatch) {
-        return `
-          <div class="video-background" data-platform="vimeo" data-id="${vimeoMatch[1]}">
-            <iframe src="https://player.vimeo.com/video/${vimeoMatch[1]}?background=1&autoplay=1&loop=1&transparent=0" frameborder="0" allow="autoplay; fullscreen" allowfullscreen></iframe>
-          </div>
-        `;
-      }
-
-      // Streamable
-      const streamableMatch = url.match(/streamable\.com\/([a-zA-Z0-9]+)/);
-      if (streamableMatch) {
-        return `
-          <div class="video-background" data-platform="streamable" data-id="${streamableMatch[1]}">
-            <iframe src="https://streamable.com/e/${streamableMatch[1]}?autoplay=1&loop=1" frameborder="0" allow="autoplay; fullscreen" allowfullscreen></iframe>
-          </div>
-        `;
-      }
-
-      // Direct MP4 / WebM / MOV (e.g. catbox.moe)
-      if (/\.(mp4|webm|mov)(\?.*)?$/i.test(url) || /catbox\.moe/.test(url)) {
-        return `
-          <div class="video-background" data-platform="direct">
-            <video autoplay loop playsinline>
-              <source src="${url}" type="video/mp4">
-            </video>
-          </div>
-        `;
-      }
-
-      return '';
+      return `
+        <div class="video-background">
+          <video autoplay loop playsinline>
+            <source src="${url}" type="video/mp4">
+          </video>
+        </div>
+      `;
     }
 
     function showError(message) {
