@@ -882,6 +882,15 @@
     let existingCard = null;
     let userAvatarUrl = null;
 
+    // Normalize URLs - add https:// if missing
+    function normalizeUrl(url) {
+      if (!url) return url;
+      url = url.trim();
+      if (!url) return url;
+      if (url.startsWith('http://') || url.startsWith('https://')) return url;
+      return 'https://' + url;
+    }
+
     // Initialize
     async function init() {
       // Check if user is admin/owner
@@ -1072,8 +1081,9 @@
       socialLinksContainer.innerHTML = '';
       socialLinks.forEach(link => {
         const icon = getSocialIcon(link.platform);
+        const normalizedUrl = normalizeUrl(link.url);
         socialLinksContainer.innerHTML += `
-          <a href="${link.url}" class="social-link" style="background: ${accentColor}20;">
+          <a href="${normalizedUrl}" class="social-link" style="background: ${accentColor}20;" target="_blank" rel="noopener">
             <i class="${icon}"></i>
           </a>
         `;
@@ -1214,7 +1224,10 @@
           badge: document.getElementById('badgeText').value,
           card_avatar_url: document.getElementById('cardAvatarUrl').value,
           bio: document.getElementById('bio').value,
-          social_links: socialLinks,
+          social_links: socialLinks.map(link => ({
+            platform: link.platform,
+            url: normalizeUrl(link.url)
+          })),
           username_effect: document.getElementById('usernameEffect').value,
           username_font: document.getElementById('usernameFont').value,
           badge_effect: document.getElementById('badgeEffect').value,

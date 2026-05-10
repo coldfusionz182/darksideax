@@ -1,9 +1,275 @@
-import{createClient as a}from"https://esm.sh/@supabase/supabase-js@2";import{SUPABASE_ANON_KEY as b}from"./keys.js";const c=a("https://ffmkkwskvjvytdddevmm.supabase.co",b);
-function normalizeUrl(a){if(!a)return a;if(a.startsWith("http://")||a.startsWith("https://"))return a;return"https://"+a}
-async function d(){const e=document.getElementById("cardContainer"),f=window.location.pathname.replace("/","").toLowerCase();if(!f){e.innerHTML='<div class="error-message" style="color:#fff;"><h1>No username specified</h1><p><a href="/">Return to Darkside</a></p></div>';return}try{const{data:g,error:h}=await c.from("profile_cards").select("*").ilike("username",f).maybeSingle();if(h)throw h;if(!g||!g.enabled){e.innerHTML='<div class="error-message" style="color:#fff;"><h1>Profile card not found</h1><p><a href="/">Return to Darkside</a></p></div>';return}let i=g.card_avatar_url||null;if(!i&&g.user_id){const{data:j}=await c.from("users").select("avatar_url").eq("id",g.user_id).maybeSingle();i=j?.avatar_url||null}k(g,i)}catch(l){console.error("Load error:",l),e.innerHTML='<div class="error-message" style="color:#fff;"><h1>Error loading profile card</h1><p><a href="/">Return to Darkside</a></p></div>'}}
-function k(l,m){const n=document.getElementById("cardContainer");let o="",p="",K=l.profile_layout||"default";if(l.video_url){o+='<video class="video-background" autoplay muted loop playsinline><source src="'+l.video_url+'" type="video/mp4"></video><div class="overlay"></div>'}if(l.enable_audio_player&&(l.video_url||l.audio_url)){const q=l.audio_url||l.video_url,r=l.audio_title||"Background Music",M=l.audio_cover||"";let s="audio/mp4";q.includes(".mp3")?s="audio/mpeg":q.includes(".wav")?s="audio/wav":q.includes(".ogg")&&(s="audio/ogg");let N="";M&&(N='<div class="audio-cover" style="margin-right:10px;"><img src="'+M+'" alt="Cover" style="width:40px;height:40px;border-radius:4px;object-fit:cover;"></div>');p='<div class="audio-player"><audio id="bgAudio" loop><source src="'+q+'" type="'+s+'"><source src="'+q+'" type="audio/mpeg"><source src="'+q+'" type="audio/mp4"></audio><div class="audio-controls">'+N+'<button id="playPauseBtn" class="audio-btn"><i class="fa fa-play"></i></button><div class="audio-info"><span class="audio-title">'+r+'</span></div><input type="range" id="volumeSlider" class="volume-slider" min="0" max="100" value="50"></div></div>'}const t='<div class="overlay" style="background: '+l.background_color+(l.video_url?"aa":"")+'"></div>',R=l.animated_social_buttons||!1,u=l.social_links&&l.social_links.length>0?l.social_links.map(a=>{const b=v(a.platform),c=normalizeUrl(a.url);return'<a href="'+c+'" class="social-link '+(R?'animated':'')+'" style="background: '+l.accent_color+'33; color: '+l.text_color+';" target="_blank" rel="noopener"><i class="'+b+'"></i></a>'}).join(""):"",w=l.bio?'<p class="bio" id="bioText" style="color: '+l.text_color+';'+(l.enable_glitch?' animation:glitch 2s infinite;':'')+'">'+l.bio+"</p>":"",x=l.badge?'<div class="badge" style="background: '+l.accent_color+'; color: #fff;">'+l.badge+"</div>":"",y=m?'<img src="'+m+'" class="card-avatar" alt="Avatar" style="border-color: '+(l.accent_color||"#7c3aed")+';">':"",z=l.username_effect||"none",A=l.username_font||"default",B=l.badge_effect||"none",C=l.badge_font||"default",D=l.bio_effect||"none",E=l.bio_font||"default";let O="",P="";l.enable_particles&&(O='<div id="particles" style="position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:1;"></div>');"left"===K?P="layout-left ":"right"===K?P="layout-right ":"compact"===K&&(P="layout-compact ");n.innerHTML=o+p+t+O+'<div class="card-content '+P+'">'+y+'<h1 class="username '+z+" "+A+'" style="color: '+l.text_color+';'+(l.enable_glitch?' animation:glitch 2s infinite;':'')+'">'+l.username+'</h1>'+(x?'<div class="badge '+B+" "+C+'" style="background: '+l.accent_color+'; color: #fff;">'+l.badge+"</div>":"")+(w?'<p class="bio '+D+" "+E+'" style="color: '+l.text_color+';" id="typewriterBio">'+l.bio+"</p>":"")+'<div class="social-links">'+u+"</div></div>",l.enable_audio_player&&(l.video_url||l.audio_url)&&(F(),J(m,l.video_url)),l.enable_typewriter&&l.bio&&L(l.bio),l.enable_particles&&Q()}
-function L(a){const b=document.getElementById("typewriterBio");if(!b)return;b.textContent="";let c=0;const d=setInterval(()=>{c<a.length?(b.textContent+=a.charAt(c),c++):clearInterval(d)},50)}
-function Q(){const a=document.getElementById("particles");if(!a)return;for(let b=0;b<30;b++){const b=document.createElement("div");b.style.cssText="position:absolute;width:4px;height:4px;background:rgba(255,255,255,0.5);border-radius:50%;animation:float "+(3+5*Math.random())+"s ease-in-out infinite;left:"+100*Math.random()+"%;top:"+100*Math.random()+"%;",a.appendChild(b)}const b=document.createElement("style");b.textContent="@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-100px) translateX("+(20*Math.random()-10)+"px)}}",document.head.appendChild(b)}
-function F(){const a=document.getElementById("bgAudio"),b=document.getElementById("playPauseBtn"),c=document.getElementById("volumeSlider");a&&b&&c&&(a.volume=.5,b.addEventListener("click",()=>{a.paused?a.play().then(()=>{b.innerHTML='<i class="fa fa-pause"></i>'}).catch(c=>{console.error("Audio play failed:",c)}):(a.pause(),b.innerHTML='<i class="fa fa-play"></i>')}),c.addEventListener("input",b=>{a.volume=b.target.value/100}),a.addEventListener("ended",()=>{b.innerHTML='<i class="fa fa-play"></i>'}))}
-function J(m,videoUrl){const a=document.getElementById("bgAudio");if(!a)return;const b=document.createElement("div");b.id="enterOverlay";let bgStyle="";m?bgStyle='background-image:url('+m+');background-size:cover;background-position:center;':videoUrl&&(bgStyle='background-image:url('+videoUrl+');background-size:cover;background-position:center;');b.style.cssText="position:fixed;top:0;left:0;width:100%;height:100%;z-index:9999;cursor:pointer;transition:opacity 0.6s ease;"+bgStyle;b.innerHTML='<div style="position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);backdrop-filter:blur(15px);-webkit-backdrop-filter:blur(15px);display:flex;align-items:center;justify-content:center;"><div style="text-align:center;pointer-events:none;"><h1 class="rainbow-text" style="font-size:56px;font-weight:900;font-family:\'Orbitron\',sans-serif;text-transform:uppercase;letter-spacing:8px;margin:0;">Click to Enter</h1></div></div>',document.body.appendChild(b);const c=()=>{console.log("Enter overlay clicked");const c=document.getElementById("enterOverlay");c&&(c.style.opacity="0",setTimeout(()=>c.remove(),600));try{a.play().then(()=>{console.log("Audio playing!");const a=document.getElementById("playPauseBtn");a&&(a.innerHTML='<i class="fa fa-pause"></i>')}).catch(a=>{console.error("Audio play failed:",a)})}catch(a){console.error("Audio error:",a)}};b.addEventListener("click",c),b.addEventListener("touchstart",c)}
-function v(a){const b={discord:"fab fa-discord",telegram:"fab fa-telegram",twitter:"fab fa-twitter",github:"fab fa-github",youtube:"fab fa-youtube",instagram:"fab fa-instagram",tiktok:"fab fa-tiktok",website:"fa fa-globe"};return b[a]||"fa fa-link"}d();
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { SUPABASE_ANON_KEY } from './keys.js';
+
+const supabase = createClient('https://ffmkkwskvjvytdddevmm.supabase.co', SUPABASE_ANON_KEY);
+
+// Normalize social URLs - ensure https:// prefix
+function normalizeUrl(url) {
+  if (!url) return url;
+  url = url.trim();
+  if (!url) return url;
+  if (url.startsWith('http://') || url.startsWith('https://')) return url;
+  return 'https://' + url;
+}
+
+async function loadCard() {
+  const container = document.getElementById('cardContainer');
+  const username = window.location.pathname.replace('/', '').toLowerCase();
+
+  if (!username) {
+    container.innerHTML = '<div class="error-message" style="color:#fff;"><h1>No username specified</h1><p><a href="/">Return to Darkside</a></p></div>';
+    return;
+  }
+
+  try {
+    const { data: card, error } = await supabase
+      .from('profile_cards')
+      .select('*')
+      .ilike('username', username)
+      .maybeSingle();
+
+    if (error) throw error;
+
+    if (!card || !card.enabled) {
+      container.innerHTML = '<div class="error-message" style="color:#fff;"><h1>Profile card not found</h1><p><a href="/">Return to Darkside</a></p></div>';
+      return;
+    }
+
+    // Get avatar - prefer card_avatar_url, fallback to user avatar
+    let avatarUrl = card.card_avatar_url || null;
+    if (!avatarUrl && card.user_id) {
+      const { data: userData } = await supabase
+        .from('users')
+        .select('avatar_url')
+        .eq('id', card.user_id)
+        .maybeSingle();
+      avatarUrl = userData?.avatar_url || null;
+    }
+
+    renderCard(card, avatarUrl);
+  } catch (err) {
+    console.error('Load error:', err);
+    container.innerHTML = '<div class="error-message" style="color:#fff;"><h1>Error loading profile card</h1><p><a href="/">Return to Darkside</a></p></div>';
+  }
+}
+
+function renderCard(card, avatarUrl) {
+  const container = document.getElementById('cardContainer');
+  let videoHtml = '';
+  let audioHtml = '';
+  const layout = card.profile_layout || 'default';
+
+  // Video background
+  if (card.video_url) {
+    videoHtml += '<video class="video-background" autoplay muted loop playsinline>';
+    videoHtml += '<source src="' + card.video_url + '" type="video/mp4">';
+    videoHtml += '</video><div class="overlay"></div>';
+  }
+
+  // Audio player
+  if (card.enable_audio_player && (card.video_url || card.audio_url)) {
+    const audioSource = card.audio_url || card.video_url;
+    const audioTitle = card.audio_title || 'Background Music';
+    const coverUrl = card.audio_cover || '';
+    
+    let audioType = 'audio/mp4';
+    if (audioSource.includes('.mp3')) audioType = 'audio/mpeg';
+    else if (audioSource.includes('.wav')) audioType = 'audio/wav';
+    else if (audioSource.includes('.ogg')) audioType = 'audio/ogg';
+
+    let coverHtml = '';
+    if (coverUrl) {
+      coverHtml = '<div class="audio-cover" style="margin-right:10px;">';
+      coverHtml += '<img src="' + coverUrl + '" alt="Cover" style="width:40px;height:40px;border-radius:4px;object-fit:cover;">';
+      coverHtml += '</div>';
+    }
+
+    audioHtml = '<div class="audio-player">';
+    audioHtml += '<audio id="bgAudio" loop>';
+    audioHtml += '<source src="' + audioSource + '" type="' + audioType + '">';
+    audioHtml += '<source src="' + audioSource + '" type="audio/mpeg">';
+    audioHtml += '<source src="' + audioSource + '" type="audio/mp4">';
+    audioHtml += '</audio>';
+    audioHtml += '<div class="audio-controls">' + coverHtml;
+    audioHtml += '<button id="playPauseBtn" class="audio-btn"><i class="fa fa-play"></i></button>';
+    audioHtml += '<div class="audio-info"><span class="audio-title">' + audioTitle + '</span></div>';
+    audioHtml += '<input type="range" id="volumeSlider" class="volume-slider" min="0" max="100" value="50">';
+    audioHtml += '</div></div>';
+  }
+
+  const overlayColor = '<div class="overlay" style="background: ' + card.background_color + (card.video_url ? 'aa' : '') + '"></div>';
+  
+  // Social links - normalize URLs
+  const animatedSocial = card.animated_social_buttons || false;
+  const socialHtml = card.social_links && card.social_links.length > 0
+    ? card.social_links.map(link => {
+        const icon = getSocialIcon(link.platform);
+        const normalizedUrl = normalizeUrl(link.url);
+        return '<a href="' + normalizedUrl + '" class="social-link ' + (animatedSocial ? 'animated' : '') + '" style="background: ' + card.accent_color + '33; color: ' + card.text_color + ';" target="_blank" rel="noopener"><i class="' + icon + '"></i></a>';
+      }).join('')
+    : '';
+
+  const bioHtml = card.bio
+    ? '<p class="bio" id="bioText" style="color: ' + card.text_color + ';' + (card.enable_glitch ? ' animation:glitch 2s infinite;' : '') + '">' + card.bio + '</p>'
+    : '';
+
+  const badgeHtml = card.badge
+    ? '<div class="badge" style="background: ' + card.accent_color + '; color: #fff;">' + card.badge + '</div>'
+    : '';
+
+  const avatarHtml = avatarUrl
+    ? '<img src="' + avatarUrl + '" class="card-avatar" alt="Avatar" style="border-color: ' + (card.accent_color || '#7c3aed') + ';">'
+    : '';
+
+  const usernameEffect = card.username_effect || 'none';
+  const usernameFont = card.username_font || 'default';
+  const badgeEffect = card.badge_effect || 'none';
+  const badgeFont = card.badge_font || 'default';
+  const bioEffect = card.bio_effect || 'none';
+  const bioFont = card.bio_font || 'default';
+
+  let particlesHtml = '';
+  if (card.enable_particles) {
+    particlesHtml = '<div id="particles" style="position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:1;"></div>';
+  }
+
+  let layoutClass = '';
+  if (layout === 'left') layoutClass = 'layout-left ';
+  else if (layout === 'right') layoutClass = 'layout-right ';
+  else if (layout === 'compact') layoutClass = 'layout-compact ';
+
+  container.innerHTML = videoHtml + audioHtml + overlayColor + particlesHtml
+    + '<div class="card-content ' + layoutClass + '">'
+    + avatarHtml
+    + '<h1 class="username ' + usernameEffect + ' ' + usernameFont + '" style="color: ' + card.text_color + ';' + (card.enable_glitch ? ' animation:glitch 2s infinite;' : '') + '">' + card.username + '</h1>'
+    + (badgeHtml ? '<div class="badge ' + badgeEffect + ' ' + badgeFont + '" style="background: ' + card.accent_color + '; color: #fff;">' + card.badge + '</div>' : '')
+    + (bioHtml ? '<p class="bio ' + bioEffect + ' ' + bioFont + '" style="color: ' + card.text_color + ';" id="typewriterBio">' + card.bio + '</p>' : '')
+    + '<div class="social-links">' + socialHtml + '</div>'
+    + '</div>';
+
+  // Setup audio
+  if (card.enable_audio_player && (card.video_url || card.audio_url)) {
+    setupAudioPlayer();
+    createEnterOverlay(avatarUrl, card.video_url);
+  }
+
+  // Typewriter
+  if (card.enable_typewriter && card.bio) {
+    typewriterEffect(card.bio);
+  }
+
+  // Particles
+  if (card.enable_particles) {
+    createParticles();
+  }
+}
+
+function typewriterEffect(text) {
+  const bio = document.getElementById('typewriterBio');
+  if (!bio) return;
+  bio.textContent = '';
+  let i = 0;
+  const interval = setInterval(() => {
+    if (i < text.length) {
+      bio.textContent += text.charAt(i);
+      i++;
+    } else {
+      clearInterval(interval);
+    }
+  }, 50);
+}
+
+function createParticles() {
+  const container = document.getElementById('particles');
+  if (!container) return;
+  for (let i = 0; i < 30; i++) {
+    const p = document.createElement('div');
+    p.style.cssText = 'position:absolute;width:4px;height:4px;background:rgba(255,255,255,0.5);border-radius:50%;animation:float ' + (3 + Math.random() * 5) + 's ease-in-out infinite;left:' + (Math.random() * 100) + '%;top:' + (Math.random() * 100) + '%;';
+    container.appendChild(p);
+  }
+  const style = document.createElement('style');
+  style.textContent = '@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-100px) translateX(' + (Math.random() * 20 - 10) + 'px)}}';
+  document.head.appendChild(style);
+}
+
+function setupAudioPlayer() {
+  const audio = document.getElementById('bgAudio');
+  const playPauseBtn = document.getElementById('playPauseBtn');
+  const volumeSlider = document.getElementById('volumeSlider');
+  if (!audio || !playPauseBtn || !volumeSlider) return;
+  audio.volume = 0.5;
+  playPauseBtn.addEventListener('click', () => {
+    if (audio.paused) {
+      audio.play().then(() => {
+        playPauseBtn.innerHTML = '<i class="fa fa-pause"></i>';
+      }).catch(err => {
+        console.error('Audio play failed:', err);
+      });
+    } else {
+      audio.pause();
+      playPauseBtn.innerHTML = '<i class="fa fa-play"></i>';
+    }
+  });
+  volumeSlider.addEventListener('input', (e) => {
+    audio.volume = e.target.value / 100;
+  });
+  audio.addEventListener('ended', () => {
+    playPauseBtn.innerHTML = '<i class="fa fa-play"></i>';
+  });
+}
+
+function createEnterOverlay(avatarUrl, videoUrl) {
+  const audio = document.getElementById('bgAudio');
+  if (!audio) return;
+  
+  const overlay = document.createElement('div');
+  overlay.id = 'enterOverlay';
+  
+  let bgStyle = '';
+  if (avatarUrl) {
+    bgStyle = 'background-image:url(' + avatarUrl + ');background-size:cover;background-position:center;';
+  } else if (videoUrl) {
+    bgStyle = 'background-image:url(' + videoUrl + ');background-size:cover;background-position:center;';
+  }
+  
+  overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;z-index:9999;cursor:pointer;transition:opacity 0.6s ease;' + bgStyle;
+  overlay.innerHTML = '<div style="position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);backdrop-filter:blur(15px);-webkit-backdrop-filter:blur(15px);display:flex;align-items:center;justify-content:center;"><div style="text-align:center;pointer-events:none;"><h1 class="rainbow-text" style="font-size:56px;font-weight:900;font-family:\'Orbitron\',sans-serif;text-transform:uppercase;letter-spacing:8px;margin:0;">Click to Enter</h1></div></div>';
+  document.body.appendChild(overlay);
+
+  const handleClick = () => {
+    const el = document.getElementById('enterOverlay');
+    if (el) {
+      el.style.opacity = '0';
+      setTimeout(() => el.remove(), 600);
+    }
+    try {
+      audio.play().then(() => {
+        const btn = document.getElementById('playPauseBtn');
+        if (btn) btn.innerHTML = '<i class="fa fa-pause"></i>';
+      }).catch(err => {
+        console.error('Audio play failed:', err);
+      });
+    } catch (err) {
+      console.error('Audio error:', err);
+    }
+  };
+  
+  overlay.addEventListener('click', handleClick);
+  overlay.addEventListener('touchstart', handleClick);
+}
+
+function getSocialIcon(platform) {
+  const icons = {
+    discord: 'fab fa-discord',
+    telegram: 'fab fa-telegram',
+    twitter: 'fab fa-twitter',
+    github: 'fab fa-github',
+    youtube: 'fab fa-youtube',
+    instagram: 'fab fa-instagram',
+    tiktok: 'fab fa-tiktok',
+    website: 'fa fa-globe'
+  };
+  return icons[platform] || 'fa fa-link';
+}
+
+loadCard();
