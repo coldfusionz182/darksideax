@@ -287,21 +287,22 @@ module.exports = async function handler(req, res) {
         const clickScript = `
 <script>
 (function(){
-  // Wait for page to load, then set cookie and refresh
+  // Wait for page to load, then click the ENTER button
   window.addEventListener('load', function(){
-    if (document.cookie.indexOf('agy=accepted') === -1) {
-      document.cookie = 'agy=accepted; path=/; max-age=31536000';
+    var ageBtn = document.querySelector('#AgeModal button');
+    if (ageBtn && document.getElementById('AgeModal').style.display !== 'none') {
       setTimeout(function(){
-        location.reload();
-      }, 100);
+        ageBtn.click();
+      }, 500);
     }
   });
 
-  // Intercept video clicks
+  // Intercept video clicks (but not modal buttons)
   document.addEventListener('click', function(e){
     var a = e.target.closest('a');
     if (!a) return;
     var href = a.getAttribute('href') || '';
+    // Only intercept video/project links, not modal buttons
     if (href.indexOf('/project/') !== -1 || href.indexOf('littlecaprice-dreams.com/project/') !== -1) {
       e.preventDefault();
       e.stopPropagation();
