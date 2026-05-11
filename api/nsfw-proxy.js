@@ -287,12 +287,15 @@ module.exports = async function handler(req, res) {
         const clickScript = `
 <script>
 (function(){
-  // Set age verification cookie and hide modal immediately
-  document.cookie = 'agy=accepted; path=/; max-age=31536000';
-  var ageModal = document.getElementById('AgeModal');
-  if (ageModal) {
-    ageModal.style.display = 'none';
-  }
+  // Wait for page to load, then set cookie and refresh
+  window.addEventListener('load', function(){
+    if (document.cookie.indexOf('agy=accepted') === -1) {
+      document.cookie = 'agy=accepted; path=/; max-age=31536000';
+      setTimeout(function(){
+        location.reload();
+      }, 100);
+    }
+  });
 
   // Intercept video clicks
   document.addEventListener('click', function(e){
