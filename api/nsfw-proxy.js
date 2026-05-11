@@ -6,7 +6,95 @@ const supabaseServiceKey =
 
 const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 
-// --- Cookie jar helper ---
+const LOGIN_URL = 'https://nubilefilms.com/authentication/login';
+const USERNAME = 'coldfusionz1234@gmail.com';
+const PASSWORD = 'eeeeeeee';
+
+async function doLogin() {
+  const ua = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36';
+
+  // Step 1: GET auth page to fetch CSRF token
+  console.log('Fetching CSRF from', LOGIN_URL);
+  const csrfRes = await fetch(LOGIN_URL, {
+    headers: {
+      'host': 'nubilefilms.com',
+      'user-agent': ua,
+      'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
+      'accept-language': 'en-US,en;q=0.9',
+      'accept-encoding': 'gzip, deflate, br, zstd',
+      'referer': 'https://nubilefilms.com/',
+      'upgrade-insecure-requests': '1',
+      'sec-ch-ua': '"Chromium";v="148", "Google Chrome";v="148", "Not/A)Brand";v="99"',
+      'sec-ch-ua-mobile': '?0',
+      'sec-ch-ua-platform': '"Windows"',
+      'sec-fetch-site': 'same-origin',
+      'sec-fetch-mode': 'navigate',
+      'sec-fetch-user': '?1',
+      'sec-fetch-dest': 'document',
+      'cache-control': 'max-age=0',
+    },
+    redirect: 'follow',
+  });
+
+  const html = await csrfRes.text();
+  const csrfMatch = html.match(/name=["']csrf-token["']\s*type=["']hidden["']\s*value=["']([^"']+)["']/i)
+    || html.match(/value=["']([^"']+)["']\s*type=["']hidden["']\s*name=["']csrf-token["']/i)
+    || html.match(/name=["']csrf-token["']\s*value=["']([^"']+)["']/i);
+
+  if (!csrfMatch) {
+    console.log('Auth page HTML preview:', html.substring(0, 1500));
+    throw new Error('CSRF token not found');
+  }
+  const csrf = csrfMatch[1];
+  console.log('CSRF found:', csrf.substring(0, 30) + '...');
+
+  // Capture cookies from CSRF response
+  const setCookie = csrfRes.headers.getSetCookie?.() || csrfRes.headers.get('set-cookie');
+  const cookies = parseCookies(setCookie);
+
+  // Step 2: POST login
+  const body = `username=${encodeURIComponent(USERNAME)}&password=${encodeURIComponent(PASSWORD)}&sign-in=&r=members.nubilefilms.com&csrf-token=${encodeURIComponent(csrf)}`;
+
+  console.log('POST login to', LOGIN_URL);
+  const loginRes = await fetch(LOGIN_URL, {
+    method: 'POST',
+    headers: {
+      'host': 'nubilefilms.com',
+      'content-type': 'application/x-www-form-urlencoded',
+      'content-length': String(Buffer.byteLength(body)),
+      'user-agent': ua,
+      'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
+      'accept-language': 'en-US,en;q=0.9',
+      'accept-encoding': 'gzip, deflate, br, zstd',
+      'origin': 'https://nubilefilms.com',
+      'referer': LOGIN_URL,
+      'upgrade-insecure-requests': '1',
+      'sec-ch-ua': '"Chromium";v="148", "Google Chrome";v="148", "Not/A)Brand";v="99"',
+      'sec-ch-ua-mobile': '?0',
+      'sec-ch-ua-platform': '"Windows"',
+      'sec-fetch-site': 'same-origin',
+      'sec-fetch-mode': 'navigate',
+      'sec-fetch-user': '?1',
+      'sec-fetch-dest': 'document',
+      'cache-control': 'max-age=0',
+      'cookie': cookies,
+    },
+    body: body,
+    redirect: 'manual',
+  });
+
+  const loginSetCookie = loginRes.headers.getSetCookie?.() || loginRes.headers.get('set-cookie');
+  const loginCookies = parseCookies(loginSetCookie);
+  const status = loginRes.status;
+  const location = loginRes.headers.get('location') || '';
+
+  console.log('Login status:', status, 'redirect:', location);
+
+  // Merge cookies
+  const allCookies = [cookies, loginCookies].filter(Boolean).join('; ');
+  return allCookies;
+}
+
 function parseCookies(setCookieHeaders) {
   const cookies = [];
   if (!setCookieHeaders) return '';
@@ -16,115 +104,6 @@ function parseCookies(setCookieHeaders) {
     if (c) cookies.push(c);
   }
   return cookies.join('; ');
-}
-
-// --- Dynamic login flow ---
-function sleep(ms) {
-  return new Promise(r => setTimeout(r, ms));
-}
-
-async function doLogin() {
-  const ua = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36';
-
-  // Step 1: GET login page to fetch CSRF token
-  const loginPageRes = await fetch('https://nubilefilms.com/login', {
-    headers: {
-      'host': 'nubilefilms.com',
-      'cache-control': 'max-age=0',
-      'sec-ch-ua': '"Chromium";v="148", "Google Chrome";v="148", "Not/A)Brand";v="99"',
-      'sec-ch-ua-mobile': '?0',
-      'sec-ch-ua-platform': '"Windows"',
-      'upgrade-insecure-requests': '1',
-      'user-agent': ua,
-      'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
-      'sec-fetch-site': 'same-origin',
-      'sec-fetch-mode': 'navigate',
-      'sec-fetch-user': '?1',
-      'sec-fetch-dest': 'document',
-      'referer': 'https://nubilefilms.com/',
-      'accept-encoding': 'gzip, deflate, br, zstd',
-      'accept-language': 'en-US,en;q=0.9',
-    },
-    redirect: 'manual',
-  });
-
-  const setCookie1 = loginPageRes.headers.getSetCookie?.() || loginPageRes.headers.get('set-cookie');
-  const cookies1 = parseCookies(setCookie1);
-  const loginHtml = await loginPageRes.text();
-
-  // Parse CSRF token
-  const csrfMatch = loginHtml.match(/name=["']csrf-token["']\s*type=["']hidden["']\s*value=["']([^"']+)["']/i)
-    || loginHtml.match(/value=["']([^"']+)["']\s*type=["']hidden["']\s*name=["']csrf-token["']/i)
-    || loginHtml.match(/name=["']csrf-token["']\s*value=["']([^"']+)["']/i);
-
-  if (!csrfMatch) {
-    console.log('Login HTML snippet:', loginHtml.substring(0, 1500));
-    throw new Error('CSRF token not found in login page');
-  }
-  const csrfToken = csrfMatch[1];
-
-  // Step 2: POST login
-  const formBody = `username=${encodeURIComponent('gpanter22@aol.com')}&password=${encodeURIComponent('7911MAge21')}&r=${encodeURIComponent('members.nubilefilms.com/')}&csrf-token=${encodeURIComponent(csrfToken)}&sign-in=${encodeURIComponent('Sign In')}`;
-
-  const loginPostRes = await fetch('https://nubilefilms.com/login', {
-    method: 'POST',
-    headers: {
-      'host': 'nubilefilms.com',
-      'content-length': String(Buffer.byteLength(formBody)),
-      'cache-control': 'max-age=0',
-      'sec-ch-ua': '"Chromium";v="148", "Google Chrome";v="148", "Not/A)Brand";v="99"',
-      'sec-ch-ua-mobile': '?0',
-      'sec-ch-ua-platform': '"Windows"',
-      'upgrade-insecure-requests': '1',
-      'content-type': 'application/x-www-form-urlencoded',
-      'user-agent': ua,
-      'origin': 'https://nubilefilms.com',
-      'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
-      'sec-fetch-site': 'same-origin',
-      'sec-fetch-mode': 'navigate',
-      'sec-fetch-user': '?1',
-      'sec-fetch-dest': 'document',
-      'referer': 'https://nubilefilms.com/login',
-      'accept-encoding': 'gzip, deflate, br, zstd',
-      'accept-language': 'en-US,en;q=0.9',
-      'cookie': cookies1,
-    },
-    body: formBody,
-    redirect: 'manual',
-  });
-
-  const setCookie2 = loginPostRes.headers.getSetCookie?.() || loginPostRes.headers.get('set-cookie');
-  const cookies2 = parseCookies(setCookie2);
-  const loginStatus = loginPostRes.status;
-  const location = loginPostRes.headers.get('location') || '';
-
-  console.log('Login POST status:', loginStatus, 'location:', location);
-
-  // Step 3: If redirect after login, follow it to get session cookies
-  let cookies3 = '';
-  if (loginStatus >= 300 && loginStatus < 400 && location) {
-    const redirectUrl = location.startsWith('http') ? location : `https://nubilefilms.com${location}`;
-    const redirectRes = await fetch(redirectUrl, {
-      headers: {
-        'user-agent': ua,
-        'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-        'referer': 'https://nubilefilms.com/login',
-        'cookie': [cookies1, cookies2].filter(Boolean).join('; '),
-      },
-      redirect: 'manual',
-    });
-    const setCookie3 = redirectRes.headers.getSetCookie?.() || redirectRes.headers.get('set-cookie');
-    cookies3 = parseCookies(setCookie3);
-    console.log('Redirect status:', redirectRes.status);
-  }
-
-  // Delay before gallery fetch to avoid rate limit
-  await sleep(2000);
-
-  // Merge all cookies
-  const allCookies = [cookies1, cookies2, cookies3].filter(Boolean).join('; ');
-  console.log('Final cookies length:', allCookies.length);
-  return allCookies;
 }
 
 export default async function handler(req, res) {
@@ -199,8 +178,6 @@ export default async function handler(req, res) {
     }
 
     const ua = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36';
-
-    await sleep(1500);
 
     // Fetch video gallery page
     if (action === 'gallery') {
