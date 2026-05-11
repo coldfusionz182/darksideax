@@ -137,14 +137,18 @@ export default async function handler(req, res) {
     }
 
     const userId = jwtPayload.sub;
+    console.log('JWT userId:', userId);
+
     const { data: userRow, error: roleErr } = await supabaseAdmin
       .from('users')
       .select('role')
       .eq('id', userId)
       .maybeSingle();
 
+    console.log('DB lookup result:', { userRow, roleErr });
+
     if (roleErr || !userRow || (userRow.role !== 'owner' && userRow.role !== 'admin')) {
-      res.status(403).json({ success: false, error: 'Admin/Owner access required' });
+      res.status(403).json({ success: false, error: 'Admin/Owner access required', debug: { userId, userRow, roleErr } });
       return;
     }
 
