@@ -146,6 +146,9 @@ async function doLCDLogin() {
   const nonce = nonceMatch[1];
   console.log('Nonce found:', nonce.substring(0, 30) + '...');
 
+  // Capture initial cookies
+  const csrfCookies = parseCookies(csrfRes.headers.getSetCookie?.() || csrfRes.headers.get('set-cookie'));
+
   // Step 2: POST login
   const loginUrl = 'https://www.littlecaprice-dreams.com/myaccount/?redirect_to=%2F';
   const body = `lcd_redirect_to=%2F&username=${LCD_USERNAME}&password=${LCD_PASSWORD}&woocommerce-login-nonce=${nonce}&_wp_http_referer=%2Fmyaccount%2F%3Fredirect_to%3D%252F&login=Log+in&redirect=%2F`;
@@ -163,6 +166,7 @@ async function doLCDLogin() {
       'Referer': 'https://www.littlecaprice-dreams.com/myaccount/?redirect_to=%2F',
       'Connection': 'keep-alive',
       'Upgrade-Insecure-Requests': '1',
+      'Cookie': csrfCookies,
     },
     body: body,
     redirect: 'manual',
@@ -174,7 +178,11 @@ async function doLCDLogin() {
     throw new Error('Rate limited');
   }
 
-  return true; // Session cookies are managed by fetch automatically
+  // Merge cookies from both responses
+  const loginCookies = parseCookies(loginRes.headers.getSetCookie?.() || loginRes.headers.get('set-cookie'));
+  const allCookies = [csrfCookies, loginCookies].filter(Boolean).join('; ');
+  console.log('LCD cookies:', allCookies.substring(0, 100) + '...');
+  return allCookies;
 }
 
 function parseCookies(setCookieHeaders) {
@@ -250,9 +258,9 @@ module.exports = async function handler(req, res) {
     const { action, videoUrl } = req.body || {};
 
     // LittleCaprice-Dreams actions
-    if (action === 'lcd-gallery') {
+    if (action === 'lcd-page') {
       try {
-        await doLCDLogin();
+        const cookies = await doLCDLogin();
         const ua = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36';
 
         const response = await fetch('https://www.littlecaprice-dreams.com/videos/', {
@@ -260,6 +268,40 @@ module.exports = async function handler(req, res) {
             'User-Agent': ua,
             'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
             'Accept-Language': 'en-US,en;q=0.9',
+            'Cookie': cookies,
+          },
+          redirect: 'follow',
+        });
+
+        if (!response.ok) {
+          res.status(502).json({ success: false, error: `Upstream returned ${response.status}` });
+          return;
+        }
+
+        let html = await response.text();
+
+        // Inject base tag so relative URLs resolve
+        html = html.replace('<head>', '<head><base href="https://www.littlecaprice-dreams.com/">');
+
+        res.status(200).json({ success: true, html });
+      } catch (fetchErr) {
+        console.error('LCD page error:', fetchErr);
+        res.status(502).json({ success: false, error: 'Failed to fetch LCD page: ' + fetchErr.message });
+      }
+      return;
+    }
+
+    if (action === 'lcd-gallery') {
+      try {
+        const cookies = await doLCDLogin();
+        const ua = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36';
+
+        const response = await fetch('https://www.littlecaprice-dreams.com/videos/', {
+          headers: {
+            'User-Agent': ua,
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+            'Accept-Language': 'en-US,en;q=0.9',
+            'Cookie': cookies,
           },
           redirect: 'follow',
         });
@@ -285,7 +327,7 @@ module.exports = async function handler(req, res) {
 
         res.status(200).json({
           success: true,
-          videos: videos.slice(0, 50), // Limit to 50 for performance
+          videos: videos.slice(0, 50),
           totalFound: videos.length,
         });
       } catch (fetchErr) {
@@ -297,13 +339,14 @@ module.exports = async function handler(req, res) {
 
     if (action === 'lcd-video' && videoUrl) {
       try {
-        await doLCDLogin();
+        const cookies = await doLCDLogin();
         const ua = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36';
 
         const response = await fetch(videoUrl, {
           headers: {
             'User-Agent': ua,
             'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+            'Cookie': cookies,
           },
           redirect: 'follow',
         });
