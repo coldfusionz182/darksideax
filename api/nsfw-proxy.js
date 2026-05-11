@@ -117,9 +117,21 @@ export default async function handler(req, res) {
     }
 
     const accessToken = authHeader.slice('Bearer '.length);
-    const { data: userData, error: userErr } = await supabaseAdmin.auth.getUser(accessToken);
+
+    // Create a client authenticated as the user (like ban.js does)
+    const supabaseUser = createClient(supabaseUrl, supabaseServiceKey, {
+      global: {
+        headers: {
+          Authorization: `Bearer ${accessToken}`
+        }
+      }
+    });
+
+    // Verify token by getting user
+    const { data: userData, error: userErr } = await supabaseUser.auth.getUser();
     if (userErr || !userData?.user) {
-      res.status(401).json({ success: false, error: 'Invalid token' });
+      console.error('Token validation failed:', userErr);
+      res.status(401).json({ success: false, error: 'Invalid or expired token. Please log in again.' });
       return;
     }
 

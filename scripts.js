@@ -315,10 +315,18 @@ document.addEventListener('DOMContentLoaded', () => {
     grid.innerHTML = '<div class="nsfw-loading"><i class="fa fa-spinner fa-spin"></i> Loading VIP content...</div>';
 
     try {
-      const session = await supabaseClient.auth.getSession();
-      const token = session?.data?.session?.access_token;
+      // Get fresh token (getUser refreshes expired tokens)
+      const { data: userData, error: userErr } = await supabaseClient.auth.getUser();
+      if (userErr || !userData?.user) {
+        grid.innerHTML = '<div class="nsfw-error"><i class="fa fa-exclamation-triangle"></i> Please log in to access VIP content</div>';
+        return;
+      }
+
+      // Get session after getUser (ensures fresh token)
+      const { data: sessionData } = await supabaseClient.auth.getSession();
+      const token = sessionData?.session?.access_token;
       if (!token) {
-        grid.innerHTML = '<div class="nsfw-error"><i class="fa fa-exclamation-triangle"></i> Authentication required</div>';
+        grid.innerHTML = '<div class="nsfw-error"><i class="fa fa-exclamation-triangle"></i> Session expired. Please log in again.</div>';
         return;
       }
 
@@ -368,9 +376,13 @@ document.addEventListener('DOMContentLoaded', () => {
     wrapper.innerHTML = '<div class="nsfw-modal-loading"><i class="fa fa-spinner fa-spin"></i> Loading video...</div>';
 
     try {
-      const session = await supabaseClient.auth.getSession();
-      const token = session?.data?.session?.access_token;
-      if (!token) return;
+      await supabaseClient.auth.getUser(); // refresh token if needed
+      const { data: sessionData } = await supabaseClient.auth.getSession();
+      const token = sessionData?.session?.access_token;
+      if (!token) {
+        wrapper.innerHTML = '<div style="padding:40px;text-align:center;color:#ff6666;">Session expired. Please log in again.</div>';
+        return;
+      }
 
       const response = await fetch('/api/nsfw-proxy', {
         method: 'POST',
