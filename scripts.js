@@ -300,6 +300,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initAdminPanel();
 
   // ===================== NSFW VIP Section (Admin/Owner Only) =====================
+  let _nsfwLoaded = false;
   async function initNsfwSection() {
     const section = document.getElementById('nsfw-vip-section');
     const grid = document.getElementById('nsfw-grid');
@@ -312,21 +313,22 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     section.style.display = 'block';
-    grid.innerHTML = '<div class="nsfw-loading"><i class="fa fa-spinner fa-spin"></i> Loading VIP content...</div>';
+    if (_nsfwLoaded) return; // only fetch once
+    _nsfwLoaded = true;
+
+    grid.innerHTML = '<div style="text-align:center;color:#888;padding:30px;font-size:14px;"><i class="fa fa-spinner fa-spin"></i> Loading VIP content...</div>';
 
     try {
-      // Get fresh token (getUser refreshes expired tokens)
       const { data: userData, error: userErr } = await supabaseClient.auth.getUser();
       if (userErr || !userData?.user) {
-        grid.innerHTML = '<div class="nsfw-error"><i class="fa fa-exclamation-triangle"></i> Please log in to access VIP content</div>';
+        grid.innerHTML = '<div style="text-align:center;color:#ff6666;padding:20px;"><i class="fa fa-exclamation-triangle"></i> Please log in to access VIP content</div>';
         return;
       }
 
-      // Get session after getUser (ensures fresh token)
       const { data: sessionData } = await supabaseClient.auth.getSession();
       const token = sessionData?.session?.access_token;
       if (!token) {
-        grid.innerHTML = '<div class="nsfw-error"><i class="fa fa-exclamation-triangle"></i> Session expired. Please log in again.</div>';
+        grid.innerHTML = '<div style="text-align:center;color:#ff6666;padding:20px;"><i class="fa fa-exclamation-triangle"></i> Session expired. Please log in again.</div>';
         return;
       }
 
@@ -342,26 +344,29 @@ document.addEventListener('DOMContentLoaded', () => {
       const data = await response.json();
 
       if (!data.success) {
-        grid.innerHTML = `<div class="nsfw-error"><i class="fa fa-exclamation-triangle"></i> ${data.error || 'Failed to load content'}</div>`;
+        grid.innerHTML = `<div style="text-align:center;color:#ff6666;padding:20px;"><i class="fa fa-exclamation-triangle"></i> ${data.error || 'Failed to load content'}</div>`;
         return;
       }
 
       if (!data.videos || data.videos.length === 0) {
-        grid.innerHTML = '<div class="nsfw-loading">No videos found. Check proxy configuration.</div>';
+        grid.innerHTML = '<div style="text-align:center;color:#888;padding:20px;">No videos found. Check proxy configuration.</div>';
         return;
       }
 
-      grid.innerHTML = data.videos.map((video, i) => `
-        <div class="nsfw-card" data-url="${video.url}" data-title="${video.title}" onclick="window.openNsfwModal('${video.url}', '${video.title.replace(/'/g, "\\'")}')">
-          <img class="thumb" src="${video.thumbnail}" alt="${video.title}" loading="lazy" onerror="this.src=''">
-          <div class="play-overlay"><i class="fa fa-play"></i></div>
-          <div class="title">${video.title}</div>
+      const cardStyle = 'cursor:pointer;transition:all 0.3s ease;border-radius:10px;overflow:hidden;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);position:relative;';
+      const cardHover = "this.style.transform='translateY(-4px)';this.style.borderColor='rgba(255,50,50,0.4)';this.style.boxShadow='0 8px 30px rgba(255,50,50,0.15)';";
+      const cardOut = "this.style.transform='';this.style.borderColor='rgba(255,255,255,0.06)';this.style.boxShadow='';";
+
+      grid.innerHTML = data.videos.map((video) => `
+        <div style="${cardStyle}" onmouseenter="${cardHover}" onmouseleave="${cardOut}" onclick="window.openNsfwModal('${video.url}', '${video.title.replace(/'/g, "\\'")}')">
+          <img src="${video.thumbnail}" alt="${video.title}" loading="lazy" onerror="this.style.display='none'" style="width:100%;aspect-ratio:16/9;object-fit:cover;background:#1a0a0a;display:block;">
+          <div style="padding:10px 12px;font-size:13px;color:#ccc;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${video.title}</div>
         </div>
       `).join('');
 
     } catch (err) {
       console.error('NSFW section error:', err);
-      grid.innerHTML = `<div class="nsfw-error"><i class="fa fa-exclamation-triangle"></i> ${err.message}</div>`;
+      grid.innerHTML = `<div style="text-align:center;color:#ff6666;padding:20px;"><i class="fa fa-exclamation-triangle"></i> ${err.message}</div>`;
     }
   }
 
