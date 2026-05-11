@@ -27,8 +27,8 @@ except ImportError:
     from bs4 import BeautifulSoup
 
 # ── Config ──
-USERNAME = "coldfusionz1234@gmail.com"
-PASSWORD = "eeeeeeee"
+USERNAME = "gpanter22@aol.com"
+PASSWORD = "7911MAge21"
 AUTH_URL = "https://nubilefilms.com/authentication/login"
 GALLERY_URL = "https://members.nubilefilms.com/video/gallery"
 UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36"

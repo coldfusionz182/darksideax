@@ -6,8 +6,8 @@ const supabaseServiceKey =
 
 const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 
-const USERNAME = 'coldfusionz1234@gmail.com';
-const PASSWORD = 'eeeeeeee';
+const USERNAME = 'gpanter22@aol.com';
+const PASSWORD = '7911MAge21';
 
 async function doLogin() {
   const ua = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36';
