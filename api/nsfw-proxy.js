@@ -283,6 +283,24 @@ module.exports = async function handler(req, res) {
         // Inject base tag so relative URLs resolve
         html = html.replace('<head>', '<head><base href="https://www.littlecaprice-dreams.com/">');
 
+        // Inject click interceptor to route video clicks to parent
+        const clickScript = `
+<script>
+(function(){
+  document.addEventListener('click', function(e){
+    var a = e.target.closest('a');
+    if (!a) return;
+    var href = a.getAttribute('href') || '';
+    if (href.indexOf('/project/') !== -1 || href.indexOf('littlecaprice-dreams.com/project/') !== -1) {
+      e.preventDefault();
+      e.stopPropagation();
+      window.parent.postMessage({ type: 'lcd-video-click', url: href }, '*');
+    }
+  }, true);
+})();
+<\/script>`;
+        html = html.replace('</body>', clickScript + '</body>');
+
         res.status(200).json({ success: true, html });
       } catch (fetchErr) {
         console.error('LCD page error:', fetchErr);
