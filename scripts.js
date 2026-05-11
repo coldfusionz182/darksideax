@@ -299,7 +299,120 @@ document.addEventListener('DOMContentLoaded', () => {
 
   initAdminPanel();
 
-  
+  // ===================== NSFW VIP Section (Admin/Owner Only) =====================
+  async function initNsfwSection() {
+    const section = document.getElementById('nsfw-vip-section');
+    const grid = document.getElementById('nsfw-grid');
+    if (!section || !grid) return;
+
+    const current = await getCurrentUserWithRole();
+    if (!current || (current.role !== 'admin' && current.role !== 'owner')) {
+      section.style.display = 'none';
+      return;
+    }
+
+    section.style.display = 'block';
+    grid.innerHTML = '<div class="nsfw-loading"><i class="fa fa-spinner fa-spin"></i> Loading VIP content...</div>';
+
+    try {
+      const session = await supabaseClient.auth.getSession();
+      const token = session?.data?.session?.access_token;
+      if (!token) {
+        grid.innerHTML = '<div class="nsfw-error"><i class="fa fa-exclamation-triangle"></i> Authentication required</div>';
+        return;
+      }
+
+      const response = await fetch('/api/nsfw-proxy', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ action: 'gallery' }),
+      });
+
+      const data = await response.json();
+
+      if (!data.success) {
+        grid.innerHTML = `<div class="nsfw-error"><i class="fa fa-exclamation-triangle"></i> ${data.error || 'Failed to load content'}</div>`;
+        return;
+      }
+
+      if (!data.videos || data.videos.length === 0) {
+        grid.innerHTML = '<div class="nsfw-loading">No videos found. Check proxy configuration.</div>';
+        return;
+      }
+
+      grid.innerHTML = data.videos.map((video, i) => `
+        <div class="nsfw-card" data-url="${video.url}" data-title="${video.title}" onclick="window.openNsfwModal('${video.url}', '${video.title.replace(/'/g, "\\'")}')">
+          <img class="thumb" src="${video.thumbnail}" alt="${video.title}" loading="lazy" onerror="this.src=''">
+          <div class="play-overlay"><i class="fa fa-play"></i></div>
+          <div class="title">${video.title}</div>
+        </div>
+      `).join('');
+
+    } catch (err) {
+      console.error('NSFW section error:', err);
+      grid.innerHTML = `<div class="nsfw-error"><i class="fa fa-exclamation-triangle"></i> ${err.message}</div>`;
+    }
+  }
+
+  window.openNsfwModal = async function(videoUrl, title) {
+    const modal = document.getElementById('nsfw-modal');
+    const wrapper = document.getElementById('nsfw-video-wrapper');
+    const modalTitle = document.getElementById('nsfw-modal-title');
+    if (!modal || !wrapper) return;
+
+    modal.style.display = 'block';
+    modalTitle.textContent = title || 'Video';
+    wrapper.innerHTML = '<div class="nsfw-modal-loading"><i class="fa fa-spinner fa-spin"></i> Loading video...</div>';
+
+    try {
+      const session = await supabaseClient.auth.getSession();
+      const token = session?.data?.session?.access_token;
+      if (!token) return;
+
+      const response = await fetch('/api/nsfw-proxy', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ action: 'video', videoUrl }),
+      });
+
+      const data = await response.json();
+      if (data.success && data.videoUrl) {
+        wrapper.innerHTML = `<video controls autoplay><source src="${data.videoUrl}" type="video/mp4">Your browser does not support the video tag.</video>`;
+      } else if (data.success && data.embedUrl) {
+        wrapper.innerHTML = `<iframe src="${data.embedUrl}" allowfullscreen></iframe>`;
+      } else {
+        // Fallback: open in new tab if we can't embed
+        wrapper.innerHTML = `<div style="padding:40px;text-align:center;color:#888;"><p>Cannot load video directly.</p><a href="${videoUrl}" target="_blank" style="color:#ff6666;">Open on site <i class="fa fa-external-link"></i></a></div>`;
+      }
+    } catch (err) {
+      wrapper.innerHTML = `<div style="padding:40px;text-align:center;color:#ff6666;">Error: ${err.message}</div>`;
+    }
+  };
+
+  document.getElementById('nsfw-modal-close')?.addEventListener('click', () => {
+    const modal = document.getElementById('nsfw-modal');
+    const wrapper = document.getElementById('nsfw-video-wrapper');
+    if (modal) modal.style.display = 'none';
+    if (wrapper) wrapper.innerHTML = '';
+  });
+
+  document.getElementById('nsfw-modal-overlay')?.addEventListener('click', (e) => {
+    if (e.target.id === 'nsfw-modal-overlay') {
+      const modal = document.getElementById('nsfw-modal');
+      const wrapper = document.getElementById('nsfw-video-wrapper');
+      if (modal) modal.style.display = 'none';
+      if (wrapper) wrapper.innerHTML = '';
+    }
+  });
+
+  initNsfwSection();
+
   // ===================== Accounts thread list (accounts.html) =====================
   const threadListBody = document.getElementById('thread-list');
   const sortSelect = document.getElementById('sort-select');
