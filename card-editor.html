@@ -839,15 +839,10 @@
             </label>
             <span class="form-hint">Uncheck to completely hide the music player</span>
           </div>
-          <div class="form-row">
-            <div class="form-group">
-              <label>Audio URL</label>
-              <input type="url" id="audioUrl" placeholder="https://files.catbox.moe/audio.mp3">
-            </div>
-            <div class="form-group">
-              <label>Song Title</label>
-              <input type="text" id="audioTitle" placeholder="Song Name" maxlength="50">
-            </div>
+          <div class="form-group">
+            <label>Song Title</label>
+            <input type="text" id="audioTitle" placeholder="Song Name" maxlength="50">
+            <span class="form-hint">Audio is taken from the MP4 video above</span>
           </div>
           <div class="form-group">
             <label>Cover Art URL</label>
@@ -1137,7 +1132,6 @@
         // Set audio settings
         const audioPlayerElement = document.getElementById('enableAudioPlayer');
         if (audioPlayerElement) audioPlayerElement.checked = card.enable_audio_player || false;
-        safeSetValue('audioUrl', card.audio_url);
         safeSetValue('audioTitle', card.audio_title);
         safeSetValue('audioCover', card.audio_cover);
         
@@ -1192,7 +1186,7 @@
     function setupLivePreview() {
       const inputs = ['videoUrl', 'bgColor', 'textColor', 'accentColor', 'displayUsername', 'displayName', 'badgeText', 'cardAvatarUrl', 'bio', 
                       'usernameEffect', 'usernameFont', 'badgeEffect', 'badgeFont', 'bioEffect', 'bioFont',
-                      'enableAudioPlayer', 'audioUrl', 'audioTitle', 'audioCover',
+                      'enableAudioPlayer', 'audioTitle', 'audioCover',
                       'audioPlayerPosition', 'audioPlayerStyle', 'audioPlayerTheme', 'audioVisualizer',
                       'audioShowCover', 'audioAutohide',
                       'profileLayout', 'enableTypewriter', 'enableParticles', 'enableGlitch', 'animatedSocialButtons',
@@ -1250,7 +1244,7 @@
       
       // Get audio settings with null checks
       const enableAudioPlayer = document.getElementById('enableAudioPlayer')?.checked || false;
-      const audioUrl = document.getElementById('audioUrl')?.value || '';
+      const audioUrl = '';
       const audioTitle = document.getElementById('audioTitle')?.value || 'Background Music';
       const previewFrame = document.getElementById('previewFrame');
       const previewContent = document.getElementById('previewContent');
@@ -1450,7 +1444,7 @@
           bio_effect: document.getElementById('bioEffect').value,
           bio_font: document.getElementById('bioFont').value,
           enable_audio_player: document.getElementById('enableAudioPlayer').checked,
-          audio_url: document.getElementById('audioUrl').value,
+          audio_url: '',
           audio_title: document.getElementById('audioTitle').value,
           audio_cover: document.getElementById('audioCover').value,
           audio_player_position: document.getElementById('audioPlayerPosition').value,

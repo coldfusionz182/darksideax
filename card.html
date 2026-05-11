@@ -107,8 +107,12 @@
     .error-message a { color: inherit; text-decoration: underline; }
 
     /* Video / Overlay */
-    .video-background {
-      position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 0;
+    .video-background,
+    video.video-background {
+      position: absolute; top: 0; left: 0;
+      width: 100vw; height: 100vh;
+      object-fit: cover; pointer-events: none; border: none;
+      z-index: 0;
     }
     .video-background video {
       width: 100vw; height: 100vh; object-fit: cover; position: absolute;
@@ -373,6 +377,6 @@
   <div id="cardContainer" class="card-container">
     <div class="loading"><i class="fa fa-spinner"></i></div>
   </div>
-  <script type="module" src="./card-app.js?v=8"></script>
+  <script type="module" src="./card-app.js?v=9"></script>
 </body>
 </html>
