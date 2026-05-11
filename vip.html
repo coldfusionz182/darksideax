@@ -182,59 +182,67 @@
   </div>
 </div>
 
-<script type="module">
-  import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.0/dist/module.js';
-
-  const SUPABASE_URL = 'https://ffmkkwskvjvytdddevmm.supabase.co';
-  const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZmbWtrd3Nrdmp2eXRkZGRldm1tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU2NjU4OTUsImV4cCI6MjA5MTI0MTg5NX0.g6MJn6LScw7hRKSN5k2Q1lI9HjJs8q72JY3B4USzH1s';
-
-  const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON);
-
-  async function getCurrentUserWithRole() {
-    const { data: userData, error } = await supabaseClient.auth.getUser();
-    if (error || !userData?.user) return null;
-    const { data: userRow } = await supabaseClient
-      .from('users')
-      .select('role, username')
-      .eq('id', userData.user.id)
-      .maybeSingle();
-    return { id: userData.user.id, role: userRow?.role || 'user', username: userRow?.username };
-  }
-
-  async function initVipPage() {
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.0/dist/umd.js"></script>
+<script>
+  (async function() {
     const container = document.getElementById('vip-container');
-    const current = await getCurrentUserWithRole();
-
-    if (!current || (current.role !== 'admin' && current.role !== 'owner')) {
-      container.innerHTML = `
-        <div class="access-denied">
-          <i class="fa fa-lock"></i>
-          <h2>Access Denied</h2>
-          <p>Admin/Owner access required to view VIP Content.</p>
-        </div>
-      `;
-      return;
-    }
-
-    container.innerHTML = `
-      <div class="vip-header">
-        <i class="fa fa-crown"></i>
-        <h1>VIP Content</h1>
-      </div>
-      <div id="vip-grid" class="vip-grid">
-        <div class="vip-loading"><i class="fa fa-spinner fa-spin"></i> Loading videos...</div>
-      </div>
-    `;
 
     try {
-      await supabaseClient.auth.getUser();
+      const SUPABASE_URL = 'https://ffmkkwskvjvytdddevmm.supabase.co';
+      const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZmbWtrd3Nrdmp2eXRkZGRldm1tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU2NjU4OTUsImV4cCI6MjA5MTI0MTg5NX0.g6MJn6LScw7hRKSN5k2Q1lI9HjJs8q72JY3B4USzH1s';
+
+      const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+
+      // Check auth
+      const { data: userData, error: userErr } = await supabaseClient.auth.getUser();
+      if (userErr || !userData?.user) {
+        container.innerHTML = `
+          <div class="access-denied">
+            <i class="fa fa-lock"></i>
+            <h2>Access Denied</h2>
+            <p>Please log in to access VIP Content.</p>
+          </div>
+        `;
+        return;
+      }
+
+      // Check role
+      const { data: userRow, error: roleErr } = await supabaseClient
+        .from('users')
+        .select('role')
+        .eq('id', userData.user.id)
+        .maybeSingle();
+
+      if (roleErr || !userRow || (userRow.role !== 'owner' && userRow.role !== 'admin')) {
+        container.innerHTML = `
+          <div class="access-denied">
+            <i class="fa fa-lock"></i>
+            <h2>Access Denied</h2>
+            <p>Admin/Owner access required to view VIP Content.</p>
+          </div>
+        `;
+        return;
+      }
+
+      // Show grid
+      container.innerHTML = `
+        <div class="vip-header">
+          <i class="fa fa-crown"></i>
+          <h1>VIP Content</h1>
+        </div>
+        <div id="vip-grid" class="vip-grid">
+          <div class="vip-loading"><i class="fa fa-spinner fa-spin"></i> Loading videos...</div>
+        </div>
+      `;
+
+      // Fetch videos
       const { data: sessionData } = await supabaseClient.auth.getSession();
       const token = sessionData?.session?.access_token;
       if (!token) throw new Error('Session expired');
 
       const response = await fetch('/api/nsfw-proxy', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
         body: JSON.stringify({ action: 'gallery' }),
       });
 
@@ -243,17 +251,17 @@
       if (!data.videos?.length) throw new Error('No videos found');
 
       const grid = document.getElementById('vip-grid');
-      grid.innerHTML = data.videos.map(video => `
-        <div class="vip-card" onclick="window.openVipModal('${video.url}', '${video.title.replace(/'/g, "\\'")}')">
-          <img src="${video.thumbnail}" alt="${video.title}" loading="lazy" onerror="this.style.display='none'">
-          <div class="title">${video.title}</div>
-        </div>
-      `).join('');
+      grid.innerHTML = data.videos.map(function(video) {
+        return '<div class="vip-card" onclick="window.openVipModal(\'' + video.url + '\', \'' + video.title.replace(/\'/g, "\\'") + '\')">' +
+          '<img src="' + video.thumbnail + '" alt="' + video.title + '" loading="lazy" onerror="this.style.display=\'none\'">' +
+          '<div class="title">' + video.title + '</div></div>';
+      }).join('');
 
     } catch (err) {
-      document.getElementById('vip-grid').innerHTML = `<div class="vip-error"><i class="fa fa-exclamation-triangle"></i> ${err.message}</div>`;
+      console.error('VIP page error:', err);
+      container.innerHTML = '<div class="vip-error"><i class="fa fa-exclamation-triangle"></i> ' + err.message + '</div>';
     }
-  }
+  })();
 
   window.openVipModal = async function(videoUrl, title) {
     const modal = document.getElementById('vip-modal');
@@ -266,6 +274,10 @@
     wrapper.innerHTML = '<div class="vip-modal-loading"><i class="fa fa-spinner fa-spin"></i> Loading video...</div>';
 
     try {
+      const SUPABASE_URL = 'https://ffmkkwskvjvytdddevmm.supabase.co';
+      const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZmbWtrd3Nrdmp2eXRkZGRldm1tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU2NjU4OTUsImV4cCI6MjA5MTI0MTg5NX0.g6MJn6LScw7hRKSN5k2Q1lI9HjJs8q72JY3B4USzH1s';
+      const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+
       await supabaseClient.auth.getUser();
       const { data: sessionData } = await supabaseClient.auth.getSession();
       const token = sessionData?.session?.access_token;
@@ -273,31 +285,31 @@
 
       const response = await fetch('/api/nsfw-proxy', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
         body: JSON.stringify({ action: 'video', videoUrl }),
       });
 
       const data = await response.json();
       if (data.success && data.videoUrl) {
-        wrapper.innerHTML = `<video controls autoplay><source src="${data.videoUrl}" type="video/mp4"></video>`;
+        wrapper.innerHTML = '<video controls autoplay><source src="' + data.videoUrl + '" type="video/mp4"></video>';
       } else if (data.success && data.embedUrl) {
-        wrapper.innerHTML = `<iframe src="${data.embedUrl}" allowfullscreen></iframe>`;
+        wrapper.innerHTML = '<iframe src="' + data.embedUrl + '" allowfullscreen></iframe>';
       } else {
-        wrapper.innerHTML = `<div style="padding:40px;text-align:center;color:#888;"><p>Cannot load video directly.</p><a href="${videoUrl}" target="_blank" style="color:#ff6666;">Open on site <i class="fa fa-external-link"></i></a></div>`;
+        wrapper.innerHTML = '<div style="padding:40px;text-align:center;color:#888;"><p>Cannot load video directly.</p><a href="' + videoUrl + '" target="_blank" style="color:#ff6666;">Open on site <i class="fa fa-external-link"></i></a></div>';
       }
     } catch (err) {
-      wrapper.innerHTML = `<div style="padding:40px;text-align:center;color:#ff6666;">Error: ${err.message}</div>`;
+      wrapper.innerHTML = '<div style="padding:40px;text-align:center;color:#ff6666;">Error: ' + err.message + '</div>';
     }
   };
 
-  document.getElementById('vip-modal-close')?.addEventListener('click', () => {
+  document.getElementById('vip-modal-close')?.addEventListener('click', function() {
     const modal = document.getElementById('vip-modal');
     const wrapper = document.getElementById('vip-video-wrapper');
     if (modal) modal.style.display = 'none';
     if (wrapper) wrapper.innerHTML = '';
   });
 
-  document.getElementById('vip-modal-overlay')?.addEventListener('click', (e) => {
+  document.getElementById('vip-modal-overlay')?.addEventListener('click', function(e) {
     if (e.target.id === 'vip-modal-overlay') {
       const modal = document.getElementById('vip-modal');
       const wrapper = document.getElementById('vip-video-wrapper');
@@ -305,8 +317,6 @@
       if (wrapper) wrapper.innerHTML = '';
     }
   });
-
-  initVipPage();
 </script>
 </body>
 </html>
