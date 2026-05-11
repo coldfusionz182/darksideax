@@ -6,43 +6,48 @@ const supabaseServiceKey =
 
 const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 
-const LOGIN_URL = 'https://nubilefilms.com/authentication/login';
 const USERNAME = 'coldfusionz1234@gmail.com';
 const PASSWORD = 'eeeeeeee';
 
 async function doLogin() {
-  const ua = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36';
+  const ua = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36';
 
-  // Step 1: GET auth page to fetch CSRF token
-  console.log('Fetching CSRF from', LOGIN_URL);
-  const csrfRes = await fetch(LOGIN_URL, {
+  // Step 1: GET /login to fetch CSRF token
+  console.log('Fetching CSRF from https://nubilefilms.com/login');
+  const csrfRes = await fetch('https://nubilefilms.com/login', {
     headers: {
       'host': 'nubilefilms.com',
-      'user-agent': ua,
-      'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
-      'accept-language': 'en-US,en;q=0.9',
-      'accept-encoding': 'gzip, deflate, br, zstd',
-      'referer': 'https://nubilefilms.com/',
-      'upgrade-insecure-requests': '1',
-      'sec-ch-ua': '"Chromium";v="148", "Google Chrome";v="148", "Not/A)Brand";v="99"',
+      'connection': 'keep-alive',
+      'cache-control': 'max-age=0',
+      'sec-ch-ua': '"Chromium";v="146", "Not-A.Brand";v="24", "Google Chrome";v="146"',
       'sec-ch-ua-mobile': '?0',
       'sec-ch-ua-platform': '"Windows"',
+      'origin': 'https://nubilefilms.com',
+      'content-type': 'application/x-www-form-urlencoded',
+      'upgrade-insecure-requests': '1',
+      'user-agent': ua,
+      'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
       'sec-fetch-site': 'same-origin',
       'sec-fetch-mode': 'navigate',
       'sec-fetch-user': '?1',
       'sec-fetch-dest': 'document',
-      'cache-control': 'max-age=0',
+      'referer': 'https://nubilefilms.com/',
+      'accept-language': 'en-GB,en;q=0.9',
+      'accept-encoding': 'gzip, deflate',
     },
     redirect: 'follow',
   });
 
   const html = await csrfRes.text();
-  const csrfMatch = html.match(/name=["']csrf-token["']\s*type=["']hidden["']\s*value=["']([^"']+)["']/i)
-    || html.match(/value=["']([^"']+)["']\s*type=["']hidden["']\s*name=["']csrf-token["']/i)
-    || html.match(/name=["']csrf-token["']\s*value=["']([^"']+)["']/i);
 
+  // Check for ban/captcha
+  if (html.includes('turnstile-card') || html.includes('Just a moment') || html.includes('Security Check')) {
+    throw new Error('Cloudflare captcha triggered');
+  }
+
+  const csrfMatch = html.match(/name=["']csrf-token["']\s*type=["']hidden["']\s*value=["']([^"']+)["']/i);
   if (!csrfMatch) {
-    console.log('Auth page HTML preview:', html.substring(0, 1500));
+    console.log('Login page HTML preview:', html.substring(0, 1500));
     throw new Error('CSRF token not found');
   }
   const csrf = csrfMatch[1];
@@ -52,36 +57,47 @@ async function doLogin() {
   const setCookie = csrfRes.headers.getSetCookie?.() || csrfRes.headers.get('set-cookie');
   const cookies = parseCookies(setCookie);
 
-  // Step 2: POST login
-  const body = `username=${encodeURIComponent(USERNAME)}&password=${encodeURIComponent(PASSWORD)}&sign-in=&r=members.nubilefilms.com&csrf-token=${encodeURIComponent(csrf)}`;
+  // Step 2: POST /authentication/login
+  const loginUrl = 'https://nubilefilms.com/authentication/login';
+  const body = `username=${encodeURIComponent(USERNAME)}&password=${encodeURIComponent(PASSWORD)}&r=members.nubilefilms.com%2Fvideo%2Fgallery&csrf-token=${encodeURIComponent(csrf)}&sign-in=Sign+In`;
 
-  console.log('POST login to', LOGIN_URL);
-  const loginRes = await fetch(LOGIN_URL, {
+  console.log('POST login to', loginUrl);
+  const loginRes = await fetch(loginUrl, {
     method: 'POST',
     headers: {
       'host': 'nubilefilms.com',
-      'content-type': 'application/x-www-form-urlencoded',
-      'content-length': String(Buffer.byteLength(body)),
-      'user-agent': ua,
-      'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
-      'accept-language': 'en-US,en;q=0.9',
-      'accept-encoding': 'gzip, deflate, br, zstd',
-      'origin': 'https://nubilefilms.com',
-      'referer': LOGIN_URL,
-      'upgrade-insecure-requests': '1',
-      'sec-ch-ua': '"Chromium";v="148", "Google Chrome";v="148", "Not/A)Brand";v="99"',
+      'connection': 'keep-alive',
+      'cache-control': 'max-age=0',
+      'sec-ch-ua': '"Chromium";v="146", "Not-A.Brand";v="24", "Google Chrome";v="146"',
       'sec-ch-ua-mobile': '?0',
       'sec-ch-ua-platform': '"Windows"',
+      'origin': 'https://nubilefilms.com',
+      'content-type': 'application/x-www-form-urlencoded',
+      'upgrade-insecure-requests': '1',
+      'user-agent': ua,
+      'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
       'sec-fetch-site': 'same-origin',
       'sec-fetch-mode': 'navigate',
       'sec-fetch-user': '?1',
       'sec-fetch-dest': 'document',
-      'cache-control': 'max-age=0',
+      'referer': 'https://nubilefilms.com/',
+      'accept-language': 'en-GB,en;q=0.9',
+      'accept-encoding': 'gzip, deflate',
       'cookie': cookies,
     },
     body: body,
     redirect: 'manual',
   });
+
+  const loginHtml = await loginRes.text();
+
+  // Check login result
+  if (loginHtml.includes('The username or password you\'ve entered is incorrect or blocked')) {
+    throw new Error('Invalid credentials');
+  }
+  if (loginHtml.includes('Your subscription has expired')) {
+    throw new Error('Subscription expired');
+  }
 
   const loginSetCookie = loginRes.headers.getSetCookie?.() || loginRes.headers.get('set-cookie');
   const loginCookies = parseCookies(loginSetCookie);
