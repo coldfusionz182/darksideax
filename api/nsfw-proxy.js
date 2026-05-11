@@ -118,24 +118,25 @@ export default async function handler(req, res) {
 
     const accessToken = authHeader.slice('Bearer '.length);
 
-    // Create a client authenticated as the user (like ban.js does)
-    const supabaseUser = createClient(supabaseUrl, supabaseServiceKey, {
-      global: {
-        headers: {
-          Authorization: `Bearer ${accessToken}`
-        }
+    // Decode JWT payload directly (avoids Supabase client conflicts)
+    function decodeJwt(token) {
+      try {
+        const parts = token.split('.');
+        if (parts.length !== 3) return null;
+        const payload = Buffer.from(parts[1].replace(/-/g, '+').replace(/_/g, '/'), 'base64').toString('utf-8');
+        return JSON.parse(payload);
+      } catch {
+        return null;
       }
-    });
+    }
 
-    // Verify token by getting user
-    const { data: userData, error: userErr } = await supabaseUser.auth.getUser();
-    if (userErr || !userData?.user) {
-      console.error('Token validation failed:', userErr);
-      res.status(401).json({ success: false, error: 'Invalid or expired token. Please log in again.' });
+    const jwtPayload = decodeJwt(accessToken);
+    if (!jwtPayload || !jwtPayload.sub) {
+      res.status(401).json({ success: false, error: 'Invalid token format' });
       return;
     }
 
-    const userId = userData.user.id;
+    const userId = jwtPayload.sub;
     const { data: userRow, error: roleErr } = await supabaseAdmin
       .from('users')
       .select('role')
