@@ -299,19 +299,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   initAdminPanel();
 
-  // ===================== VIP Content category link (Admin/Owner Only) =====================
-  async function initNsfwSection() {
-    const section = document.getElementById('nsfw-vip-section');
-    if (!section) return;
-    const current = await getCurrentUserWithRole();
-    if (current && (current.role === 'admin' || current.role === 'owner')) {
-      section.style.display = 'block';
-    } else {
-      section.style.display = 'none';
-    }
-  }
-  initNsfwSection();
-
   // ===================== Accounts thread list (accounts.html) =====================
   const threadListBody = document.getElementById('thread-list');
   const sortSelect = document.getElementById('sort-select');
