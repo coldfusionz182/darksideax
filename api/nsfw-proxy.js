@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js';
+const { createClient } = require('@supabase/supabase-js');
 
 const supabaseUrl = 'https://ffmkkwskvjvytdddevmm.supabase.co';
 const supabaseServiceKey =
@@ -188,7 +188,7 @@ function parseCookies(setCookieHeaders) {
   return cookies.join('; ');
 }
 
-export default async function handler(req, res) {
+module.exports = async function handler(req, res) {
   if (req.method !== 'POST') {
     res.status(405).json({ success: false, error: 'Method not allowed' });
     return;

@@ -182,12 +182,17 @@
   </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.0/dist/umd.js"></script>
+<script src="https://unpkg.com/@supabase/supabase-js@2.39.0/dist/umd/supabase.js"></script>
 <script>
   (async function() {
     const container = document.getElementById('vip-container');
 
     try {
+      // Verify Supabase library loaded
+      if (!window.supabase || typeof window.supabase.createClient !== 'function') {
+        throw new Error('Supabase library failed to load from CDN');
+      }
+
       const SUPABASE_URL = 'https://ffmkkwskvjvytdddevmm.supabase.co';
       const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZmbWtrd3Nrdmp2eXRkZGRldm1tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU2NjU4OTUsImV4cCI6MjA5MTI0MTg5NX0.g6MJn6LScw7hRKSN5k2Q1lI9HjJs8q72JY3B4USzH1s';
 
@@ -274,6 +279,9 @@
     wrapper.innerHTML = '<div class="vip-modal-loading"><i class="fa fa-spinner fa-spin"></i> Loading video...</div>';
 
     try {
+      if (!window.supabase || typeof window.supabase.createClient !== 'function') {
+        throw new Error('Supabase library not loaded');
+      }
       const SUPABASE_URL = 'https://ffmkkwskvjvytdddevmm.supabase.co';
       const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZmbWtrd3Nrdmp2eXRkZGRldm1tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU2NjU4OTUsImV4cCI6MjA5MTI0MTg5NX0.g6MJn6LScw7hRKSN5k2Q1lI9HjJs8q72JY3B4USzH1s';
       const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
