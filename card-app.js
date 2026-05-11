@@ -101,19 +101,21 @@ function renderCard(card, avatarUrl) {
   const isBioGradient = gradientEffects.includes(card.bio_effect);
   const bioColorStyle = isBioGradient ? '' : 'color: ' + card.text_color + ';';
   const bioGlitch = card.enable_glitch ? ' animation:glitch 2s infinite;' : '';
-  const bioEffectClass = card.bio_effect || 'none';
+  const bioEffectClass = (card.bio_effect && card.bio_effect !== 'none' && card.bio_effect !== 'default') ? card.bio_effect : '';
   const bioFontClass = card.bio_font || 'default';
+  const bioInner = bioEffectClass ? '<span class="' + bioEffectClass + '">' + card.bio + '</span>' : card.bio;
   const bioHtml = card.bio
-    ? '<p class="bio ' + bioEffectClass + ' ' + bioFontClass + '" id="typewriterBio" style="' + bioColorStyle + bioGlitch + '">' + card.bio + '</p>'
+    ? '<p class="bio ' + bioFontClass + '" id="typewriterBio" style="' + bioColorStyle + bioGlitch + '">' + bioInner + '</p>'
     : '';
 
   const isBadgeGradient = gradientEffects.includes(card.badge_effect);
   const badgeBgStyle = isBadgeGradient ? '' : 'background: ' + card.accent_color + '; ';
   const badgeColorStyle = isBadgeGradient ? '' : 'color: #fff; ';
-  const badgeEffectClass = card.badge_effect || 'none';
+  const badgeEffectClass = (card.badge_effect && card.badge_effect !== 'none' && card.badge_effect !== 'default') ? card.badge_effect : '';
   const badgeFontClass = card.badge_font || 'default';
+  const badgeInner = badgeEffectClass ? '<span class="' + badgeEffectClass + '">' + card.badge + '</span>' : card.badge;
   const badgeHtml = card.badge
-    ? '<div class="badge ' + badgeEffectClass + ' ' + badgeFontClass + '" style="' + badgeBgStyle + badgeColorStyle + '">' + card.badge + '</div>'
+    ? '<div class="badge ' + badgeFontClass + '" style="' + badgeBgStyle + badgeColorStyle + '">' + badgeInner + '</div>'
     : '';
 
   const avatarHtml = avatarUrl
@@ -143,12 +145,18 @@ function renderCard(card, avatarUrl) {
   const isUsernameGradient = gradientEffects.includes(card.username_effect);
   const usernameColorStyle = isUsernameGradient ? '' : 'color: ' + card.text_color + ';';
   const usernameGlitch = card.enable_glitch ? ' animation:glitch 2s infinite;' : '';
+
+  // Wrap text in a span for the effect — background-clip:text is more reliable on inline-block spans
+  const usernameEffectClass = (card.username_effect && card.username_effect !== 'none' && card.username_effect !== 'default') ? card.username_effect : '';
   const usernameDataText = card.username_effect === 'text-sparkle' ? ' data-text="' + visibleName + '"' : '';
+  const usernameInner = usernameEffectClass
+    ? '<span class="' + usernameEffectClass + '"' + usernameDataText + '>' + visibleName + '</span>'
+    : visibleName;
 
   container.innerHTML = videoHtml + hiddenAudioHtml + audioPlayerHtml + overlayColor + particlesHtml
     + '<div class="card-content ' + layoutClass + '">'
     + avatarHtml
-    + '<h1 class="username ' + usernameEffect + ' ' + usernameFont + '"' + usernameDataText + ' style="' + usernameColorStyle + usernameGlitch + '">' + visibleName + '</h1>'
+    + '<h1 class="username ' + usernameFont + '" style="' + usernameColorStyle + usernameGlitch + '">' + usernameInner + '</h1>'
     + badgeHtml
     + bioHtml
     + '<div class="social-links">' + socialHtml + '</div>'

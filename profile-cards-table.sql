@@ -13,7 +13,20 @@ CREATE TABLE IF NOT EXISTS profile_cards (
   badge TEXT,
   enabled BOOLEAN DEFAULT true,
   created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW()
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+
+  -- Text effects & fonts
+  username_effect TEXT DEFAULT 'none',
+  username_font TEXT DEFAULT 'default',
+  badge_effect TEXT DEFAULT 'none',
+  badge_font TEXT DEFAULT 'default',
+  bio_effect TEXT DEFAULT 'none',
+  bio_font TEXT DEFAULT 'default',
+
+  -- Audio
+  enable_audio_player BOOLEAN DEFAULT false,
+  audio_url TEXT,
+  audio_title TEXT DEFAULT 'Background Music'
 );
 
 -- Enable RLS
