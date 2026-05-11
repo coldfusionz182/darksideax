@@ -9,6 +9,9 @@ const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 const USERNAME = 'gpanter22@aol.com';
 const PASSWORD = '7911MAge21';
 
+const LCD_USERNAME = 'jj2367836794@gmail.com';
+const LCD_PASSWORD = '4042179971';
+
 async function doLogin() {
   const ua = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36';
 
@@ -59,7 +62,7 @@ async function doLogin() {
 
   // Step 2: POST /authentication/login
   const loginUrl = 'https://nubilefilms.com/authentication/login';
-  const body = `username=${encodeURIComponent(USERNAME)}&password=${encodeURIComponent(PASSWORD)}&r=members.nubilefilms.com%2Fvideo%2Fgallery&csrf-token=${encodeURIComponent(csrf)}&sign-in=Sign+In`;
+  const body = `username=${USERNAME}&password=${PASSWORD}&r=members.nubilefilms.com%2Fvideo%2Fgallery&csrf-token=${csrf}&sign-in=Sign+In`;
 
   console.log('POST login to', loginUrl);
   const loginRes = await fetch(loginUrl, {
@@ -109,6 +112,69 @@ async function doLogin() {
   // Merge cookies
   const allCookies = [cookies, loginCookies].filter(Boolean).join('; ');
   return allCookies;
+}
+
+async function doLCDLogin() {
+  const ua = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36';
+
+  // Step 1: GET /myaccount to fetch nonce
+  console.log('Fetching nonce from https://www.littlecaprice-dreams.com/myaccount');
+  const csrfRes = await fetch('https://www.littlecaprice-dreams.com/myaccount', {
+    headers: {
+      'User-Agent': ua,
+      'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+      'Accept-Language': 'en-US,en;q=0.9',
+      'Accept-Encoding': 'gzip, deflate, br',
+      'Connection': 'keep-alive',
+      'Upgrade-Insecure-Requests': '1',
+    },
+    redirect: 'follow',
+  });
+
+  const html = await csrfRes.text();
+
+  // Check for region block/ban
+  if (html.includes('We are sorry to inform you that this website cant be accessed by this region')) {
+    throw new Error('Region blocked');
+  }
+
+  const nonceMatch = html.match(/name="woocommerce-login-nonce" value="([^"]+)"/);
+  if (!nonceMatch) {
+    console.log('Login page HTML preview:', html.substring(0, 1500));
+    throw new Error('Nonce not found');
+  }
+  const nonce = nonceMatch[1];
+  console.log('Nonce found:', nonce.substring(0, 30) + '...');
+
+  // Step 2: POST login
+  const loginUrl = 'https://www.littlecaprice-dreams.com/myaccount/?redirect_to=%2F';
+  const body = `lcd_redirect_to=%2F&username=${LCD_USERNAME}&password=${LCD_PASSWORD}&woocommerce-login-nonce=${nonce}&_wp_http_referer=%2Fmyaccount%2F%3Fredirect_to%3D%252F&login=Log+in&redirect=%2F`;
+
+  console.log('POST login to', loginUrl);
+  const loginRes = await fetch(loginUrl, {
+    method: 'POST',
+    headers: {
+      'User-Agent': ua,
+      'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+      'Accept-Language': 'en-US,en;q=0.9',
+      'Accept-Encoding': 'gzip, deflate, br',
+      'Content-Type': 'application/x-www-form-urlencoded',
+      'Origin': 'https://www.littlecaprice-dreams.com',
+      'Referer': 'https://www.littlecaprice-dreams.com/myaccount/?redirect_to=%2F',
+      'Connection': 'keep-alive',
+      'Upgrade-Insecure-Requests': '1',
+    },
+    body: body,
+    redirect: 'manual',
+  });
+
+  console.log('Login status:', loginRes.status, 'redirect:', loginRes.headers.get('location') || 'none');
+
+  if (loginRes.status === 429) {
+    throw new Error('Rate limited');
+  }
+
+  return true; // Session cookies are managed by fetch automatically
 }
 
 function parseCookies(setCookieHeaders) {
@@ -183,7 +249,87 @@ export default async function handler(req, res) {
 
     const { action, videoUrl } = req.body || {};
 
-    // Login and get fresh session cookies
+    // LittleCaprice-Dreams actions
+    if (action === 'lcd-gallery') {
+      try {
+        await doLCDLogin();
+        const ua = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36';
+
+        const response = await fetch('https://www.littlecaprice-dreams.com/videos/', {
+          headers: {
+            'User-Agent': ua,
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+            'Accept-Language': 'en-US,en;q=0.9',
+          },
+          redirect: 'follow',
+        });
+
+        if (!response.ok) {
+          res.status(502).json({ success: false, error: `Upstream returned ${response.status}` });
+          return;
+        }
+
+        const html = await response.text();
+        const videos = [];
+
+        // Parse project-preview cards
+        const cardRegex = /<a[^>]*class="project-preview[^"]*"[^>]*href="([^"]+)"[^>]*>[\s\S]*?<img[^>]*class="preview-img preview-thumb"[^>]*src="([^"]+)"[^>]*>[\s\S]*?<h2>([^<]+)<\/h2>[\s\S]*?<\/a>/gi;
+        let match;
+        while ((match = cardRegex.exec(html)) !== null) {
+          videos.push({
+            url: match[1].startsWith('http') ? match[1] : 'https://www.littlecaprice-dreams.com' + match[1],
+            thumbnail: match[2],
+            title: match[3].trim(),
+          });
+        }
+
+        res.status(200).json({
+          success: true,
+          videos: videos.slice(0, 50), // Limit to 50 for performance
+          totalFound: videos.length,
+        });
+      } catch (fetchErr) {
+        console.error('LCD gallery error:', fetchErr);
+        res.status(502).json({ success: false, error: 'Failed to fetch LCD gallery: ' + fetchErr.message });
+      }
+      return;
+    }
+
+    if (action === 'lcd-video' && videoUrl) {
+      try {
+        await doLCDLogin();
+        const ua = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36';
+
+        const response = await fetch(videoUrl, {
+          headers: {
+            'User-Agent': ua,
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+          },
+          redirect: 'follow',
+        });
+
+        if (!response.ok) {
+          res.status(502).json({ success: false, error: 'Failed to fetch video page' });
+          return;
+        }
+
+        const html = await response.text();
+        const iframeMatch = html.match(/<iframe[^>]*src="([^"]+)"/);
+        const sourceMatch = html.match(/<source[^>]*src="([^"]+)"/);
+        const videoMatch = html.match(/<video[^>]*src="([^"]+)"/);
+
+        res.status(200).json({
+          success: true,
+          embedUrl: iframeMatch ? iframeMatch[1] : null,
+          videoUrl: sourceMatch ? sourceMatch[1] : (videoMatch ? videoMatch[1] : null),
+        });
+      } catch (fetchErr) {
+        res.status(502).json({ success: false, error: fetchErr.message });
+      }
+      return;
+    }
+
+    // Login and get fresh session cookies (for nubilefilms)
     let cookies;
     try {
       cookies = await doLogin();

@@ -243,7 +243,7 @@
       const response = await fetch('/api/nsfw-proxy', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-        body: JSON.stringify({ action: 'gallery' }),
+        body: JSON.stringify({ action: 'lcd-gallery' }),
       });
 
       const data = await response.json();
@@ -286,14 +286,14 @@
       const response = await fetch('/api/nsfw-proxy', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-        body: JSON.stringify({ action: 'video', videoUrl }),
+        body: JSON.stringify({ action: 'lcd-video', videoUrl }),
       });
 
       const data = await response.json();
-      if (data.success && data.videoUrl) {
+      if (data.success && data.embedUrl) {
+        wrapper.innerHTML = '<iframe src="' + data.embedUrl + '" allowfullscreen allow="autoplay; encrypted-media"></iframe>';
+      } else if (data.success && data.videoUrl) {
         wrapper.innerHTML = '<video controls autoplay><source src="' + data.videoUrl + '" type="video/mp4"></video>';
-      } else if (data.success && data.embedUrl) {
-        wrapper.innerHTML = '<iframe src="' + data.embedUrl + '" allowfullscreen></iframe>';
       } else {
         wrapper.innerHTML = '<div style="padding:40px;text-align:center;color:#888;"><p>Cannot load video directly.</p><a href="' + videoUrl + '" target="_blank" style="color:#ff6666;">Open on site <i class="fa fa-external-link"></i></a></div>';
       }
