@@ -299,135 +299,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
   initAdminPanel();
 
-  // ===================== NSFW VIP Section (Admin/Owner Only) =====================
-  let _nsfwLoaded = false;
+  // ===================== VIP Content category link (Admin/Owner Only) =====================
   async function initNsfwSection() {
     const section = document.getElementById('nsfw-vip-section');
-    const grid = document.getElementById('nsfw-grid');
-    if (!section || !grid) return;
-
+    if (!section) return;
     const current = await getCurrentUserWithRole();
-    if (!current || (current.role !== 'admin' && current.role !== 'owner')) {
+    if (current && (current.role === 'admin' || current.role === 'owner')) {
+      section.style.display = 'block';
+    } else {
       section.style.display = 'none';
-      return;
-    }
-
-    section.style.display = 'block';
-    if (_nsfwLoaded) return; // only fetch once
-    _nsfwLoaded = true;
-
-    grid.innerHTML = '<div style="text-align:center;color:#888;padding:30px;font-size:14px;"><i class="fa fa-spinner fa-spin"></i> Loading VIP content...</div>';
-
-    try {
-      const { data: userData, error: userErr } = await supabaseClient.auth.getUser();
-      if (userErr || !userData?.user) {
-        grid.innerHTML = '<div style="text-align:center;color:#ff6666;padding:20px;"><i class="fa fa-exclamation-triangle"></i> Please log in to access VIP content</div>';
-        return;
-      }
-
-      const { data: sessionData } = await supabaseClient.auth.getSession();
-      const token = sessionData?.session?.access_token;
-      if (!token) {
-        grid.innerHTML = '<div style="text-align:center;color:#ff6666;padding:20px;"><i class="fa fa-exclamation-triangle"></i> Session expired. Please log in again.</div>';
-        return;
-      }
-
-      const response = await fetch('/api/nsfw-proxy', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify({ action: 'gallery' }),
-      });
-
-      const data = await response.json();
-
-      if (!data.success) {
-        grid.innerHTML = `<div style="text-align:center;color:#ff6666;padding:20px;"><i class="fa fa-exclamation-triangle"></i> ${data.error || 'Failed to load content'}</div>`;
-        return;
-      }
-
-      if (!data.videos || data.videos.length === 0) {
-        grid.innerHTML = '<div style="text-align:center;color:#888;padding:20px;">No videos found. Check proxy configuration.</div>';
-        return;
-      }
-
-      const cardStyle = 'cursor:pointer;transition:all 0.3s ease;border-radius:10px;overflow:hidden;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);position:relative;';
-      const cardHover = "this.style.transform='translateY(-4px)';this.style.borderColor='rgba(255,50,50,0.4)';this.style.boxShadow='0 8px 30px rgba(255,50,50,0.15)';";
-      const cardOut = "this.style.transform='';this.style.borderColor='rgba(255,255,255,0.06)';this.style.boxShadow='';";
-
-      grid.innerHTML = data.videos.map((video) => `
-        <div style="${cardStyle}" onmouseenter="${cardHover}" onmouseleave="${cardOut}" onclick="window.openNsfwModal('${video.url}', '${video.title.replace(/'/g, "\\'")}')">
-          <img src="${video.thumbnail}" alt="${video.title}" loading="lazy" onerror="this.style.display='none'" style="width:100%;aspect-ratio:16/9;object-fit:cover;background:#1a0a0a;display:block;">
-          <div style="padding:10px 12px;font-size:13px;color:#ccc;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${video.title}</div>
-        </div>
-      `).join('');
-
-    } catch (err) {
-      console.error('NSFW section error:', err);
-      grid.innerHTML = `<div style="text-align:center;color:#ff6666;padding:20px;"><i class="fa fa-exclamation-triangle"></i> ${err.message}</div>`;
     }
   }
-
-  window.openNsfwModal = async function(videoUrl, title) {
-    const modal = document.getElementById('nsfw-modal');
-    const wrapper = document.getElementById('nsfw-video-wrapper');
-    const modalTitle = document.getElementById('nsfw-modal-title');
-    if (!modal || !wrapper) return;
-
-    modal.style.display = 'block';
-    modalTitle.textContent = title || 'Video';
-    wrapper.innerHTML = '<div class="nsfw-modal-loading"><i class="fa fa-spinner fa-spin"></i> Loading video...</div>';
-
-    try {
-      await supabaseClient.auth.getUser(); // refresh token if needed
-      const { data: sessionData } = await supabaseClient.auth.getSession();
-      const token = sessionData?.session?.access_token;
-      if (!token) {
-        wrapper.innerHTML = '<div style="padding:40px;text-align:center;color:#ff6666;">Session expired. Please log in again.</div>';
-        return;
-      }
-
-      const response = await fetch('/api/nsfw-proxy', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify({ action: 'video', videoUrl }),
-      });
-
-      const data = await response.json();
-      if (data.success && data.videoUrl) {
-        wrapper.innerHTML = `<video controls autoplay><source src="${data.videoUrl}" type="video/mp4">Your browser does not support the video tag.</video>`;
-      } else if (data.success && data.embedUrl) {
-        wrapper.innerHTML = `<iframe src="${data.embedUrl}" allowfullscreen></iframe>`;
-      } else {
-        // Fallback: open in new tab if we can't embed
-        wrapper.innerHTML = `<div style="padding:40px;text-align:center;color:#888;"><p>Cannot load video directly.</p><a href="${videoUrl}" target="_blank" style="color:#ff6666;">Open on site <i class="fa fa-external-link"></i></a></div>`;
-      }
-    } catch (err) {
-      wrapper.innerHTML = `<div style="padding:40px;text-align:center;color:#ff6666;">Error: ${err.message}</div>`;
-    }
-  };
-
-  document.getElementById('nsfw-modal-close')?.addEventListener('click', () => {
-    const modal = document.getElementById('nsfw-modal');
-    const wrapper = document.getElementById('nsfw-video-wrapper');
-    if (modal) modal.style.display = 'none';
-    if (wrapper) wrapper.innerHTML = '';
-  });
-
-  document.getElementById('nsfw-modal-overlay')?.addEventListener('click', (e) => {
-    if (e.target.id === 'nsfw-modal-overlay') {
-      const modal = document.getElementById('nsfw-modal');
-      const wrapper = document.getElementById('nsfw-video-wrapper');
-      if (modal) modal.style.display = 'none';
-      if (wrapper) wrapper.innerHTML = '';
-    }
-  });
-
   initNsfwSection();
 
   // ===================== Accounts thread list (accounts.html) =====================

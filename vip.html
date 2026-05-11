@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>VIP Content - Darkside</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+  <link href="styles.css" rel="stylesheet">
+  <link href="userroles.css" rel="stylesheet">
+  <style>
+    .vip-container { max-width: 1400px; margin: 0 auto; padding: 20px; }
+    .vip-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 24px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid rgba(255, 50, 50, 0.2);
+    }
+    .vip-header i { color: #ff4444; font-size: 24px; }
+    .vip-header h1 {
+      margin: 0;
+      color: #ff6666;
+      font-size: 24px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    .vip-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 20px;
+    }
+    .vip-card {
+      background: rgba(255, 255, 255, 0.03);
+      border-radius: 12px;
+      overflow: hidden;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      position: relative;
+    }
+    .vip-card:hover {
+      transform: translateY(-4px);
+      border-color: rgba(255, 50, 50, 0.4);
+      box-shadow: 0 8px 30px rgba(255, 50, 50, 0.15);
+    }
+    .vip-card img {
+      width: 100%;
+      aspect-ratio: 16/9;
+      object-fit: cover;
+      background: #1a0a0a;
+      display: block;
+    }
+    .vip-card .title {
+      padding: 12px 14px;
+      font-size: 14px;
+      color: #ccc;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .vip-loading {
+      padding: 60px;
+      text-align: center;
+      color: #888;
+      font-size: 16px;
+    }
+    .vip-error {
+      padding: 40px;
+      text-align: center;
+      color: #ff6666;
+      font-size: 16px;
+    }
+    .vip-modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.92);
+      z-index: 9999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      backdrop-filter: blur(10px);
+    }
+    .vip-modal-box {
+      width: 90%;
+      max-width: 1100px;
+      background: #111;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid rgba(255, 50, 50, 0.3);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
+    }
+    .vip-modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 20px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .vip-modal-header h3 {
+      margin: 0;
+      color: #ff8888;
+      font-size: 15px;
+      font-weight: 500;
+    }
+    .vip-modal-close {
+      background: none;
+      border: none;
+      color: #888;
+      font-size: 20px;
+      cursor: pointer;
+      padding: 4px;
+    }
+    .vip-modal-close:hover { color: #fff; }
+    .vip-video-wrapper {
+      position: relative;
+      aspect-ratio: 16/9;
+      background: #000;
+    }
+    .vip-video-wrapper video,
+    .vip-video-wrapper iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+    .vip-modal-loading {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #888;
+    }
+    .access-denied {
+      text-align: center;
+      padding: 80px 20px;
+      color: #ff6666;
+    }
+    .access-denied i { font-size: 48px; margin-bottom: 16px; }
+    .access-denied h2 { margin: 0 0 8px; }
+  </style>
+</head>
+<body>
+<div id="page">
+  <header id="header">
+    <div class="wrapper header-inner">
+      <div class="header-left">
+        <div class="header-logo">
+          <a href="index.html" class="logo-text">Darkside</a>
+        </div>
+      </div>
+      <div class="header-right">
+        <a href="index.html" class="btn btn-small btn-outline">Back to Forums</a>
+      </div>
+    </div>
+  </header>
+
+  <main id="main-content">
+    <div class="wrapper">
+      <div class="vip-container" id="vip-container">
+        <div class="vip-loading"><i class="fa fa-spinner fa-spin"></i> Checking access...</div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- Video Modal -->
+<div id="vip-modal" style="display:none;">
+  <div class="vip-modal-overlay" id="vip-modal-overlay">
+    <div class="vip-modal-box">
+      <div class="vip-modal-header">
+        <h3 id="vip-modal-title">Video</h3>
+        <button class="vip-modal-close" id="vip-modal-close">
+          <i class="fa fa-times"></i>
+        </button>
+      </div>
+      <div class="vip-video-wrapper" id="vip-video-wrapper">
+        <div class="vip-modal-loading"><i class="fa fa-spinner fa-spin"></i> Loading video...</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.0/dist/module.js';
+
+  const SUPABASE_URL = 'https://ffmkkwskvjvytdddevmm.supabase.co';
+  const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZmbWtrd3Nrdmp2eXRkZGRldm1tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU2NjU4OTUsImV4cCI6MjA5MTI0MTg5NX0.g6MJn6LScw7hRKSN5k2Q1lI9HjJs8q72JY3B4USzH1s';
+
+  const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON);
+
+  async function getCurrentUserWithRole() {
+    const { data: userData, error } = await supabaseClient.auth.getUser();
+    if (error || !userData?.user) return null;
+    const { data: userRow } = await supabaseClient
+      .from('users')
+      .select('role, username')
+      .eq('id', userData.user.id)
+      .maybeSingle();
+    return { id: userData.user.id, role: userRow?.role || 'user', username: userRow?.username };
+  }
+
+  async function initVipPage() {
+    const container = document.getElementById('vip-container');
+    const current = await getCurrentUserWithRole();
+
+    if (!current || (current.role !== 'admin' && current.role !== 'owner')) {
+      container.innerHTML = `
+        <div class="access-denied">
+          <i class="fa fa-lock"></i>
+          <h2>Access Denied</h2>
+          <p>Admin/Owner access required to view VIP Content.</p>
+        </div>
+      `;
+      return;
+    }
+
+    container.innerHTML = `
+      <div class="vip-header">
+        <i class="fa fa-crown"></i>
+        <h1>VIP Content</h1>
+      </div>
+      <div id="vip-grid" class="vip-grid">
+        <div class="vip-loading"><i class="fa fa-spinner fa-spin"></i> Loading videos...</div>
+      </div>
+    `;
+
+    try {
+      await supabaseClient.auth.getUser();
+      const { data: sessionData } = await supabaseClient.auth.getSession();
+      const token = sessionData?.session?.access_token;
+      if (!token) throw new Error('Session expired');
+
+      const response = await fetch('/api/nsfw-proxy', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ action: 'gallery' }),
+      });
+
+      const data = await response.json();
+      if (!data.success) throw new Error(data.error || 'Failed to load');
+      if (!data.videos?.length) throw new Error('No videos found');
+
+      const grid = document.getElementById('vip-grid');
+      grid.innerHTML = data.videos.map(video => `
+        <div class="vip-card" onclick="window.openVipModal('${video.url}', '${video.title.replace(/'/g, "\\'")}')">
+          <img src="${video.thumbnail}" alt="${video.title}" loading="lazy" onerror="this.style.display='none'">
+          <div class="title">${video.title}</div>
+        </div>
+      `).join('');
+
+    } catch (err) {
+      document.getElementById('vip-grid').innerHTML = `<div class="vip-error"><i class="fa fa-exclamation-triangle"></i> ${err.message}</div>`;
+    }
+  }
+
+  window.openVipModal = async function(videoUrl, title) {
+    const modal = document.getElementById('vip-modal');
+    const wrapper = document.getElementById('vip-video-wrapper');
+    const modalTitle = document.getElementById('vip-modal-title');
+    if (!modal || !wrapper) return;
+
+    modal.style.display = 'block';
+    modalTitle.textContent = title || 'Video';
+    wrapper.innerHTML = '<div class="vip-modal-loading"><i class="fa fa-spinner fa-spin"></i> Loading video...</div>';
+
+    try {
+      await supabaseClient.auth.getUser();
+      const { data: sessionData } = await supabaseClient.auth.getSession();
+      const token = sessionData?.session?.access_token;
+      if (!token) { wrapper.innerHTML = '<div class="vip-modal-loading" style="color:#ff6666;">Session expired</div>'; return; }
+
+      const response = await fetch('/api/nsfw-proxy', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ action: 'video', videoUrl }),
+      });
+
+      const data = await response.json();
+      if (data.success && data.videoUrl) {
+        wrapper.innerHTML = `<video controls autoplay><source src="${data.videoUrl}" type="video/mp4"></video>`;
+      } else if (data.success && data.embedUrl) {
+        wrapper.innerHTML = `<iframe src="${data.embedUrl}" allowfullscreen></iframe>`;
+      } else {
+        wrapper.innerHTML = `<div style="padding:40px;text-align:center;color:#888;"><p>Cannot load video directly.</p><a href="${videoUrl}" target="_blank" style="color:#ff6666;">Open on site <i class="fa fa-external-link"></i></a></div>`;
+      }
+    } catch (err) {
+      wrapper.innerHTML = `<div style="padding:40px;text-align:center;color:#ff6666;">Error: ${err.message}</div>`;
+    }
+  };
+
+  document.getElementById('vip-modal-close')?.addEventListener('click', () => {
+    const modal = document.getElementById('vip-modal');
+    const wrapper = document.getElementById('vip-video-wrapper');
+    if (modal) modal.style.display = 'none';
+    if (wrapper) wrapper.innerHTML = '';
+  });
+
+  document.getElementById('vip-modal-overlay')?.addEventListener('click', (e) => {
+    if (e.target.id === 'vip-modal-overlay') {
+      const modal = document.getElementById('vip-modal');
+      const wrapper = document.getElementById('vip-video-wrapper');
+      if (modal) modal.style.display = 'none';
+      if (wrapper) wrapper.innerHTML = '';
+    }
+  });
+
+  initVipPage();
+</script>
+</body>
+</html>
