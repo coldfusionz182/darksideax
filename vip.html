@@ -229,38 +229,17 @@
         return;
       }
 
-      // Show page container
+      // Show disabled message
       container.innerHTML = `
         <div class="vip-header">
           <i class="fa fa-crown"></i>
           <h1>VIP Content</h1>
         </div>
-        <div id="vip-frame-wrap" style="width:100%;height:85vh;border-radius:12px;overflow:hidden;border:1px solid rgba(255,50,50,0.2);">
-          <div class="vip-loading"><i class="fa fa-spinner fa-spin"></i> Loading content...</div>
+        <div class="vip-error">
+          <i class="fa fa-lock"></i>
+          <p>VIP Content is currently disabled.</p>
         </div>
       `;
-
-      // Fetch full page HTML via proxy
-      const { data: sessionData } = await supabaseClient.auth.getSession();
-      const token = sessionData?.session?.access_token;
-      if (!token) throw new Error('Session expired');
-
-      const response = await fetch('/api/nsfw-proxy', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-        body: JSON.stringify({ action: 'lcd-page' }),
-      });
-
-      const data = await response.json();
-      if (!data.success) throw new Error(data.error || 'Failed to load');
-      if (!data.html) throw new Error('No content received');
-
-      // Create blob URL from HTML and load in iframe
-      const blob = new Blob([data.html], { type: 'text/html' });
-      const blobUrl = URL.createObjectURL(blob);
-
-      const wrap = document.getElementById('vip-frame-wrap');
-      wrap.innerHTML = '<iframe id="lcd-iframe" src="' + blobUrl + '" style="width:100%;height:100%;border:none;" sandbox="allow-scripts allow-same-origin allow-popups allow-forms"></iframe>';
 
     } catch (err) {
       console.error('VIP page error:', err);
