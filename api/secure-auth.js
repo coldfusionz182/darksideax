@@ -3,7 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 const _0xdec = (s) => Buffer.from(s, 'base64').toString('utf8');
 
 const _0x_u1 = _0xdec('aHR0cHM6Ly9mZm1ra3dza3Zqdnl0ZGRkZXZtbS5zdXBhYmFzZS5jbw==');
-const _0x_k2 = _0xdec('ZXlKaGJHY2lPaUpJVXpJMU5pSXNJblI1Y0NJNklrcFhWQ0o5LmV5SnBjM01pT2lKemRYQmhZbUZ6WlNJc0luSmxaaUk2SW1abWJXdHJkM05yZG1wMmVYUmtaR1JsZG0xdElpd2ljbTlzWlNJNkluTmxjblpwWTJWZmNtOXNaU0lzSW1saGRDSTZNVGMzTlRZMk5UZzVOU3dpWlhod0lqb3lNRGt4TWpReE9EazFmUS5ZdGFXRmRtLWd5cXBxem9WeVpUQ0JUazhyUzhDa201Y09Zc3VuOEd3R2xR');
+const _0x_k2 = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const _0x_s3 = _0xdec('ZHMtZ2F0ZXdheS12MS1hbHBoYS05OQ==');
 const _0x_v2_s = 'ds-v2-integrity-check-delta';
 
