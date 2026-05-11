@@ -217,10 +217,14 @@ def scrape_videos():
         print(r.text[:1000])
         return []
 
-    # Save raw HTML
+    # Save raw HTML for inspection
     with open("videos.html", "w", encoding="utf-8") as f:
         f.write(r.text)
     print("    Saved to videos.html")
+
+    # Check for age verification
+    if "AgeModal" in r.text or "AGE VERIFICATION" in r.text.upper():
+        print("[!] Age verification modal detected")
 
     soup = BeautifulSoup(r.text, "html.parser")
     videos = []

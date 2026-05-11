@@ -283,27 +283,18 @@ module.exports = async function handler(req, res) {
         // Inject base tag so relative URLs resolve
         html = html.replace('<head>', '<head><base href="https://www.littlecaprice-dreams.com/">');
 
-        // Inject click interceptor and auto-clicker for age verification
+        // Inject click interceptor and auto-bypass age verification
         const clickScript = `
 <script>
 (function(){
-  // Auto-click age verification modal
-  var attempts = 0;
-  var maxAttempts = 5;
-  var clickInterval = setInterval(function(){
-    var ageBtn = document.getElementById('AgeModal')?.querySelector('button');
-    if (ageBtn) {
-      ageBtn.click();
-      clearInterval(clickInterval);
-      console.log('Age verification clicked automatically');
-    }
-    attempts++;
-    if (attempts >= maxAttempts) {
-      clearInterval(clickInterval);
-    }
-  }, 1000);
+  // Set age verification cookie and hide modal immediately
+  document.cookie = 'agy=accepted; path=/; max-age=31536000';
+  var ageModal = document.getElementById('AgeModal');
+  if (ageModal) {
+    ageModal.style.display = 'none';
+  }
 
-  // Allow manual click as fallback
+  // Intercept video clicks
   document.addEventListener('click', function(e){
     var a = e.target.closest('a');
     if (!a) return;
